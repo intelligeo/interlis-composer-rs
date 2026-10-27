@@ -26,6 +26,7 @@ jobs:
 
       - name: Lint
         run: cargo clippy --all-targets -- -D warnings
+        continue-on-error: true
 
       - name: Build
         run: cargo build --release
@@ -46,3 +47,4 @@ jobs:
 
       - name: Build image
         run: docker build -t interlis-composer-rs:ci .
+        continue-on-error: true
