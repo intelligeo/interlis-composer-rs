@@ -3,68 +3,251 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>INTERLIS Model Composer (Rust MVP)</title>
+    <title>INTERLIS Model Composer • UML Studio</title>
+    <meta name="theme-color" content="#0b1020" />
     <style>
       :root {
-        --bg: #f6f4ec;
-        --panel: #fffdf7;
-        --ink: #202018;
-        --ink-soft: #595646;
-        --accent: #0a6d6f;
-        --accent-2: #f19f3a;
-        --ok: #0f7a49;
-        --warn: #a15b00;
-        --err: #b3261e;
-        --line: #d9d3bf;
+        --bg: #090f1a;
+        --bg-alt: #101a2b;
+        --panel: rgba(15, 23, 35, 0.9);
+        --panel-strong: #111b2d;
+        --panel-soft: #132238;
+        --panel-elevated: #18293d;
+        --ink: #edf5ff;
+        --ink-soft: #9bb0c8;
+        --accent: #5eead4;
+        --accent-2: #8ab4ff;
+        --ok: #34d399;
+        --warn: #fbbf24;
+        --err: #f87171;
+        --line: rgba(148, 163, 184, 0.18);
+        --shadow: 0 24px 80px rgba(2, 6, 23, 0.72);
       }
 
       * { box-sizing: border-box; }
+
+      html, body {
+        min-height: 100%;
+      }
 
       body {
         margin: 0;
         color: var(--ink);
         font-family: "Segoe UI", "Trebuchet MS", sans-serif;
         background:
-          radial-gradient(circle at 10% 0%, #f5e9c8 0, transparent 38%),
-          radial-gradient(circle at 90% 20%, #cde8e3 0, transparent 35%),
-          var(--bg);
+          radial-gradient(circle at top left, rgba(75, 85, 255, 0.18), transparent 30%),
+          radial-gradient(circle at 90% 10%, rgba(45, 212, 191, 0.12), transparent 28%),
+          linear-gradient(180deg, #070d18 0%, #0b1020 100%);
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(transparent, rgba(255,255,255,0.02));
       }
 
       .wrap {
-        width: min(1100px, calc(100% - 2rem));
-        margin: 1.25rem auto 2rem;
+        width: min(1600px, calc(100% - 1.5rem));
+        margin: 1rem auto 2rem;
         display: grid;
         gap: 1rem;
       }
 
       .hero {
-        background: linear-gradient(120deg, #0a6d6f 0%, #0f7f82 50%, #145d7c 100%);
-        color: #fff;
-        border-radius: 16px;
-        padding: 1rem 1.2rem;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        position: relative;
+        background: linear-gradient(135deg, rgba(15, 118, 110, 0.92), rgba(37, 99, 235, 0.72), rgba(8, 15, 30, 0.96));
+        color: #effdfd;
+        border: 1px solid rgba(94, 234, 212, 0.35);
+        border-radius: 18px;
+        padding: 1.3rem 1.35rem 1.2rem;
+        box-shadow: var(--shadow);
       }
 
       .hero h1 {
-        margin: 0 0 0.4rem;
-        font-size: clamp(1.3rem, 3.2vw, 2rem);
+        display: none;
       }
 
       .hero p {
         margin: 0;
-        color: #e7f7f6;
+        color: rgba(224, 247, 255, 0.9);
       }
 
-      .project-meta {
-        margin-top: 0.45rem;
-        font-size: 0.9rem;
-        color: #d6efee;
+      .window-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.85rem;
+      }
+
+      .window-controls span {
+        display: inline-block;
+        width: 0.8rem;
+        height: 0.8rem;
+        border-radius: 50%;
+      }
+
+      .window-controls .red { background: #f87171; }
+      .window-controls .yellow { background: #fbbf24; }
+      .window-controls .green { background: #34d399; }
+
+      .project-meta,
+      .sync-meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.55rem;
+        padding: 0.38rem 0.7rem;
+        border-radius: 999px;
+        background: rgba(8, 15, 30, 0.32);
+        border: 1px solid rgba(255,255,255,0.12);
+        font-size: 0.82rem;
+        color: #dfeaf8;
+      }
+
+      .app-ribbon {
+        background: linear-gradient(180deg, rgba(15, 23, 33, 0.98), rgba(11, 17, 25, 0.98));
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 10px;
+        box-shadow: 0 4px 18px rgba(2, 6, 23, 0.28);
+        overflow: hidden;
+      }
+
+      .ribbon-tabs {
+        display: flex;
+        align-items: center;
+        gap: 0.2rem;
+        padding: 0.45rem 0.6rem 0;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+        background: rgba(148, 163, 184, 0.02);
+      }
+
+      .ribbon-tab {
+        appearance: none;
+        border: 1px solid transparent;
+        border-bottom: none;
+        border-radius: 6px 6px 0 0;
+        background: transparent;
+        color: rgba(226, 232, 240, 0.68);
+        font-weight: 700;
+        padding: 0.45rem 0.7rem;
+        cursor: pointer;
+        font-size: 0.72rem;
+        letter-spacing: 0.01em;
+      }
+
+      .ribbon-tab.active {
+        background: rgba(148, 163, 184, 0.06);
+        color: var(--ink);
+        border-color: rgba(148, 163, 184, 0.16);
+      }
+
+      .ribbon-panel {
+        display: none;
+        padding: 0.55rem 0.65rem 0.65rem;
+      }
+
+      .ribbon-panel.active {
+        display: block;
+      }
+
+      .ribbon-groups {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.38rem;
+      }
+
+      .ribbon-group {
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 8px;
+        padding: 0.34rem 0.4rem;
+        min-width: 145px;
+      }
+
+      .ribbon-group-header {
+        font-size: 0.6rem;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: rgba(191, 219, 254, 0.7);
+        margin: 0 0 0.25rem;
+      }
+
+      .ribbon-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.24rem;
+      }
+
+      .ribbon-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.38rem;
+        background: rgba(17, 24, 39, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        border-radius: 6px;
+        color: var(--ink);
+        padding: 0.38rem 0.5rem;
+        font-weight: 600;
+        font-size: 0.72rem;
+        cursor: pointer;
+        transition: border-color 0.15s ease, background 0.15s ease;
+        line-height: 1.2;
+      }
+
+      .ribbon-button:hover {
+        border-color: rgba(191, 219, 254, 0.2);
+      }
+
+      .ribbon-button.active,
+      .ribbon-button[aria-pressed="true"] {
+        background: rgba(30, 41, 59, 0.96);
+        border-color: rgba(147, 197, 253, 0.38);
+      }
+
+      .ribbon-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 0.92rem;
+        height: 0.92rem;
+        color: #dfeaf8;
+        flex: 0 0 0.92rem;
+        opacity: 0.96;
+      }
+
+      .ribbon-icon svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .ribbon-button strong {
+        display: none;
+      }
+
+      .card.is-hidden {
+        display: none !important;
       }
 
       .sync-meta {
-        margin-top: 0.2rem;
-        font-size: 0.82rem;
-        color: #c6e4e3;
+        margin-left: 0.5rem;
+      }
+
+      .project-meta::before,
+      .sync-meta::before {
+        content: "";
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: var(--ok);
+        box-shadow: 0 0 12px rgba(52, 211, 153, 0.9);
       }
 
       .grid {
@@ -79,63 +262,206 @@
         }
       }
 
-      .card {
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        overflow: hidden;
+      .workspace-shell {
+        display: grid;
+        grid-template-columns: minmax(230px, 0.9fr) minmax(260px, 1fr) minmax(420px, 2fr);
+        gap: 1rem;
+        align-items: stretch;
       }
 
+      .workspace-shell > .card {
+        min-height: 700px;
+      }
+
+      .workspace-shell .diagram-card {
+        min-width: 0;
+      }
+
+      .workspace-shell .card[data-collapsed="true"] {
+        display: none;
+      }
+
+      .card {
+        position: relative;
+        background: linear-gradient(180deg, rgba(18, 28, 45, 0.94), rgba(12, 19, 31, 0.96));
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        min-height: 220px;
+        transition: flex-basis 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .card.dragging {
+        opacity: 0.65;
+        transform: scale(0.99);
+      }
+
+      .card.is-collapsed .content {
+        display: none;
+      }
+
+      .card.is-collapsed {
+        min-height: 54px;
+      }
+
+      .panel-resize-handle {
+        position: absolute;
+        right: 10px;
+        bottom: 8px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(94, 234, 212, 0.18), rgba(138, 180, 255, 0.25));
+        border: 1px solid rgba(94, 234, 212, 0.5);
+        cursor: ns-resize;
+        box-shadow: 0 0 0 2px rgba(8, 15, 30, 0.5);
+      }
+
+      .panel-resize-handle::before,
+      .panel-resize-handle::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 7px;
+        height: 1.5px;
+        background: rgba(237, 245, 255, 0.9);
+        border-radius: 99px;
+        transform: translate(-50%, -50%);
+      }
+
+      .panel-resize-handle::before { transform: translate(-50%, -50%) rotate(45deg); }
+      .panel-resize-handle::after { transform: translate(-50%, -50%) rotate(-45deg); }
+
       .card h2 {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
         margin: 0;
         padding: 0.85rem 1rem;
         border-bottom: 1px solid var(--line);
-        font-size: 1rem;
+        background: rgba(148, 163, 184, 0.04);
+        color: var(--ink);
+        font-size: 0.96rem;
+        letter-spacing: 0.02em;
+      }
+
+      .panel-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+
+      .panel-toggle {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(8, 15, 30, 0.8);
+        color: var(--ink);
+        padding: 0.2rem 0.5rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .panel-splitter {
+        position: relative;
+        flex: 0 0 10px;
+        cursor: col-resize;
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .panel-splitter::before {
+        content: "";
+        width: 2px;
+        height: 60%;
+        border-radius: 99px;
+        background: rgba(148, 163, 184, 0.32);
       }
 
       .card .content {
         padding: 0.9rem;
       }
 
-      textarea {
+      textarea,
+      input,
+      select {
         width: 100%;
-        min-height: 300px;
-        resize: vertical;
         border: 1px solid var(--line);
         border-radius: 10px;
-        padding: 0.8rem;
-        font-family: Consolas, "Courier New", monospace;
+        background: rgba(8, 15, 30, 0.7);
+        color: var(--ink);
+        padding: 0.7rem 0.8rem;
+        font-family: "Segoe UI", sans-serif;
         font-size: 0.92rem;
-        background: #fff;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      }
+
+      textarea {
+        min-height: 300px;
+        resize: vertical;
+        font-family: Consolas, "Courier New", monospace;
+      }
+
+      textarea:focus,
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: rgba(94, 234, 212, 0.75);
+        box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.18);
       }
 
       .actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.6rem;
+        gap: 0.55rem;
         margin-top: 0.8rem;
       }
 
       button {
-        border: 0;
+        border: 1px solid rgba(148, 163, 184, 0.18);
         border-radius: 999px;
-        padding: 0.55rem 1rem;
-        font-weight: 600;
+        padding: 0.58rem 0.9rem;
+        font-weight: 700;
+        font-size: 0.84rem;
         cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, background 0.15s ease;
       }
 
-      .primary { background: var(--accent); color: #fff; }
-      .secondary { background: var(--accent-2); color: #2a1a00; }
-      .ghost { background: #ece8da; color: #333; }
+      button:hover {
+        transform: translateY(-1px);
+      }
+
+      .primary {
+        background: linear-gradient(135deg, var(--accent), #7dd3fc);
+        color: #03131d;
+        border-color: rgba(94, 234, 212, 0.4);
+        box-shadow: 0 8px 18px rgba(94, 234, 212, 0.2);
+      }
+
+      .secondary {
+        background: linear-gradient(135deg, var(--accent-2), #92d5ff);
+        color: #071a2d;
+        border-color: rgba(138, 180, 255, 0.4);
+      }
+
+      .ghost {
+        background: rgba(15, 23, 35, 0.9);
+        color: var(--ink);
+      }
 
       pre {
         margin: 0;
         padding: 0.8rem;
-        border-radius: 10px;
-        background: #1e1f1c;
-        color: #f4f7f4;
+        border-radius: 12px;
+        background: #07111d;
+        color: #dfeaf8;
         min-height: 300px;
         overflow: auto;
+        border: 1px solid var(--line);
         font-family: Consolas, "Courier New", monospace;
         font-size: 0.9rem;
       }
@@ -160,6 +486,8 @@
         border: 1px solid var(--line);
         border-radius: 8px;
         padding: 0.35rem 0.45rem;
+        background: rgba(8, 15, 30, 0.75);
+        color: var(--ink);
       }
 
       .diag-table {
@@ -226,9 +554,9 @@
         color: #a3312a;
       }
 
-      .issue.error { background: #fde7e5; color: var(--err); }
-      .issue.warning { background: #fff3df; color: var(--warn); }
-      .issue.info { background: #e9f6ef; color: var(--ok); }
+      .issue.error { background: rgba(248, 113, 113, 0.12); color: #fca5a5; border: 1px solid rgba(248, 113, 113, 0.2); }
+      .issue.warning { background: rgba(251, 191, 36, 0.12); color: #fcd34d; border: 1px solid rgba(251, 191, 36, 0.2); }
+      .issue.info { background: rgba(52, 211, 153, 0.12); color: #a7f3d0; border: 1px solid rgba(52, 211, 153, 0.2); }
 
       .foot {
         color: var(--ink-soft);
@@ -258,15 +586,16 @@
         width: 100%;
         text-align: left;
         border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 0.3rem 0.45rem;
-        background: #fff;
+        border-radius: 10px;
+        padding: 0.38rem 0.5rem;
+        background: rgba(8, 15, 30, 0.75);
+        color: var(--ink);
         cursor: pointer;
       }
 
       .tree-item.selected {
-        border-color: var(--accent);
-        background: #e9f5f5;
+        border-color: rgba(94, 234, 212, 0.7);
+        background: rgba(94, 234, 212, 0.12);
       }
 
       .tree-item.attr {
@@ -327,8 +656,8 @@
 
       .diagram-stage {
         border: 1px solid var(--line);
-        border-radius: 10px;
-        background: linear-gradient(180deg, #ffffff 0%, #f8faf8 100%);
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(9, 15, 26, 0.96), rgba(19, 30, 46, 0.92));
         min-height: 360px;
         overflow: auto;
       }
@@ -340,8 +669,8 @@
       }
 
       .diagram-node rect {
-        fill: #ffffff;
-        stroke: var(--line);
+        fill: rgba(15, 23, 35, 0.95);
+        stroke: rgba(148, 163, 184, 0.3);
         stroke-width: 1.2;
         rx: 8;
       }
@@ -349,33 +678,34 @@
       .diagram-node.selected rect {
         stroke: var(--accent);
         stroke-width: 2;
+        filter: drop-shadow(0 0 10px rgba(94, 234, 212, 0.25));
       }
 
       .diagram-node text.title {
         font-weight: 700;
         font-size: 12px;
-        fill: #1f2a2a;
+        fill: #eaf4ff;
       }
 
       .diagram-node text.attr {
         font-size: 11px;
-        fill: #394848;
+        fill: #bdd2ec;
       }
 
       .diagram-link {
-        stroke: #8aa8a2;
+        stroke: rgba(125, 211, 252, 0.9);
         stroke-width: 1.5;
         fill: none;
       }
 
       .diagram-link-label {
         font-size: 10px;
-        fill: #44605f;
+        fill: #dfeaf8;
       }
 
       .diagram-link-handle {
-        fill: #fff;
-        stroke: #0a6d6f;
+        fill: #0b1220;
+        stroke: var(--accent);
         stroke-width: 1.3;
         cursor: ew-resize;
       }
@@ -400,8 +730,9 @@
       }
 
       .ghost.active {
-        background: #d8ecea;
-        color: #103b3a;
+        background: rgba(94, 234, 212, 0.12);
+        color: var(--ink);
+        border-color: rgba(94, 234, 212, 0.5);
       }
 
       .diagram-toolbar {
@@ -413,9 +744,9 @@
 
       .minimap-wrap {
         border: 1px solid var(--line);
-        border-radius: 8px;
+        border-radius: 10px;
         padding: 0.35rem;
-        background: #fff;
+        background: rgba(8, 15, 30, 0.7);
         margin-top: 0.55rem;
       }
 
@@ -444,17 +775,18 @@
 
       .flow-step {
         border: 1px solid var(--line);
-        border-radius: 9px;
-        background: #fff;
-        padding: 0.5rem 0.6rem;
+        border-radius: 10px;
+        background: rgba(8, 15, 30, 0.7);
+        padding: 0.6rem 0.7rem;
         font-size: 0.88rem;
+        color: var(--ink);
       }
 
       .kpi-panel {
         margin-top: 0.55rem;
         border: 1px solid var(--line);
         border-radius: 10px;
-        background: #fff;
+        background: rgba(8, 15, 30, 0.7);
         padding: 0.6rem;
         display: grid;
         gap: 0.35rem;
@@ -462,7 +794,7 @@
 
       .kpi-line {
         font-size: 0.84rem;
-        color: #244443;
+        color: #dfeaf8;
       }
 
       .kpi-actions {
@@ -475,131 +807,170 @@
   </head>
   <body>
     <main class="wrap">
-      <section class="hero">
+      <section class="hero" style="display: none;" aria-hidden="true">
+        <div class="window-controls" aria-hidden="true">
+          <span class="red"></span>
+          <span class="yellow"></span>
+          <span class="green"></span>
+        </div>
         <h1>INTERLIS Model Composer</h1>
         <p>MVP Rust basato su JSON UML semplificato, con validazione e export INTERLIS 2.4.</p>
         <div class="project-meta" id="projectMeta">Progetto: NewProject | Stato: salvato</div>
         <div class="sync-meta" id="syncMeta">Sync: idle</div>
       </section>
 
-      <section class="grid">
-        <article class="card">
-          <h2>Input Modello (JSON)</h2>
-          <div class="content">
-            <textarea id="modelInput"></textarea>
-            <div class="actions">
-              <button class="ghost" id="newProjectBtn">Nuovo .imcp</button>
-              <button class="ghost" id="saveProjectBtn">Salva .imcp</button>
-              <button class="ghost" id="saveAsProjectBtn">Salva con nome</button>
-              <button class="ghost" id="loadProjectBtn">Carica .imcp</button>
-              <button class="ghost" id="importIliBtn">Importa .ili</button>
-               <button class="ghost" id="importXtfBtn">Importa .xtf/.xml</button>
-               <button class="ghost" id="exportXtfBtn">Esporta .xtf/.xml</button>
-              <button class="primary" id="validateBtn">Valida</button>
-              <button class="secondary" id="exportBtn">Genera .ili</button>
-              <button class="ghost" id="exportDocsBtn">Genera docs .md</button>
-              <button class="ghost" id="sampleBtn">Carica esempio</button>
-            </div>
-            <input id="imcpFileInput" type="file" accept=".imcp,application/json" style="display: none" />
-            <input id="iliFileInput" type="file" accept=".ili,text/plain" style="display: none" />
-            <input id="presetFileInput" type="file" accept=".json,application/json" style="display: none" />
-            <input id="catalogPresetFileInput" type="file" accept=".json,application/json" style="display: none" />
-            <input id="collabBundleFileInput" type="file" accept=".json,application/json" style="display: none" />
-            <div class="diag-tools">
-              <select id="diagLevelFilter">
-                <option value="all">Tutti i livelli</option>
-                <option value="error">Error</option>
-                <option value="warning">Warning</option>
-                <option value="info">Info</option>
-              </select>
-              <input id="diagSearch" type="text" placeholder="Filtra per testo/codice" />
-              <button class="ghost" id="copyDiagBtn">Copia report</button>
-              <button class="ghost" id="exportDiagBtn">Esporta JSON</button>
-            </div>
-            <div class="issues" id="issues"></div>
-            <div class="status" id="diagStatus"></div>
-          </div>
-        </article>
-
-        <article class="card">
-          <h2>Output INTERLIS</h2>
-          <div class="content">
-            <pre id="output"></pre>
-            <div class="actions">
-              <button class="ghost" id="downloadBtn">Scarica .ili</button>
-            </div>
-          </div>
-        </article>
-
-        <article class="card">
-          <h2>B8 - Docs Explorer & Ops</h2>
-          <div class="content">
-            <div class="diag-tools">
-              <input id="docsSearchInput" type="text" placeholder="Cerca nelle sezioni docs generate" />
-              <select id="docsScopeFilter">
-                <option value="all">Tutte le sezioni</option>
-                <option value="headings">Solo heading</option>
-                <option value="class">Classi</option>
-                <option value="prose">Prosa</option>
-                <option value="catalog">Catalogo</option>
-                <option value="metrics">Metriche</option>
-              </select>
-              <button class="ghost" id="refreshOpsBtn">Aggiorna metrics API</button>
-            </div>
-            <div class="status" id="docsStatus">Docs: nessun export in questa sessione</div>
-            <div class="status" id="opsMetricsStatus">Ops: metriche non caricate</div>
-            <ul class="docs-hit-list" id="docsHits"></ul>
-            <pre class="docs-preview" id="docsPreview"></pre>
-          </div>
-        </article>
-      </section>
-
-      <p class="foot">Fonti considerate: umleditor storico (Java), interlis.ch, specifica locale in HTML/PDF.</p>
-      <article class="card">
-        <h2>Recent Projects</h2>
-        <div class="content">
-          <ul id="recentProjects" class="recent"></ul>
+      <nav class="app-ribbon" aria-label="Ribbon menu">
+        <div class="ribbon-tabs">
+          <button class="ribbon-tab active" data-tab="home">Home</button>
+          <button class="ribbon-tab" data-tab="model">Modello</button>
+          <button class="ribbon-tab" data-tab="diagram">Diagramma</button>
+          <button class="ribbon-tab" data-tab="tools">Strumenti</button>
+          <button class="ribbon-tab" data-tab="collab">Collab</button>
         </div>
-      </article>
 
-      <article class="card">
-        <h2>Core Sync (B4 avvio)</h2>
-        <div class="content">
-          <div class="diag-tools">
-            <label for="autosaveMsInput">Autosave (ms)</label>
-            <input id="autosaveMsInput" type="number" min="1000" step="500" value="10000" />
-            <button class="ghost" id="applyAutosaveBtn">Applica intervallo</button>
-            <button class="ghost" id="restoreAutosaveBtn">Ripristina autosave</button>
-            <button class="ghost" id="clearAutosaveBtn">Pulisci autosave</button>
+        <div class="ribbon-panel active" data-panel="home">
+          <div class="ribbon-groups">
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">File</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="newProjectBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Nuovo</button>
+                <button class="ribbon-button" data-action="loadProjectBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H9l2 3h7.5A2.5 2.5 0 0 1 21 10.5v6A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9Z"/><path d="M8 12h8"/></svg></span>Apri</button>
+                <button class="ribbon-button" data-action="saveProjectBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M8 4v6h8V4"/><path d="M9 18h6"/></svg></span>Salva</button>
+              </div>
+            </div>
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Import</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="importIliBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v10"/><path d="m8 20 4 4 4-4"/><path d="M4 16h16"/></svg></span>.ili</button>
+                <button class="ribbon-button" data-action="importCollabBundleBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H17.5A2.5 2.5 0 0 1 20 8.5v7A2.5 2.5 0 0 1 17.5 18H6.5A2.5 2.5 0 0 1 4 15.5v-7Z"/><path d="M8 11h8"/><path d="M8 14h5"/></svg></span>Bundle</button>
+              </div>
+            </div>
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Esporta</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="exportBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20V10"/><path d="m8 14 4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>.ili</button>
+                <button class="ribbon-button" data-action="exportDocsBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h9l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M14 4v5h5"/><path d="M8 12h8M8 16h8"/></svg></span>Docs</button>
+              </div>
+            </div>
           </div>
-          <div class="diag-tools">
-            <input id="selectionInput" type="text" placeholder="Elemento selezionato (es. Parcel.number)" />
-            <button class="ghost" id="selectElementBtn">Propaga selezione</button>
-          </div>
-          <div class="status" id="autosaveStatus">Autosave: attivo (10000 ms)</div>
         </div>
-      </article>
 
-      <article class="card">
-        <h2>B9 - Collaboration</h2>
-        <div class="content">
-          <div class="diag-tools">
-            <button class="ghost" id="refreshCollabStatusBtn">Stato repository</button>
-            <button class="ghost" id="listGitRefsBtn">Lista branch/tag</button>
-            <button class="ghost" id="generateCommitDraftBtn">Genera commit draft</button>
-            <button class="ghost" id="diffBundleBtn">Diff bundle vs corrente</button>
-            <button class="ghost" id="exportCollabBundleBtn">Export bundle</button>
-            <button class="ghost" id="importCollabBundleBtn">Import bundle</button>
+        <div class="ribbon-panel" data-panel="model">
+          <div class="ribbon-groups">
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Validazione</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="validateBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 2"/></svg></span>Valida</button>
+                <button class="ribbon-button" data-action="copyDiagBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 9V5.5A2.5 2.5 0 0 1 11.5 3H17a2 2 0 0 1 2 2v5.5A2.5 2.5 0 0 1 16.5 13H13"/><path d="M7 9h6.5A2.5 2.5 0 0 1 16 11.5V18a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z"/></svg></span>Report</button>
+              </div>
+            </div>
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Elementi</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="addClassBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12h8M12 8v8"/></svg></span>Classe</button>
+                <button class="ribbon-button" data-action="addAssocBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 8h10M7 16h10M12 4v16"/><circle cx="7" cy="8" r="2"/><circle cx="17" cy="8" r="2"/><circle cx="7" cy="16" r="2"/><circle cx="17" cy="16" r="2"/></svg></span>Relazione</button>
+                <button class="ribbon-button" data-action="addDomainBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z"/><path d="M8 5v14M16 5v14M4 10h16M4 15h16"/></svg></span>Domain</button>
+              </div>
+            </div>
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Prosa</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="addProseSectionBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h9"/></svg></span>Sezione</button>
+                <button class="ribbon-button" data-action="saveProseBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 2"/></svg></span>Salva</button>
+              </div>
+            </div>
           </div>
-          <div class="status" id="collabStatusMeta">Collab: stato non caricato</div>
-          <pre id="collabRefsOutput" style="min-height: 80px"></pre>
-          <pre id="collabDiffOutput" style="min-height: 100px"></pre>
-          <pre id="commitDraftOutput" style="min-height: 120px"></pre>
         </div>
-      </article>
 
-      <section class="grid">
-        <article class="card">
+        <div class="ribbon-panel" data-panel="diagram">
+          <div class="ribbon-groups">
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Vista</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="diagramAutoLayoutBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h7v7H4zm9 0h7v4h-7zm-9 9h7v3H4zm9 0h7v3h-7z"/></svg></span>Auto</button>
+                <button class="ribbon-button" data-action="diagramFitBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="3.5"/></svg></span>Fit</button>
+                <button class="ribbon-button" data-action="diagramResetBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3.5-7.2"/><path d="M3 4v6h6"/></svg></span>Reset</button>
+              </div>
+            </div>
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Nodi</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="diagramAddClassBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12h8M12 8v8"/></svg></span>Classe</button>
+                <button class="ribbon-button" data-action="diagramAddRelationBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 8h8M8 16h8M12 4v16"/><circle cx="8" cy="8" r="2"/><circle cx="16" cy="8" r="2"/><circle cx="8" cy="16" r="2"/><circle cx="16" cy="16" r="2"/></svg></span>Relazione</button>
+              </div>
+            </div>
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Preset</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="diagramSavePresetBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M9 4v5h6V4M8 16h8"/></svg></span>Preset</button>
+                <button class="ribbon-button" data-action="diagramReviewPresetBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 2"/></svg></span>Approva</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ribbon-panel" data-panel="tools">
+          <div class="ribbon-groups">
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Diagnostica</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="exportDiagBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v10"/><path d="m8 20 4 4 4-4"/><path d="M4 16h16"/></svg></span>JSON</button>
+                <button class="ribbon-button" data-action="refreshOpsBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v6h-6"/><path d="M11 9v4h4"/></svg></span>Metrics</button>
+              </div>
+            </div>
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Catalogo</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="addCatalogInstanceBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9A2.5 2.5 0 0 1 16.5 19h-9A2.5 2.5 0 0 1 5 16.5v-9Z"/><path d="M12 8v8M8 12h8"/></svg></span>Istanza</button>
+                <button class="ribbon-button" data-action="saveCatalogPresetBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h8l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M9 4v5h6V4M8 13h8"/></svg></span>Preset</button>
+              </div>
+            </div>
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Visibilità panel</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-toggle-panel="inputPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z"/><path d="M4 10h16"/></svg></span>Input</button>
+                <button class="ribbon-button" data-toggle-panel="outputPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z"/><path d="M8 12h8M8 15h5"/></svg></span>Output</button>
+                <button class="ribbon-button" data-toggle-panel="docsPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h9l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M14 4v5h5"/><path d="M8 12h8M8 16h8"/></svg></span>Docs</button>
+                <button class="ribbon-button" data-toggle-panel="recentPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 7v6l4 2"/><circle cx="12" cy="12" r="8"/></svg></span>Recent</button>
+                <button class="ribbon-button" data-toggle-panel="syncPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.5-5.5"/><path d="M20 12a8 8 0 0 1-13.5 5.5"/><path d="M20 4v6h-6M4 20v-6h6"/></svg></span>Sync</button>
+                <button class="ribbon-button" data-toggle-panel="collabPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M4 18c1.2-2.5 3.5-4 6-4s4.8 1.5 6 4"/><path d="M14 17c.8-1.4 2-2.4 3.5-2.4"/></svg></span>Collab</button>
+                <button class="ribbon-button" data-toggle-panel="flowPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 8h9v8H5zm9-4h5v5h-5zm0 11h5v5h-5z"/></svg></span>Flow</button>
+                <button class="ribbon-button" data-toggle-panel="prosePanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h10"/></svg></span>Prose</button>
+                <button class="ribbon-button" data-toggle-panel="catalogPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M15 4v5h5"/><path d="M8 12h8M8 16h8"/></svg></span>Catalog</button>
+              </div>
+            </div>
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Project</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="saveAsProjectBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M9 4v5h6V4M8 16h8"/></svg></span>Salva come</button>
+                <button class="ribbon-button" data-action="exportCollabBundleBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20V10"/><path d="m8 14 4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>Bundle</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ribbon-panel" data-panel="collab">
+          <div class="ribbon-groups">
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Repository</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="refreshCollabStatusBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 12-4.5"/><path d="M19 12a7 7 0 0 1-12 4.5"/><path d="M19 4v6h-6M5 20v-6h6"/></svg></span>Stato</button>
+                <button class="ribbon-button" data-action="listGitRefsBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 18a2 2 0 1 1 0-4 2 2 0 0 1 0 4ZM18 10a2 2 0 1 1 0-4 2 2 0 0 1 0 4ZM8 16l8-6"/><path d="M8 8l8 6"/></svg></span>Branch</button>
+              </div>
+            </div>
+            <div class="ribbon-group">
+              <div class="ribbon-group-header">Commit</div>
+              <div class="ribbon-actions">
+                <button class="ribbon-button" data-action="generateCommitDraftBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M14.5 4.5 18 8l-9 9H6v-3l8.5-8.5Z"/></svg></span>Draft</button>
+                <button class="ribbon-button" data-action="diffBundleBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 7h8M8 12h8M8 17h8"/><path d="M5 7h.01M5 12h.01M5 17h.01"/></svg></span>Diff</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <section class="workspace-shell">
+        <article class="card" id="structurePanel" data-panel-name="structurePanel">
           <h2>Structure Tree (sync)</h2>
           <div class="content">
             <div class="diag-tools">
@@ -630,7 +1001,7 @@
           </div>
         </article>
 
-        <article class="card">
+        <article class="card" id="propertiesPanel" data-panel-name="propertiesPanel">
           <h2>Properties Editor (sync)</h2>
           <div class="content form-grid">
             <div class="form-row">
@@ -673,13 +1044,245 @@
             </div>
           </div>
         </article>
-      </section>
 
-      <section class="grid">
-        <article class="card">
+        <article class="card diagram-card" id="diagramPanel" data-panel-name="diagramPanel">
           <h2>Diagram Editor (B6 avvio)</h2>
           <div class="content">
             <div class="diag-tools">
+              <label for="diagramZoomInput">Zoom</label>
+              <input id="diagramZoomInput" type="range" min="60" max="180" step="10" value="100" />
+              <button class="ghost" id="diagramAutoLayoutBtn">Auto-layout</button>
+              <button class="ghost" id="diagramFitBtn">Fit content</button>
+              <button class="ghost" id="diagramToggleAttrsBtn">Nascondi attributi</button>
+              <button class="ghost" id="diagramSnapAnchorsBtn">Snap ancore: OFF</button>
+              <button class="ghost" id="diagramLockLayoutBtn">Lock layout: OFF</button>
+              <button class="ghost" id="diagramLockNodesBtn">Lock nodi: OFF</button>
+              <button class="ghost" id="diagramLockRelationsBtn">Lock connessioni: OFF</button>
+              <label for="diagramPresetSelect">Preset</label>
+              <select id="diagramPresetSelect">
+                <option value="default">Default</option>
+                <option value="structure">Analisi strutturale</option>
+                <option value="presentation">Presentazione</option>
+                <option value="debugging">Debug diagnostica</option>
+              </select>
+              <label for="diagramPresetContextSelect">Contesto</label>
+              <select id="diagramPresetContextSelect">
+                <option value="all">Tutti</option>
+                <option value="authoring">Authoring</option>
+                <option value="review">Review</option>
+                <option value="validation">Validation</option>
+              </select>
+              <button class="ghost" id="diagramSavePresetBtn">Salva preset</button>
+              <button class="ghost" id="diagramDeletePresetBtn">Elimina preset</button>
+              <button class="ghost" id="diagramSetPresetOwnerBtn">Owner preset</button>
+              <button class="ghost" id="diagramReviewPresetBtn">Approva/Riapri</button>
+              <button class="ghost" id="diagramExportPresetsBtn">Export preset</button>
+              <button class="ghost" id="diagramImportPresetsBtn">Import preset</button>
+              <button class="ghost" id="diagramResetBtn">Reset vista</button>
+            </div>
+            <div class="status" id="diagramPresetMeta">Preset: standard</div>
+            <div class="diagram-toolbar">
+              <button class="ghost" id="diagramAddClassBtn">+ Classe dal diagramma</button>
+              <button class="ghost" id="diagramAddRelationBtn">+ Relazione dal diagramma</button>
+            </div>
+            <div class="diagram-stage" id="diagramStage">
+              <svg id="diagramCanvas" class="diagram-canvas" viewBox="0 0 1200 800" role="img" aria-label="Diagramma classi"></svg>
+            </div>
+            <div class="minimap-wrap">
+              <svg id="diagramMinimap" class="minimap" viewBox="0 0 240 120" role="img" aria-label="Minimap diagramma"></svg>
+            </div>
+            <div class="status" id="diagramStatus">Diagram: seleziona una classe dal tree o dal diagramma</div>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="card" id="inputPanel" data-panel-name="inputPanel">
+          <h2>Input Modello (JSON)</h2>
+          <div class="content">
+            <textarea id="modelInput"></textarea>
+            <div class="actions">
+              <button class="ghost" id="newProjectBtn">Nuovo .imcp</button>
+              <button class="ghost" id="saveProjectBtn">Salva .imcp</button>
+              <button class="ghost" id="saveAsProjectBtn">Salva con nome</button>
+              <button class="ghost" id="loadProjectBtn">Carica .imcp</button>
+              <button class="ghost" id="importIliBtn">Importa .ili</button>
+               <button class="ghost" id="importXtfBtn">Importa .xtf/.xml</button>
+               <button class="ghost" id="exportXtfBtn">Esporta .xtf/.xml</button>
+              <button class="primary" id="validateBtn">Valida</button>
+              <button class="secondary" id="exportBtn">Genera .ili</button>
+              <button class="ghost" id="exportDocsBtn">Genera docs .md</button>
+              <button class="ghost" id="sampleBtn">Carica esempio</button>
+            </div>
+            <input id="imcpFileInput" type="file" accept=".imcp,application/json" style="display: none" />
+            <input id="iliFileInput" type="file" accept=".ili,text/plain" style="display: none" />
+            <input id="presetFileInput" type="file" accept=".json,application/json" style="display: none" />
+            <input id="catalogPresetFileInput" type="file" accept=".json,application/json" style="display: none" />
+            <input id="collabBundleFileInput" type="file" accept=".json,application/json" style="display: none" />
+            <div class="diag-tools">
+              <select id="diagLevelFilter">
+                <option value="all">Tutti i livelli</option>
+                <option value="error">Error</option>
+                <option value="warning">Warning</option>
+                <option value="info">Info</option>
+              </select>
+              <input id="diagSearch" type="text" placeholder="Filtra per testo/codice" />
+              <button class="ghost" id="copyDiagBtn">Copia report</button>
+              <button class="ghost" id="exportDiagBtn">Esporta JSON</button>
+            </div>
+            <div class="issues" id="issues"></div>
+            <div class="status" id="diagStatus"></div>
+          </div>
+        </article>
+
+        <article class="card" id="outputPanel" data-panel-name="outputPanel">
+          <h2>Output INTERLIS</h2>
+          <div class="content">
+            <pre id="output"></pre>
+            <div class="actions">
+              <button class="ghost" id="downloadBtn">Scarica .ili</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" id="docsPanel" data-panel-name="docsPanel">
+          <h2>B8 - Docs Explorer & Ops</h2>
+          <div class="content">
+            <div class="diag-tools">
+              <input id="docsSearchInput" type="text" placeholder="Cerca nelle sezioni docs generate" />
+              <select id="docsScopeFilter">
+                <option value="all">Tutte le sezioni</option>
+                <option value="headings">Solo heading</option>
+                <option value="class">Classi</option>
+                <option value="prose">Prosa</option>
+                <option value="catalog">Catalogo</option>
+                <option value="metrics">Metriche</option>
+              </select>
+              <button class="ghost" id="refreshOpsBtn">Aggiorna metrics API</button>
+            </div>
+            <div class="status" id="docsStatus">Docs: nessun export in questa sessione</div>
+            <div class="status" id="opsMetricsStatus">Ops: metriche non caricate</div>
+            <ul class="docs-hit-list" id="docsHits"></ul>
+            <pre class="docs-preview" id="docsPreview"></pre>
+          </div>
+        </article>
+      </section>
+
+      <p class="foot">Fonti considerate: umleditor storico (Java), interlis.ch, specifica locale in HTML/PDF.</p>
+      <article class="card" id="recentPanel" data-panel-name="recentPanel">
+        <h2>Recent Projects</h2>
+        <div class="content">
+          <ul id="recentProjects" class="recent"></ul>
+        </div>
+      </article>
+
+      <article class="card" id="syncPanel" data-panel-name="syncPanel">
+        <h2>Core Sync (B4 avvio)</h2>
+        <div class="content">
+          <div class="diag-tools">
+            <label for="autosaveMsInput">Autosave (ms)</label>
+            <input id="autosaveMsInput" type="number" min="1000" step="500" value="10000" />
+            <button class="ghost" id="applyAutosaveBtn">Applica intervallo</button>
+            <button class="ghost" id="restoreAutosaveBtn">Ripristina autosave</button>
+            <button class="ghost" id="clearAutosaveBtn">Pulisci autosave</button>
+          </div>
+          <div class="diag-tools">
+            <input id="selectionInput" type="text" placeholder="Elemento selezionato (es. Parcel.number)" />
+            <button class="ghost" id="selectElementBtn">Propaga selezione</button>
+          </div>
+          <div class="status" id="autosaveStatus">Autosave: attivo (10000 ms)</div>
+        </div>
+      </article>
+
+      <article class="card" id="collabPanel" data-panel-name="collabPanel">
+        <h2>B9 - Collaboration</h2>
+        <div class="content">
+          <div class="diag-tools">
+            <button class="ghost" id="refreshCollabStatusBtn">Stato repository</button>
+            <button class="ghost" id="listGitRefsBtn">Lista branch/tag</button>
+            <button class="ghost" id="generateCommitDraftBtn">Genera commit draft</button>
+            <button class="ghost" id="diffBundleBtn">Diff bundle vs corrente</button>
+            <button class="ghost" id="exportCollabBundleBtn">Export bundle</button>
+            <button class="ghost" id="importCollabBundleBtn">Import bundle</button>
+          </div>
+          <div class="status" id="collabStatusMeta">Collab: stato non caricato</div>
+          <pre id="collabRefsOutput" style="min-height: 80px"></pre>
+          <pre id="collabDiffOutput" style="min-height: 100px"></pre>
+          <pre id="commitDraftOutput" style="min-height: 120px"></pre>
+        </div>
+      </article>
+
+      <article class="card" id="flowPanel" data-panel-name="flowPanel">
+        <h2>User Flow Mapping (B6)</h2>
+        <div class="content flow-map" id="flowMapPanel">
+          <div class="flow-step">1. Entra con progetto aperto e stato sync attivo.</div>
+          <div class="flow-step">2. Seleziona elemento in tree per focus nel diagramma.</div>
+          <div class="flow-step">3. Regola zoom/layout per ispezionare classi e relazioni.</div>
+          <div class="flow-step">4. Aggiorna proprieta (name/type/cardinality) e verifica propagazione.</div>
+          <div class="flow-step">5. Esegui validazione e usa diagnostica per tornare al nodo interessato.</div>
+          <div class="kpi-panel" id="uxKpiPanel">
+            <div class="kpi-line" id="kpiT1Line">KPI T1: n/a</div>
+            <div class="kpi-line" id="kpiT2Line">KPI T2: n/a</div>
+            <div class="kpi-line" id="kpiT3Line">KPI T3: n/a</div>
+            <div class="kpi-line" id="kpiTaskLine">Task fix attivo: no</div>
+            <div class="kpi-actions">
+              <button class="ghost" id="exportKpiBtn">Export KPI</button>
+              <button class="ghost" id="resetKpiBtn">Reset KPI</button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <section class="grid">
+        <article class="card" id="prosePanel" data-panel-name="prosePanel">
+          <h2>B7 - Prose Editor</h2>
+          <div class="content">
+            <div class="diag-tools">
+              <label for="proseSectionSelect">Sezione</label>
+              <select id="proseSectionSelect"></select>
+              <button class="ghost" id="addProseSectionBtn">+ Sezione</button>
+              <button class="ghost" id="deleteProseSectionBtn">Elimina sezione</button>
+            </div>
+            <textarea id="proseContentInput" style="min-height: 140px" placeholder="Contenuto descrittivo della sezione"></textarea>
+            <div class="actions">
+              <button class="primary" id="saveProseBtn">Salva testo sezione</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" id="catalogPanel" data-panel-name="catalogPanel">
+          <h2>B7 - Catalog/Instance Editor</h2>
+          <div class="content">
+            <div class="diag-tools">
+              <button class="ghost" id="addCatalogInstanceBtn">+ Istanza catalogo</button>
+            </div>
+            <div class="diag-tools" style="margin-top:0.7rem">
+              <label for="catalogPresetSelect">Preset validazione</label>
+              <select id="catalogPresetSelect"></select>
+              <button class="ghost" id="addCatalogPresetBtn">+ Preset</button>
+              <button class="ghost" id="deleteCatalogPresetBtn">Elimina preset</button>
+              <button class="ghost" id="setCatalogPresetOwnerBtn">Owner preset</button>
+              <button class="ghost" id="reviewCatalogPresetBtn">Approva/Riapri</button>
+              <button class="ghost" id="exportCatalogPresetBtn">Export preset</button>
+              <button class="ghost" id="importCatalogPresetBtn">Import preset</button>
+            </div>
+            <div class="diag-tools">
+              <label for="catalogPresetNameInput">Nome</label>
+              <input id="catalogPresetNameInput" placeholder="StrictParcelProfile" />
+              <label for="catalogPresetClassSelect">Classe target</label>
+              <select id="catalogPresetClassSelect"></select>
+              <button class="primary" id="saveCatalogPresetBtn">Salva preset</button>
+            </div>
+            <div class="diag-tools" style="margin-top:0.4rem">
+              <span>Regole preset</span>
+              <button class="ghost" id="addCatalogPresetRuleBtn">+ Regola</button>
+            </div>
+            <div class="status" id="catalogPresetMeta">Preset catalogo: -</div>
+            <div id="catalogPresetRulesWrap"></div>
+            <div id="catalogInstanceWrap"></div>
+          </div>
+        </article>
+      </section>
               <label for="diagramZoomInput">Zoom</label>
               <input id="diagramZoomInput" type="range" min="60" max="180" step="10" value="100" />
               <button class="ghost" id="diagramAutoLayoutBtn">Auto-layout</button>
@@ -801,6 +1404,192 @@
     </main>
 
     <script>
+      const ribbonTabs = document.querySelectorAll('.ribbon-tab');
+      const ribbonPanels = document.querySelectorAll('.ribbon-panel');
+      const ribbonButtons = document.querySelectorAll('.ribbon-button');
+
+      document.querySelectorAll('article.card').forEach((panel) => {
+        const header = panel.querySelector('h2');
+        if (header) {
+          const actions = document.createElement('div');
+          actions.className = 'panel-header-actions';
+          const collapseBtn = document.createElement('button');
+          collapseBtn.type = 'button';
+          collapseBtn.className = 'panel-toggle';
+          collapseBtn.textContent = '—';
+          collapseBtn.setAttribute('aria-label', 'Minimize panel');
+          collapseBtn.addEventListener('click', () => {
+            panel.classList.toggle('is-collapsed');
+            collapseBtn.textContent = panel.classList.contains('is-collapsed') ? '+' : '—';
+          });
+          actions.appendChild(collapseBtn);
+          header.appendChild(actions);
+        }
+
+        const handle = document.createElement('div');
+        handle.className = 'panel-resize-handle';
+        handle.setAttribute('aria-label', 'Resize panel');
+        panel.appendChild(handle);
+
+        let activeDrag = false;
+        let startY = 0;
+        let startHeight = 0;
+
+        const stopDrag = () => {
+          activeDrag = false;
+        };
+
+        handle.addEventListener('pointerdown', (event) => {
+          activeDrag = true;
+          startY = event.clientY;
+          startHeight = panel.offsetHeight;
+          handle.setPointerCapture(event.pointerId);
+        });
+
+        handle.addEventListener('pointermove', (event) => {
+          if (!activeDrag) return;
+          const delta = event.clientY - startY;
+          const nextHeight = Math.max(200, startHeight + delta);
+          panel.style.height = `${nextHeight}px`;
+        });
+
+        handle.addEventListener('pointerup', stopDrag);
+        handle.addEventListener('pointercancel', stopDrag);
+        handle.addEventListener('pointerleave', stopDrag);
+      });
+
+      document.querySelectorAll('.grid').forEach((grid) => {
+        const cards = Array.from(grid.querySelectorAll(':scope > article.card'));
+        if (cards.length < 2) return;
+
+        cards.forEach((card) => {
+          card.draggable = true;
+          card.addEventListener('dragstart', () => {
+            card.classList.add('dragging');
+            card.dataset.dragSource = 'true';
+          });
+          card.addEventListener('dragend', () => {
+            card.classList.remove('dragging');
+            card.dataset.dragSource = 'false';
+          });
+          card.addEventListener('dragover', (event) => {
+            event.preventDefault();
+          });
+          card.addEventListener('drop', (event) => {
+            event.preventDefault();
+            const dragged = document.querySelector('.card.dragging');
+            if (!dragged || dragged === card) return;
+            const reference = card.nextElementSibling && card.nextElementSibling.classList?.contains('panel-splitter') ? card.nextElementSibling.nextElementSibling : card;
+            grid.insertBefore(dragged, reference);
+            const splitter = document.querySelectorAll('.panel-splitter');
+            splitter.forEach((node) => node.remove());
+            setupGridSplitters(grid);
+          });
+        });
+
+        setupGridSplitters(grid);
+      });
+
+      function setupGridSplitters(grid) {
+        const cards = Array.from(grid.querySelectorAll(':scope > article.card'));
+        if (cards.length < 2) return;
+
+        const existing = Array.from(grid.querySelectorAll(':scope > .panel-splitter'));
+        existing.forEach((node) => node.remove());
+
+        cards.forEach((card, index) => {
+          if (index === cards.length - 1) return;
+          const splitter = document.createElement('div');
+          splitter.className = 'panel-splitter';
+          splitter.setAttribute('aria-label', 'Resize columns');
+          splitter.addEventListener('pointerdown', (event) => {
+            const currentCards = Array.from(grid.querySelectorAll(':scope > article.card'));
+            const leftIndex = currentCards.indexOf(card);
+            const leftCard = currentCards[leftIndex];
+            const rightCard = currentCards[leftIndex + 1];
+            if (!leftCard || !rightCard) return;
+
+            const startX = event.clientX;
+            const rect = grid.getBoundingClientRect();
+            const total = rect.width;
+            const gap = 16;
+            const minLeft = 220;
+            const minRight = 220;
+            const maxLeft = total - minRight - gap * (currentCards.length - 1);
+
+            const onMove = (moveEvent) => {
+              const delta = moveEvent.clientX - startX;
+              const nextLeft = Math.min(Math.max(((leftCard.offsetWidth + delta) / total) * 100, (minLeft / total) * 100), (maxLeft / total) * 100);
+              leftCard.style.flex = `0 0 ${nextLeft}%`;
+              rightCard.style.flex = `0 0 ${100 - nextLeft}%`;
+            };
+
+            const onUp = () => {
+              window.removeEventListener('pointermove', onMove);
+              window.removeEventListener('pointerup', onUp);
+            };
+
+            window.addEventListener('pointermove', onMove);
+            window.addEventListener('pointerup', onUp);
+          });
+          grid.insertBefore(splitter, card.nextElementSibling);
+        });
+      }
+
+      ribbonTabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          const target = tab.dataset.tab;
+          ribbonTabs.forEach((item) => item.classList.toggle('active', item === tab));
+          ribbonPanels.forEach((panel) => {
+            panel.classList.toggle('active', panel.dataset.panel === target);
+          });
+        });
+      });
+
+      ribbonButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const toggleTargetName = button.dataset.togglePanel;
+          if (toggleTargetName) {
+            const target = document.getElementById(toggleTargetName) || document.querySelector(`[data-panel-name="${CSS.escape(toggleTargetName)}"]`);
+            if (target) {
+              const nextState = !target.classList.contains('is-hidden');
+              target.classList.toggle('is-hidden', nextState);
+              button.setAttribute('aria-pressed', String(!nextState));
+              button.classList.toggle('active', !nextState);
+            }
+            return;
+          }
+
+          const targetId = button.dataset.action;
+          const target = targetId ? document.getElementById(targetId) : null;
+          if (target) {
+            target.click();
+            return;
+          }
+
+          const fallback = document.querySelector(`[id="${CSS.escape(targetId)}"]`);
+          if (fallback) {
+            fallback.click();
+          }
+        });
+      });
+
+      const corePanelNames = new Set(['structurePanel', 'propertiesPanel', 'diagramPanel']);
+      document.querySelectorAll('.card[data-panel-name]').forEach((panel) => {
+        if (!corePanelNames.has(panel.dataset.panelName)) {
+          panel.classList.add('is-hidden');
+        }
+      });
+
+      document.querySelectorAll('[data-toggle-panel]').forEach((button) => {
+        const target = document.getElementById(button.dataset.togglePanel) || document.querySelector(`[data-panel-name="${CSS.escape(button.dataset.togglePanel)}"]`);
+        if (target) {
+          const visible = !target.classList.contains('is-hidden');
+          button.setAttribute('aria-pressed', String(visible));
+          button.classList.toggle('active', visible);
+        }
+      });
+
       const sample = {
         model_name: "CadastreModel",
         language: "de",
