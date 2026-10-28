@@ -7,7 +7,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use model::{Association, CatalogInstance, CatalogValidationPreset, Class, Domain, EnumDef, InterlisModel, InterlisProject, ProseSection, Topic, from_interlis};
+use model::{Association, CatalogInstance, CatalogValidationPreset, Class, Domain, InterlisModel, InterlisProject, ProseSection, Topic, from_interlis};
 use std::collections::{HashMap, HashSet};
 use std::{
     env,
@@ -318,7 +318,6 @@ async fn generate_commit_draft(
     stats.insert("attributes".to_string(), req.model.classes.iter().map(|c| c.attributes.len()).sum());
     stats.insert("domains".to_string(), req.model.domains.len());
     stats.insert("associations".to_string(), req.model.associations.len());
-    stats.insert("enums".to_string(), req.model.enums.len());
     stats.insert("catalog_instances".to_string(), req.model.catalog_instances.len());
     stats.insert(
         "catalog_validation_presets".to_string(),
@@ -341,7 +340,7 @@ async fn generate_commit_draft(
     );
 
     let body = format!(
-        "Model: {}\nVersion: {}\n\nSummary:\n- Topics: {}\n- Classes: {}\n- Attributes: {}\n- Domains: {}\n- Associations: {}\n- Enums: {}\n- Catalog instances: {}\n- Catalog presets: {}\n- Prose sections: {}",
+        "Model: {}\nVersion: {}\n\nSummary:\n- Topics: {}\n- Classes: {}\n- Attributes: {}\n- Domains: {}\n- Associations: {}\n- Catalog instances: {}\n- Catalog presets: {}\n- Prose sections: {}",
         model_name,
         req.model.model_version,
         stats.get("topics").copied().unwrap_or(0),
@@ -349,7 +348,6 @@ async fn generate_commit_draft(
         stats.get("attributes").copied().unwrap_or(0),
         stats.get("domains").copied().unwrap_or(0),
         stats.get("associations").copied().unwrap_or(0),
-        stats.get("enums").copied().unwrap_or(0),
         stats.get("catalog_instances").copied().unwrap_or(0),
         stats
             .get("catalog_validation_presets")
@@ -875,13 +873,6 @@ fn semantic_model_diff(
         &mut details,
     );
     diff_named_collection(
-        "enums",
-        current_model.enums.iter().map(|v| v.name.as_str()),
-        bundle_model.enums.iter().map(|v| v.name.as_str()),
-        &mut summary,
-        &mut details,
-    );
-    diff_named_collection(
         "prose_sections",
         current_model.prose_sections.iter().map(|v| v.title.as_str()),
         bundle_model.prose_sections.iter().map(|v| v.title.as_str()),
@@ -1101,7 +1092,6 @@ fn validate(model: &InterlisModel) -> Vec<ValidationIssue> {
 
     validate_topics(&model.topics, &mut issues);
     validate_domains(&model.domains, &mut issues);
-    validate_enums(&model.enums, &mut issues);
     validate_associations(&model.associations, &model.classes, &mut issues);
     validate_prose_sections(&model.prose_sections, &mut issues);
     validate_catalog_validation_presets(
@@ -1113,12 +1103,11 @@ fn validate(model: &InterlisModel) -> Vec<ValidationIssue> {
     validate_catalog_instances(
         &model.catalog_instances,
         &model.classes,
-        &model.enums,
         &model.domains,
         &model.catalog_validation_presets,
         &mut issues,
     );
-    validate_duplicates(&model.classes, &model.domains, &model.associations, &model.enums, &mut issues);
+    validate_duplicates(&model.classes, &model.domains, &model.associations, &mut issues);
 
     for class in &model.classes {
         validate_class(class, &mut issues);
@@ -1387,19 +1376,37 @@ fn validate_catalog_validation_presets(
     }
 }
 
+fn parse_domain_enum_values(value: &str) -> Option<HashSet<String>> {
+    let trimmed = value.trim();
+    if !(trimmed.starts_with('(') && trimmed.ends_with(')')) {
+        return None;
+    }
+
+    let inner = trimmed.strip_prefix('(')?.strip_suffix(')')?;
+    if inner.trim().is_empty() {
+        return Some(HashSet::new());
+    }
+
+    let values = inner
+        .split(',')
+        .map(|v| v.trim().trim_matches('"').trim().to_string())
+        .filter(|v| !v.is_empty())
+        .collect::<HashSet<_>>();
+    Some(values)
+}
+
 fn validate_catalog_instances(
     instances: &[CatalogInstance],
     classes: &[Class],
-    enums: &[EnumDef],
     domains: &[Domain],
     presets: &[CatalogValidationPreset],
     issues: &mut Vec<ValidationIssue>,
 ) {
     let class_names: HashSet<&str> = classes.iter().map(|c| c.name.as_str()).collect();
-    let enum_names: HashSet<&str> = enums.iter().map(|e| e.name.as_str()).collect();
-    let enum_values_by_name: HashMap<&str, HashSet<&str>> = enums
+    let domain_names: HashSet<&str> = domains.iter().map(|d| d.name.as_str()).collect();
+    let domain_values_by_name: HashMap<&str, HashSet<String>> = domains
         .iter()
-        .map(|e| (e.name.as_str(), e.values.iter().map(|v| v.as_str()).collect()))
+        .filter_map(|d| parse_domain_enum_values(&d.r#type).map(|values| (d.name.as_str(), values)))
         .collect();
     let class_by_name: HashMap<&str, &Class> = classes.iter().map(|c| (c.name.as_str(), c)).collect();
     let domain_by_name: HashMap<String, &Domain> = domains
@@ -1426,10 +1433,10 @@ fn validate_catalog_instances(
                 "Catalog instance catalog cannot be empty",
                 Some(path.clone()),
             ));
-        } else if !enum_names.contains(catalog) {
+        } else if !domain_names.contains(catalog) {
             issues.push(warn_issue_at(
-                "CATALOG_INSTANCE_ENUM_UNKNOWN",
-                &format!("Catalog '{}' is not defined as enum", catalog),
+                "CATALOG_INSTANCE_DOMAIN_UNKNOWN",
+                &format!("Catalog '{}' is not defined as a DOMAIN", catalog),
                 Some(path.clone()),
             ));
         }
@@ -1446,18 +1453,18 @@ fn validate_catalog_instances(
                 &format!("Catalog instance code '{}' is not a valid INTERLIS identifier", code),
                 Some(path.clone()),
             ));
-        } else if let Some(values) = enum_values_by_name.get(catalog) {
+        } else if let Some(values) = domain_values_by_name.get(catalog) {
             if values.is_empty() {
                 issues.push(warn_issue_at(
-                    "CATALOG_INSTANCE_ENUM_EMPTY",
-                    &format!("Catalog '{}' has no enum values defined", catalog),
+                    "CATALOG_INSTANCE_DOMAIN_EMPTY",
+                    &format!("Catalog '{}' has no DOMAIN values defined", catalog),
                     Some(path.clone()),
                 ));
             } else if !values.contains(code) {
                 issues.push(warn_issue_at(
-                    "CATALOG_INSTANCE_CODE_NOT_IN_ENUM",
+                    "CATALOG_INSTANCE_CODE_NOT_IN_DOMAIN",
                     &format!(
-                        "Catalog instance code '{}:{}' is not present in enum '{}' values",
+                        "Catalog instance code '{}:{}' is not present in DOMAIN '{}' values",
                         catalog, code, catalog
                     ),
                     Some(path.clone()),
@@ -1976,39 +1983,6 @@ fn validate_domains(domains: &[Domain], issues: &mut Vec<ValidationIssue>) {
     }
 }
 
-fn validate_enums(enums: &[EnumDef], issues: &mut Vec<ValidationIssue>) {
-    for en in enums {
-        let enum_path = format!("enum:{}", en.name);
-        if !is_identifier(&en.name) {
-            issues.push(error_issue_at(
-                "ENUM_NAME_INVALID",
-                &format!("Enum '{}' is not a valid INTERLIS identifier", en.name),
-                Some(enum_path.clone()),
-            ));
-        }
-
-        if en.values.is_empty() {
-            issues.push(warn_issue_at(
-                "ENUM_WITHOUT_VALUES",
-                &format!("Enum '{}' has no values", en.name),
-                Some(enum_path.clone()),
-            ));
-        }
-
-        let mut seen = HashSet::new();
-        for value in &en.values {
-            let value_path = format!("enumval:{}:{}", en.name, value);
-            if !seen.insert(value.as_str()) {
-                issues.push(error_issue_at(
-                    "ENUM_VALUE_DUPLICATE",
-                    &format!("Enum '{}' contains duplicate value '{}'", en.name, value),
-                    Some(value_path),
-                ));
-            }
-        }
-    }
-}
-
 fn validate_associations(associations: &[Association], classes: &[Class], issues: &mut Vec<ValidationIssue>) {
     let class_names: HashSet<&str> = classes.iter().map(|c| c.name.as_str()).collect();
 
@@ -2090,7 +2064,6 @@ fn validate_duplicates(
     classes: &[Class],
     domains: &[Domain],
     associations: &[Association],
-    enums: &[EnumDef],
     issues: &mut Vec<ValidationIssue>,
 ) {
     let mut seen_class = HashSet::new();
@@ -2122,17 +2095,6 @@ fn validate_duplicates(
                 "ASSOCIATION_NAME_DUPLICATE",
                 &format!("Association '{}' appears multiple times", assoc.name),
                 Some(format!("association:{}", assoc.name)),
-            ));
-        }
-    }
-
-    let mut seen_enum = HashSet::new();
-    for en in enums {
-        if !seen_enum.insert(en.name.as_str()) {
-            issues.push(error_issue_at(
-                "ENUM_NAME_DUPLICATE",
-                &format!("Enum '{}' appears multiple times", en.name),
-                Some(format!("enum:{}", en.name)),
             ));
         }
     }
