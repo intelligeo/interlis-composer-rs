@@ -14,8 +14,6 @@ pub struct InterlisModel {
     #[serde(default)]
     pub associations: Vec<Association>,
     #[serde(default)]
-    pub enums: Vec<EnumDef>,
-    #[serde(default)]
     pub topics: Vec<Topic>,
     #[serde(default)]
     pub classes: Vec<Class>,
@@ -43,13 +41,6 @@ pub struct Association {
     pub to_class: String,
     #[serde(default = "default_cardinality")]
     pub cardinality: String,
-}
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct EnumDef {
-    pub name: String,
-    #[serde(default)]
-    pub values: Vec<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -297,7 +288,6 @@ impl InterlisProject {
                 model_md5: String::new(),
                 domains: Vec::new(),
                 associations: Vec::new(),
-                enums: Vec::new(),
                 topics: Vec::new(),
                 classes: Vec::new(),
                 prose_sections: Vec::new(),
@@ -326,6 +316,10 @@ impl ParseFailure {
 }
 
 pub fn is_supported_type(value: &str) -> bool {
+    let trimmed = value.trim();
+    if trimmed.starts_with('(') && trimmed.ends_with(')') {
+        return trimmed.len() > 2;
+    }
     matches!(
         normalize_type(value).as_str(),
         "TEXT" | "BOOLEAN" | "NUMERIC" | "DATE" | "TIMEOFDAY" | "DATETIME" | "UUID"
@@ -495,13 +489,21 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
         model_md5: md5,
         domains: Vec::new(),
         associations: Vec::new(),
-        enums: Vec::new(),
         topics: Vec::new(),
         classes,
         prose_sections: Vec::new(),
         catalog_instances: Vec::new(),
         catalog_validation_presets: Vec::new(),
     })
+}
+
+fn format_domain_definition(domain: &Domain) -> String {
+    let type_expr = domain.r#type.trim();
+    if type_expr.starts_with('(') && type_expr.ends_with(')') {
+        format!("DOMAIN {} = {};", domain.name, type_expr)
+    } else {
+        format!("DOMAIN {} = {};", domain.name, to_interlis_type(type_expr))
+    }
 }
 
 impl InterlisModel {
@@ -524,20 +526,7 @@ impl InterlisModel {
         }
 
         for domain in &self.domains {
-            out.push_str(&format!(
-                "    !! DOMAIN {}: {};\n",
-                domain.name,
-                to_interlis_type(&domain.r#type)
-            ));
-        }
-
-        for en in &self.enums {
-            let values = if en.values.is_empty() {
-                "".to_string()
-            } else {
-                en.values.join(", ")
-            };
-            out.push_str(&format!("    !! ENUM {} = ({});\n", en.name, values));
+            out.push_str(&format!("    {}\n", format_domain_definition(domain)));
         }
 
         for class in &self.classes {
