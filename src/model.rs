@@ -363,14 +363,69 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
     let mut model_name: Option<String> = None;
     let mut language: Option<String> = None;
     let mut model_version: Option<String> = None;
+    let mut domains: Vec<Domain> = Vec::new();
+    let mut associations: Vec<Association> = Vec::new();
     let mut classes: Vec<Class> = Vec::new();
     let mut current_class: Option<Class> = None;
+    let mut current_association_name: Option<String> = None;
+    let mut current_association_ends: Vec<(String, String)> = Vec::new();
+    let mut in_domain_block = false;
     let mut first_code_line_seen = false;
 
     for (idx, raw_line) in input.lines().enumerate() {
         let line_no = idx + 1;
         let line = raw_line.trim();
-        if line.is_empty() || line.starts_with("!!") {
+        if line.is_empty() {
+            continue;
+        }
+
+        if line.starts_with("!! ASSOCIATION ") {
+            // Backward compatibility with historical pseudo-export format:
+            // !! ASSOCIATION Name (From -> To, 1..*);
+            if let Some(body) = line.strip_prefix("!! ASSOCIATION ") {
+                let body = body.trim().trim_end_matches(';').trim();
+                if let Some((name_part, rest)) = body.split_once('(') {
+                    let assoc_name = name_part.trim();
+                    let rest = rest.trim_end_matches(')').trim();
+                    if let Some((pair_part, card_part)) = rest.rsplit_once(',') {
+                        let card = card_part.trim();
+                        if let Some((from_part, to_part)) = pair_part.split_once("->") {
+                            let from_class = from_part.trim();
+                            let to_class = to_part.trim();
+                            if !assoc_name.is_empty() && !from_class.is_empty() && !to_class.is_empty() {
+                                associations.push(Association {
+                                    name: assoc_name.to_string(),
+                                    from_class: from_class.to_string(),
+                                    to_class: to_class.to_string(),
+                                    cardinality: card.to_string(),
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+
+        if line.starts_with("!! DOMAIN ") {
+            // Backward compatibility with historical pseudo-export format:
+            // !! DOMAIN Name: TYPE;
+            if let Some(body) = line.strip_prefix("!! DOMAIN ") {
+                let body = body.trim().trim_end_matches(';').trim();
+                if let Some((name_part, type_part)) = body.split_once(':') {
+                    let domain_name = name_part.trim();
+                    if !domain_name.is_empty() {
+                        domains.push(Domain {
+                            name: domain_name.to_string(),
+                            r#type: from_interlis_type(type_part.trim()),
+                        });
+                    }
+                }
+            }
+            continue;
+        }
+
+        if line.starts_with("!!") {
             continue;
         }
 
@@ -413,6 +468,61 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
 
             model_name = Some(parsed_name);
             language = Some(lang_part.trim().to_string());
+            continue;
+        }
+
+        if in_domain_block {
+            if line.eq_ignore_ascii_case("CLASS")
+                || line.starts_with("CLASS ")
+                || line.starts_with("ABSTRACT CLASS ")
+                || line.starts_with("ASSOCIATION ")
+                || line.starts_with("END ")
+            {
+                in_domain_block = false;
+            } else {
+                if line.ends_with(';') {
+                    let body = line.trim_end_matches(';').trim();
+                    if let Some((name_part, type_part)) = body.split_once('=') {
+                        let domain_name = name_part.trim();
+                        let domain_type_raw = type_part.trim();
+                        if !domain_name.is_empty() {
+                            domains.push(Domain {
+                                name: domain_name.to_string(),
+                                r#type: from_interlis_type(domain_type_raw),
+                            });
+                        }
+                    }
+                }
+                continue;
+            }
+        }
+
+        if line.eq_ignore_ascii_case("DOMAIN") {
+            in_domain_block = true;
+            continue;
+        }
+
+        if line.ends_with('=') && line.starts_with("ASSOCIATION ") {
+            if current_association_name.is_some() {
+                return Err(ParseFailure::new(
+                    "Nested ASSOCIATION definitions are not supported",
+                    line_no,
+                    1,
+                ));
+            }
+
+            let assoc_name = line
+                .trim_end_matches('=')
+                .trim()
+                .strip_prefix("ASSOCIATION ")
+                .map(str::trim)
+                .unwrap_or("");
+            if assoc_name.is_empty() {
+                return Err(ParseFailure::new("ASSOCIATION name cannot be empty", line_no, 1));
+            }
+
+            current_association_name = Some(assoc_name.to_string());
+            current_association_ends.clear();
             continue;
         }
 
@@ -491,6 +601,47 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
         if line.starts_with("END ") {
             if let Some(class) = current_class.take() {
                 classes.push(class);
+                continue;
+            }
+
+            if let Some(assoc_name) = current_association_name.take() {
+                if current_association_ends.len() >= 2 {
+                    let (from_class, from_cardinality) = current_association_ends[0].clone();
+                    let (to_class, to_cardinality) = current_association_ends[1].clone();
+                    associations.push(Association {
+                        name: assoc_name,
+                        from_class,
+                        to_class,
+                        cardinality: if !to_cardinality.is_empty() {
+                            to_cardinality
+                        } else {
+                            from_cardinality
+                        },
+                    });
+                }
+                current_association_ends.clear();
+            }
+            continue;
+        }
+
+        if current_association_name.is_some() {
+            if line.ends_with(';') {
+                let body = line.trim_end_matches(';').trim();
+                if let Some(open_idx) = body.find('{') {
+                    if let Some(close_rel_idx) = body[open_idx + 1..].find('}') {
+                        let close_idx = open_idx + 1 + close_rel_idx;
+                        let cardinality = body[open_idx + 1..close_idx].trim().to_string();
+                        let class_name = body[close_idx + 1..]
+                            .split_whitespace()
+                            .next()
+                            .unwrap_or("")
+                            .trim()
+                            .to_string();
+                        if !class_name.is_empty() {
+                            current_association_ends.push((class_name, cardinality));
+                        }
+                    }
+                }
             }
             continue;
         }
@@ -527,6 +678,14 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
         return Err(ParseFailure::new("Unclosed CLASS block", input.lines().count(), 1));
     }
 
+    if current_association_name.is_some() {
+        return Err(ParseFailure::new(
+            "Unclosed ASSOCIATION block",
+            input.lines().count(),
+            1,
+        ));
+    }
+
     let parsed_model_name =
         model_name.ok_or_else(|| ParseFailure::new("MODEL declaration not found", 1, 1))?;
 
@@ -537,8 +696,8 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
         language: language.unwrap_or_else(default_language),
         model_version: model_version.unwrap_or_else(|| "INTERLIS 2.4".to_string()),
         model_md5: md5,
-        domains: Vec::new(),
-        associations: Vec::new(),
+        domains,
+        associations,
         topics: Vec::new(),
         classes,
         prose_sections: Vec::new(),
@@ -566,12 +725,16 @@ impl InterlisModel {
             }
         }
 
-        for domain in &self.domains {
-            out.push_str(&format!(
-                "    !! DOMAIN {}: {};\n",
-                domain.name,
-                to_interlis_type(&domain.r#type)
-            ));
+        if !self.domains.is_empty() {
+            out.push_str("    DOMAIN\n");
+            for domain in &self.domains {
+                out.push_str(&format!(
+                    "      {} = {};\n",
+                    domain.name,
+                    to_interlis_type(&domain.r#type)
+                ));
+            }
+            out.push('\n');
         }
 
         for class in &self.classes {
@@ -615,9 +778,19 @@ impl InterlisModel {
 
         for assoc in &self.associations {
             out.push_str(&format!(
-                "    !! ASSOCIATION {} ({} -> {}, {});\n",
-                assoc.name, assoc.from_class, assoc.to_class, assoc.cardinality
+                "    ASSOCIATION {} =\n",
+                assoc.name
             ));
+            out.push_str(&format!(
+                "      from -- {{0..*}} {};\n",
+                assoc.from_class
+            ));
+            out.push_str(&format!(
+                "      to -- {{{}}} {};\n",
+                assoc.cardinality,
+                assoc.to_class
+            ));
+            out.push_str(&format!("    END {};\n\n", assoc.name));
         }
 
         out.push_str("  END Main;\n");

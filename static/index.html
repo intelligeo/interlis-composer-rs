@@ -858,6 +858,12 @@
         line-height: 1.2;
       }
 
+      #propertiesPanel .actions {
+        display: flex !important;
+        justify-content: flex-end;
+        margin-top: 0.5rem;
+      }
+
       .diagram-stage {
         border: 1px solid var(--line);
         border-radius: 14px;
@@ -1282,7 +1288,7 @@
               <input id="propAssocCardInput" type="text" placeholder="1..*" />
             </div>
             <div class="actions">
-              <button class="primary" id="savePropertiesBtn">Salva proprieta</button>
+              <button class="primary" id="savePropertiesBtn">Applica</button>
             </div>
           </div>
         </article>
@@ -2053,6 +2059,7 @@
           "tree.action.addDomain": "New domain",
           "tree.action.addAssociation": "New relation",
           "tree.action.deleteSelected": "Delete selected",
+          "properties.action.apply": "Apply",
           "ctx.section.panel": "Panel",
           "ctx.section.actions": "Actions",
           "ctx.section.insert": "Insert",
@@ -2165,6 +2172,7 @@
           "tree.action.addDomain": "Nuovo domain",
           "tree.action.addAssociation": "Nuova relazione",
           "tree.action.deleteSelected": "Elimina selezionato",
+          "properties.action.apply": "Applica",
           "ctx.section.panel": "Pannello",
           "ctx.section.actions": "Azioni",
           "ctx.section.insert": "Inserimento",
@@ -2277,6 +2285,7 @@
           "tree.action.addDomain": "Neue Doman",
           "tree.action.addAssociation": "Neue Beziehung",
           "tree.action.deleteSelected": "Auswahl loschen",
+          "properties.action.apply": "Anwenden",
           "ctx.section.panel": "Panel",
           "ctx.section.actions": "Aktionen",
           "ctx.section.insert": "Einfugen",
@@ -2389,6 +2398,7 @@
           "tree.action.addDomain": "Nouveau domaine",
           "tree.action.addAssociation": "Nouvelle relation",
           "tree.action.deleteSelected": "Supprimer la selection",
+          "properties.action.apply": "Appliquer",
           "ctx.section.panel": "Panneau",
           "ctx.section.actions": "Actions",
           "ctx.section.insert": "Insertion",
@@ -2612,6 +2622,7 @@
         setTextBySelector("#addDomainBtn", "tree.action.addDomain");
         setTextBySelector("#addAssocBtn", "tree.action.addAssociation");
         setTextBySelector("#deleteSelectedBtn", "tree.action.deleteSelected");
+        setTextBySelector("#savePropertiesBtn", "properties.action.apply");
 
         refreshProjectMeta();
         setSyncMeta(syncMeta?.dataset?.syncMessage || t("status.idle"));
