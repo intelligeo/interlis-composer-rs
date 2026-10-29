@@ -537,21 +537,7 @@ async fn import_ili(
         }
     }
 
-    let mut issues = validate(&model);
-
-    let first_code_line = trimmed
-        .lines()
-        .map(str::trim)
-        .find(|line| !line.is_empty() && !line.starts_with("!!"));
-
-    if let Some(line) = first_code_line {
-        if line.eq_ignore_ascii_case("TRANSFER INTERLIS1;") {
-            issues.push(warn_issue(
-                "INTERLIS1_UNSUPPORTED",
-                "INTERLIS 1 detected; this MVP supports INTERLIS 2.x only",
-            ));
-        }
-    }
+    let issues = validate(&model);
 
     let valid = !issues.iter().any(|i| i.level == "error");
     let response = ImportIliResponse {

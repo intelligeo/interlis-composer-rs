@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct InterlisModel {
@@ -320,43 +320,102 @@ impl ParseFailure {
 }
 
 pub fn is_supported_type(value: &str) -> bool {
-    matches!(
-        normalize_type(value).as_str(),
-        "TEXT" | "BOOLEAN" | "NUMERIC" | "DATE" | "TIMEOFDAY" | "DATETIME" | "UUID"
-    )
+    let normalized = normalize_type(value);
+    if normalized.is_empty() {
+        return false;
+    }
+    normalized == "TEXT"
+        || normalized.starts_with("TEXT*")
+        || normalized == "BOOLEAN"
+        || normalized == "NUMERIC"
+        || normalized.starts_with("NUMERIC(")
+        || normalized == "DATE"
+        || normalized == "TIMEOFDAY"
+        || normalized == "DATETIME"
+        || normalized == "UUID"
+        || normalized == "INTERLIS.XMLDATE"
+        || normalized == "INTERLIS.XMLTIME"
+        || normalized == "INTERLIS.XMLDATETIME"
+        || normalized == "INTERLIS.UUIDOID"
 }
 
 fn normalize_type(value: &str) -> String {
     value.trim().to_ascii_uppercase()
 }
 
-fn to_interlis_type(value: &str) -> &'static str {
-    match normalize_type(value).as_str() {
-        "TEXT" => "TEXT*255",
-        "BOOLEAN" => "BOOLEAN",
-        "NUMERIC" => "NUMERIC",
-        "DATE" => "INTERLIS.XMLDate",
-        "TIMEOFDAY" => "INTERLIS.XMLTime",
-        "DATETIME" => "INTERLIS.XMLDateTime",
-        "UUID" => "INTERLIS.UUIDOID",
-        _ => "TEXT*255",
+fn to_interlis_type(value: &str) -> String {
+    let raw = value.trim();
+    match normalize_type(raw).as_str() {
+        "TEXT" => "TEXT*255".to_string(),
+        "BOOLEAN" => "BOOLEAN".to_string(),
+        "NUMERIC" => "NUMERIC".to_string(),
+        "DATE" => "INTERLIS.XMLDate".to_string(),
+        "TIMEOFDAY" => "INTERLIS.XMLTime".to_string(),
+        "DATETIME" => "INTERLIS.XMLDateTime".to_string(),
+        "UUID" => "INTERLIS.UUIDOID".to_string(),
+        // Keep imported/raw INTERLIS types exactly as provided.
+        _ => {
+            if raw.is_empty() {
+                "TEXT*255".to_string()
+            } else {
+                raw.to_string()
+            }
+        }
     }
 }
 
 fn from_interlis_type(value: &str) -> String {
-    let normalized = value.trim().to_ascii_uppercase();
-    if normalized.starts_with("TEXT") {
+    let raw = value.trim();
+    if raw.is_empty() {
         return "TEXT".to_string();
     }
-    match normalized.as_str() {
-        "BOOLEAN" => "BOOLEAN".to_string(),
-        "NUMERIC" => "NUMERIC".to_string(),
-        "INTERLIS.XMLDATE" => "DATE".to_string(),
-        "INTERLIS.XMLTIME" => "TIMEOFDAY".to_string(),
-        "INTERLIS.XMLDATETIME" => "DATETIME".to_string(),
-        "INTERLIS.UUIDOID" => "UUID".to_string(),
-        _ => "TEXT".to_string(),
+    raw.to_string()
+}
+
+fn parse_domain_declaration_line(line: &str) -> Option<(String, String)> {
+    let body = line.trim().trim_end_matches(';').trim();
+    let (name_part, type_part) = body.split_once('=')?;
+    let domain_name = name_part.trim();
+    if domain_name.is_empty() {
+        return None;
     }
+    Some((domain_name.to_string(), from_interlis_type(type_part.trim())))
+}
+
+fn parse_association_end_line(line: &str, class_names: &HashSet<String>) -> Option<(String, String)> {
+    let body = line.trim().trim_end_matches(';').trim();
+    let open_idx = body.find('{')?;
+    let close_rel_idx = body[open_idx + 1..].find('}')?;
+    let close_idx = open_idx + 1 + close_rel_idx;
+    let cardinality = body[open_idx + 1..close_idx].trim().to_string();
+
+    // Try class token immediately after cardinality.
+    let after_token = body[close_idx + 1..]
+        .split_whitespace()
+        .next()
+        .unwrap_or("")
+        .trim();
+    if !after_token.is_empty() && class_names.contains(after_token) {
+        return Some((after_token.to_string(), cardinality));
+    }
+
+    // Fallback: find any known class token before the connector/cardinality.
+    let before_part = &body[..open_idx];
+    for token in before_part
+        .split(|c: char| c.is_whitespace() || c == '-' || c == '<' || c == '>' || c == '(' || c == ')' || c == ',')
+        .filter(|tok| !tok.is_empty())
+    {
+        if class_names.contains(token) {
+            return Some((token.to_string(), cardinality));
+        }
+    }
+
+    // Last fallback keeps historical behavior.
+    if !after_token.is_empty() {
+        return Some((after_token.to_string(), cardinality));
+    }
+
+    None
 }
 
 pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
@@ -432,9 +491,21 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
         if !first_code_line_seen {
             first_code_line_seen = true;
             if line.starts_with("INTERLIS ") {
-                model_version = Some(line.trim_end_matches(';').trim().to_string());
+                let version = line.trim_end_matches(';').trim();
+                if !version.eq_ignore_ascii_case("INTERLIS 2.4") {
+                    return Err(ParseFailure::new(
+                        "Unsupported INTERLIS version: only INTERLIS 2.4 is supported",
+                        line_no,
+                        1,
+                    ));
+                }
+                model_version = Some("INTERLIS 2.4".to_string());
             } else if line.eq_ignore_ascii_case("TRANSFER INTERLIS1;") {
-                model_version = Some("TRANSFER INTERLIS1".to_string());
+                return Err(ParseFailure::new(
+                    "Unsupported INTERLIS version: INTERLIS 1 is not supported (requires INTERLIS 2.4)",
+                    line_no,
+                    1,
+                ));
             }
         }
 
@@ -481,16 +552,11 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
                 in_domain_block = false;
             } else {
                 if line.ends_with(';') {
-                    let body = line.trim_end_matches(';').trim();
-                    if let Some((name_part, type_part)) = body.split_once('=') {
-                        let domain_name = name_part.trim();
-                        let domain_type_raw = type_part.trim();
-                        if !domain_name.is_empty() {
-                            domains.push(Domain {
-                                name: domain_name.to_string(),
-                                r#type: from_interlis_type(domain_type_raw),
-                            });
-                        }
+                    if let Some((domain_name, domain_type)) = parse_domain_declaration_line(line) {
+                        domains.push(Domain {
+                            name: domain_name,
+                            r#type: domain_type,
+                        });
                     }
                 }
                 continue;
@@ -499,6 +565,17 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
 
         if line.eq_ignore_ascii_case("DOMAIN") {
             in_domain_block = true;
+            continue;
+        }
+
+        if line.starts_with("DOMAIN ") && line.ends_with(';') {
+            let domain_line = line.strip_prefix("DOMAIN ").unwrap_or("").trim();
+            if let Some((domain_name, domain_type)) = parse_domain_declaration_line(domain_line) {
+                domains.push(Domain {
+                    name: domain_name,
+                    r#type: domain_type,
+                });
+            }
             continue;
         }
 
@@ -626,21 +703,9 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
 
         if current_association_name.is_some() {
             if line.ends_with(';') {
-                let body = line.trim_end_matches(';').trim();
-                if let Some(open_idx) = body.find('{') {
-                    if let Some(close_rel_idx) = body[open_idx + 1..].find('}') {
-                        let close_idx = open_idx + 1 + close_rel_idx;
-                        let cardinality = body[open_idx + 1..close_idx].trim().to_string();
-                        let class_name = body[close_idx + 1..]
-                            .split_whitespace()
-                            .next()
-                            .unwrap_or("")
-                            .trim()
-                            .to_string();
-                        if !class_name.is_empty() {
-                            current_association_ends.push((class_name, cardinality));
-                        }
-                    }
+                let class_names: HashSet<String> = classes.iter().map(|c| c.name.clone()).collect();
+                if let Some((class_name, cardinality)) = parse_association_end_line(line, &class_names) {
+                    current_association_ends.push((class_name, cardinality));
                 }
             }
             continue;

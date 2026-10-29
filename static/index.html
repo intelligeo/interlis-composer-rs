@@ -54,7 +54,7 @@
 
       .app-logo-corner {
         position: fixed;
-        top: 0.9rem;
+        top: 5.2rem;
         right: 1rem;
         z-index: 1200;
         display: inline-flex;
@@ -77,7 +77,7 @@
 
       @media (max-width: 720px) {
         .app-logo-corner {
-          top: 0.6rem;
+          top: 4.6rem;
           right: 0.6rem;
           width: clamp(70px, 22vw, 96px);
         }
@@ -976,6 +976,7 @@
       }
 
       .minimap-wrap {
+        display: none;
         border: 1px solid var(--line);
         border-radius: 10px;
         padding: 0.35rem;
@@ -1424,7 +1425,7 @@
       <div class="status-bar" aria-label="Project status bar">
         <div class="status-bar-group">
           <span><span class="status-dot"></span> <span id="statusProjectLabel">Project:</span> <strong id="statusBarProject">NewProject</strong></span>
-          <span><span id="statusModeLabel">Mode:</span> <strong>INTERLIS 2</strong></span>
+          <span><span id="statusModeLabel">Mode:</span> <strong id="statusBarMode">INTERLIS 2.4 only</strong></span>
           <span><span id="statusVersionLabel">Version:</span> <strong id="statusBarVersion">draft</strong></span>
         </div>
         <div class="status-bar-group">
@@ -1924,6 +1925,7 @@
       const projectMeta = document.getElementById("projectMeta");
       const syncMeta = document.getElementById("syncMeta");
       const statusBarProject = document.getElementById("statusBarProject");
+      const statusBarMode = document.getElementById("statusBarMode");
       const statusBarVersion = document.getElementById("statusBarVersion");
       const statusBarSync = document.getElementById("statusBarSync");
       const statusBarAbout = document.getElementById("statusBarAbout");
@@ -2026,6 +2028,7 @@
       const I18N_DEFAULT_LOCALE = "en_US";
       const I18N_SUPPORTED_LOCALES = ["de_CH", "fr_FR", "it_IT", "en_US"];
       const I18N_UI_LOCALE_KEY = "imc_ui_locale_v1";
+      const SUPPORTED_INTERLIS_MODE = "INTERLIS 2.4 only";
 
       const I18N_MESSAGES = {
         en_US: {
@@ -2035,12 +2038,141 @@
           "status.lastSync": "Last sync",
           "status.idle": "idle",
           "status.syncPrefix": "Sync",
+          "status.sync.derived": "model synced on derived panels ({source}) at {time}",
+          "status.sync.modelUpdated": "model updated by {source} at {time}",
+          "status.sync.diagnosticsUpdated": "diagnostics updated ({errors} errors, {warnings} warnings)",
+          "status.sync.selectionSynced": "selection synced: {elementId}",
+          "status.sync.projectState": "project state: {state}",
+          "status.sync.fixTaskCompleted": "fix task completed ({transitions} tree/diagram transitions)",
+          "status.state.dirty": "dirty",
+          "status.state.saved": "saved",
           "status.about": "About",
           "status.language": "Language",
           "project.meta": "Project: {name} | Status: {status}",
           "project.saved": "saved",
           "project.unsaved": "unsaved changes",
           "autosave.active": "Autosave: active ({ms} ms)",
+          "autosave.saved": "Autosave: snapshot {projectName} at {at} ({ms} ms)",
+          "autosave.restored": "Autosave: restored snapshot {projectName} ({at})",
+          "autosave.none": "Autosave: no snapshot ({ms} ms)",
+          "autosave.noneToRestore": "Autosave: no snapshot to restore",
+          "autosave.corrupted": "Autosave: corrupted snapshot",
+          "autosave.invalidInterval": "Autosave: invalid interval (min 1000 ms)",
+          "autosave.confirmRestore": "Found autosave for project '{projectName}'. Restore?",
+          "diag.none": "No issues detected",
+          "diag.summary": "{errors} errors, {warnings} warnings ({visible} visible)",
+          "diag.reportCopied": "report copied",
+          "diag.clipboardUnavailable": "clipboard unavailable",
+          "diag.goTo": "Go to: {path}",
+          "docs.noneSession": "Docs: no export in this session",
+          "docs.noMatch": "No section matches the current filter",
+          "docs.status": "Docs: {fileName} | sections={sections}, match={visible}, filter='{scope}'",
+          "recent.none": "No recent projects",
+          "prompt.projectName": "Project name (.imcp)",
+          "prompt.newProjectName": "New project name",
+          "prompt.newTopic": "New topic name",
+          "prompt.newSubtopic": "New subtopic name",
+          "prompt.newClass": "New class name",
+          "prompt.newAttribute": "Attribute name",
+          "prompt.newDomain": "New domain name",
+          "prompt.newAssociation": "New relation name",
+          "confirm.deleteSelected": "Confirm deletion of selected element?",
+          "confirm.modelConflictOverwrite": "Model conflict detected (same name, different version/md5). Overwrite?",
+          "issue.TOPIC_NAME_INVALID": "Invalid topic name: use INTERLIS identifier (start with a letter, then A-Z/a-z/0-9/_)",
+          "issue.TREE_DUPLICATE_TOPIC": "Topic '{name}' already exists",
+          "issue.TREE_TOPIC_SELECTION_REQUIRED": "Select a topic to add a subtopic",
+          "issue.SUBTOPIC_NAME_INVALID": "Invalid subtopic name: use INTERLIS identifier (start with a letter, then A-Z/a-z/0-9/_)",
+          "issue.TREE_DUPLICATE_SUBTOPIC": "Subtopic '{name}' already present in {topicName}",
+          "issue.CLASS_NAME_INVALID": "Invalid class name: use INTERLIS identifier (start with a letter, then A-Z/a-z/0-9/_)",
+          "issue.TREE_DUPLICATE_CLASS": "Class '{name}' already exists",
+          "issue.TREE_SELECTION_REQUIRED": "Select a class to add an attribute",
+          "issue.ATTRIBUTE_NAME_INVALID": "Invalid attribute name: use INTERLIS identifier (start with a letter, then A-Z/a-z/0-9/_)",
+          "issue.TREE_DUPLICATE_ATTRIBUTE": "Attribute '{name}' already present in {className}",
+          "issue.DOMAIN_NAME_INVALID": "Invalid domain name: use INTERLIS identifier (start with a letter, then A-Z/a-z/0-9/_)",
+          "issue.TREE_DUPLICATE_DOMAIN": "Domain '{name}' already exists",
+          "issue.ASSOCIATION_NAME_INVALID": "Invalid relation name: use INTERLIS identifier (start with a letter, then A-Z/a-z/0-9/_)",
+          "issue.TREE_DUPLICATE_ASSOC": "Relation '{name}' already exists",
+          "issue.TREE_DELETE_INVALID": "Select class or attribute to delete",
+          "issue.PROPERTIES_NAME_REQUIRED": "Name cannot be empty",
+          "issue.NAME_INVALID": "Invalid name: INTERLIS 2 does not allow spaces; use identifier (start with a letter, then A-Z/a-z/0-9/_)",
+          "issue.PROPERTIES_DUPLICATE_CLASS": "Class '{name}' already exists",
+          "issue.CLASS_EXTENDS_SELF": "A class cannot extend itself",
+          "issue.CLASS_EXTENDS_UNKNOWN": "Base class '{classExtends}' not found",
+          "issue.PROPERTIES_DUPLICATE_TOPIC": "Topic '{name}' already exists",
+          "issue.PROPERTIES_DUPLICATE_SUBTOPIC": "Subtopic '{name}' already present in topic {topicName}",
+          "issue.PROPERTIES_DUPLICATE_ATTRIBUTE": "Attribute '{name}' already present in class {className}",
+          "issue.ATTRIBUTE_CARDINALITY_INVALID": "Invalid attribute cardinality. Use min..max format (e.g. 0..1, 1..1, 0..*, 1..*)",
+          "issue.PROPERTIES_DUPLICATE_DOMAIN": "Domain '{name}' already exists",
+          "issue.PROPERTIES_DUPLICATE_ASSOC": "Relation '{name}' already exists",
+          "issue.ASSOC_CLASS_REQUIRED": "From/To class are required",
+          "issue.ASSOC_CLASS_INVALID": "From/To class must reference existing classes",
+          "issue.ASSOC_FROM_CARDINALITY_INVALID": "Invalid from cardinality. Use min..max format (e.g. 0..1, 1..*, 0..*)",
+          "issue.ASSOC_CARDINALITY_INVALID": "Invalid cardinality. Use min..max format (e.g. 0..1, 1..*, 0..*)",
+          "issue.CATALOG_PRESET_EXPORT_EMPTY": "No catalog preset to export",
+          "issue.CATALOG_PRESET_IMPORT_EMPTY": "No valid catalog preset found in file",
+          "issue.CATALOG_PRESET_IMPORT_NO_CHANGES": "Import completed with no changes",
+          "error.catalogPresetInvalidFormat": "Invalid catalog preset format",
+          "prompt.presetCustomName": "Custom preset name",
+          "prompt.presetOwner": "Preset owner (user/team)",
+          "prompt.presetReviewer": "Reviewer approving the preset",
+          "confirm.deletePreset": "Delete preset '{name}'?",
+          "issue.PRESET_NAME_REQUIRED": "Enter a valid preset name",
+          "issue.PRESET_NAME_INVALID": "Invalid name: use 3-48 alphanumeric characters with space, _ or -",
+          "issue.PRESET_NAME_RESERVED": "Reserved name: use a name different from standard presets",
+          "issue.PRESET_DELETE_SELECT_CUSTOM": "Select a custom preset to delete",
+          "issue.PRESET_OWNER_SELECT_CUSTOM": "Select a custom preset",
+          "issue.PRESET_OWNER_INVALID": "Invalid owner: use 3-64 characters [A-Za-z0-9_.@-]",
+          "issue.PRESET_REVIEW_SELECT_CUSTOM": "Select a custom preset",
+          "issue.PRESET_OWNER_REQUIRED": "Set a preset owner first",
+          "issue.PRESET_REVIEWER_INVALID": "Invalid reviewer: use 3-64 characters [A-Za-z0-9_.@-]",
+          "issue.PRESET_EXPORT_EMPTY": "No custom preset to export",
+          "issue.PRESET_IMPORT_EMPTY": "No valid custom preset found in file",
+          "error.presetInvalidFormat": "Invalid preset format",
+          "issue.DIAGRAM_LAYOUT_LOCKED": "Layout locked: disable lock to apply auto-layout",
+          "error.collabBundleInvalid": "Invalid collaboration bundle: missing model",
+          "issue.COLLAB_BUNDLE_IMPORTED": "Collaboration bundle imported into current model",
+          "issue.COLLAB_BUNDLE_EXPORTED": "Collaboration bundle exported",
+          "issue.COLLAB_DIFF_NEEDS_BUNDLE": "Import a bundle first to run semantic diff",
+          "issue.COLLAB_DIFF_READY": "Semantic diff bundle vs current model updated",
+          "error.collabDiff": "Semantic diff calculation error",
+          "issue.COLLAB_COMMIT_DRAFT_READY": "Commit draft generated",
+          "error.collabCommitDraft": "Commit draft generation error",
+          "prompt.newProseSection": "New prose section title",
+          "confirm.deleteProseSection": "Delete section '{title}'?",
+          "issue.B7_PROSE_SELECT": "Select a prose section",
+          "issue.B7_PRESET_NEEDS_CLASS": "Add at least one class before creating presets",
+          "issue.B7_PRESET_NAME_EMPTY": "Enter a preset name",
+          "issue.B7_PRESET_CLASS_EMPTY": "Select a target class",
+          "prompt.catalogPresetOwner": "Catalog preset owner",
+          "prompt.catalogPresetReviewer": "Reviewer approving the catalog preset",
+          "confirm.deleteCatalogPreset": "Delete preset '{name}'?",
+          "issue.CATALOG_PRESET_OWNER_INVALID": "Invalid owner: use 3-64 characters [A-Za-z0-9_.@-]",
+          "issue.CATALOG_PRESET_REVIEWER_INVALID": "Invalid reviewer: use 3-64 characters [A-Za-z0-9_.@-]",
+          "issue.B7_CATALOG_NEEDS_CLASS": "Add at least one class before creating catalog instances",
+          "status.opsMetricsError": "Ops: metrics load error ({message})",
+          "status.collabRefsError": "Refs listing error: {message}",
+          "status.collabRepoError": "Collab: repository status error ({message})",
+          "issue.PROJECT_NEW": "New project created",
+          "prompt.diagramNewClass": "New class name in diagram",
+          "prompt.diagramRelationName": "Relation name",
+          "prompt.diagramTargetClass": "Target class",
+          "issue.CLASS_NAME_INVALID": "Invalid class name: use INTERLIS identifier (start with a letter, then A-Z/a-z/0-9/_)",
+          "issue.DIAGRAM_ASSOC_NEEDS_CLASSES": "At least two classes are required to create a relation",
+          "issue.ASSOCIATION_NAME_INVALID": "Invalid relation name: use INTERLIS identifier (start with a letter, then A-Z/a-z/0-9/_)",
+          "error.unexpected": "Unexpected error",
+          "error.export": "Export error",
+          "error.projectCreate": "Project creation error",
+          "error.projectSave": "Project save error",
+          "error.importIli": "Import .ili error",
+          "error.importXtf": "Import .xtf/.xml error",
+          "error.exportXtf": "Export .xtf/.xml error",
+          "error.exportDocs": "Export markdown documentation error",
+          "error.projectLoad": "Project load error",
+          "error.importPreset": "Preset import error",
+          "error.importCatalogPreset": "Catalog preset import error",
+          "error.importCollabBundle": "Collaboration bundle import error",
+          "warn.noOutput": "Generate INTERLIS output first",
+          "confirm.discardDirty": "Current project has unsaved changes. Continue and discard changes?",
           "panel.structure": "Structure Tree",
           "panel.properties": "Properties Editor",
           "panel.diagram": "Diagram Editor",
@@ -2148,6 +2280,14 @@
           "status.lastSync": "Ultima sync",
           "status.idle": "idle",
           "status.syncPrefix": "Sync",
+          "status.sync.derived": "modello sincronizzato su pannelli derivati ({source}) alle {time}",
+          "status.sync.modelUpdated": "modello aggiornato da {source} alle {time}",
+          "status.sync.diagnosticsUpdated": "diagnostica aggiornata ({errors} errori, {warnings} warning)",
+          "status.sync.selectionSynced": "selezione sincronizzata: {elementId}",
+          "status.sync.projectState": "stato progetto: {state}",
+          "status.sync.fixTaskCompleted": "task fix concluso ({transitions} transizioni tree/diagram)",
+          "status.state.dirty": "dirty",
+          "status.state.saved": "saved",
           "status.about": "About",
           "status.language": "Lingua",
           "project.meta": "Progetto: {name} | Stato: {status}",
@@ -2261,6 +2401,14 @@
           "status.lastSync": "Letzte Sync",
           "status.idle": "idle",
           "status.syncPrefix": "Sync",
+          "status.sync.derived": "Modell in abgeleitete Panels synchronisiert ({source}) um {time}",
+          "status.sync.modelUpdated": "Modell aktualisiert von {source} um {time}",
+          "status.sync.diagnosticsUpdated": "Diagnostik aktualisiert ({errors} Fehler, {warnings} Warnungen)",
+          "status.sync.selectionSynced": "Auswahl synchronisiert: {elementId}",
+          "status.sync.projectState": "Projektstatus: {state}",
+          "status.sync.fixTaskCompleted": "Fix-Task abgeschlossen ({transitions} Baum/Diagramm-Ubergange)",
+          "status.state.dirty": "dirty",
+          "status.state.saved": "saved",
           "status.about": "Info",
           "status.language": "Sprache",
           "project.meta": "Projekt: {name} | Status: {status}",
@@ -2374,6 +2522,14 @@
           "status.lastSync": "Derniere sync",
           "status.idle": "idle",
           "status.syncPrefix": "Sync",
+          "status.sync.derived": "modele synchronise sur les panneaux derives ({source}) a {time}",
+          "status.sync.modelUpdated": "modele mis a jour par {source} a {time}",
+          "status.sync.diagnosticsUpdated": "diagnostic mis a jour ({errors} erreurs, {warnings} avertissements)",
+          "status.sync.selectionSynced": "selection synchronisee: {elementId}",
+          "status.sync.projectState": "etat du projet: {state}",
+          "status.sync.fixTaskCompleted": "tache de correction terminee ({transitions} transitions arbre/diagramme)",
+          "status.state.dirty": "dirty",
+          "status.state.saved": "saved",
           "status.about": "A propos",
           "status.language": "Langue",
           "project.meta": "Projet: {name} | Statut: {status}",
@@ -2648,6 +2804,7 @@
 
       function updateStatusBar() {
         if (statusBarProject) statusBarProject.textContent = currentProjectName;
+        if (statusBarMode) statusBarMode.textContent = SUPPORTED_INTERLIS_MODE;
         if (statusBarVersion) statusBarVersion.textContent = modelInput && modelInput.value ? "draft" : "empty";
         if (statusBarSync) statusBarSync.textContent = syncMeta?.dataset?.syncMessage || t("status.idle");
       }
@@ -2844,7 +3001,7 @@
         uxKpi.activeFixTask = null;
         renderUxKpiPanel();
         if (reason) {
-          setSyncMeta(`task fix concluso (${transitions} transizioni tree/diagram)`);
+          setSyncMeta(t("status.sync.fixTaskCompleted", { transitions }));
         }
       }
 
@@ -2994,7 +3151,7 @@
         }
 
         if (syncId === modelSyncRequestId) {
-          setSyncMeta(`modello sincronizzato su pannelli derivati (${sourceTag}) alle ${stamp()}`);
+          setSyncMeta(t("status.sync.derived", { source: sourceTag, time: stamp() }));
         }
       }
 
@@ -3063,28 +3220,36 @@
       }
 
       bus.on(EVENTS.MODEL_CHANGED, (payload) => {
-        setSyncMeta(`modello aggiornato da ${payload.source} alle ${stamp()}`);
+        setSyncMeta(t("status.sync.modelUpdated", { source: payload.source, time: stamp() }));
         scheduleCrossPanelModelSync(payload.source || "ui");
       });
 
       bus.on(EVENTS.DIAGNOSTICS_UPDATED, (payload) => {
-        setSyncMeta(`diagnostica aggiornata (${payload.errors} errori, ${payload.warnings} warning)`);
+        setSyncMeta(t("status.sync.diagnosticsUpdated", { errors: payload.errors, warnings: payload.warnings }));
       });
 
       bus.on(EVENTS.SELECTION_CHANGED, (payload) => {
-        setSyncMeta(`selezione sincronizzata: ${payload.elementId || "-"}`);
+        setSyncMeta(t("status.sync.selectionSynced", { elementId: payload.elementId || "-" }));
       });
 
       bus.on(EVENTS.PROJECT_STATE_CHANGED, (payload) => {
-        setSyncMeta(`stato progetto: ${payload.isDirty ? "dirty" : "saved"}`);
+        const stateLabel = payload.isDirty ? t("status.state.dirty") : t("status.state.saved");
+        setSyncMeta(t("status.sync.projectState", { state: stateLabel }));
       });
 
       bus.on(EVENTS.AUTOSAVE_SAVED, (payload) => {
-        autosaveStatus.textContent = `Autosave: snapshot ${payload.projectName} alle ${payload.at} (${coreState.autosaveMs} ms)`;
+        autosaveStatus.textContent = t("autosave.saved", {
+          projectName: payload.projectName,
+          at: payload.at,
+          ms: coreState.autosaveMs
+        });
       });
 
       bus.on(EVENTS.AUTOSAVE_RESTORED, (payload) => {
-        autosaveStatus.textContent = `Autosave: ripristinato snapshot ${payload.projectName} (${payload.at})`;
+        autosaveStatus.textContent = t("autosave.restored", {
+          projectName: payload.projectName,
+          at: payload.at
+        });
       });
 
       function selectionPathOf(type, className, attrName) {
@@ -3475,7 +3640,7 @@
       function exportCatalogValidationPresets() {
         const presets = serializeCatalogValidationPresets();
         if (presets.length === 0) {
-          renderIssues([{ level: "warning", code: "CATALOG_PRESET_EXPORT_EMPTY", message: "Nessun preset catalogo da esportare" }]);
+          renderIssues([{ level: "warning", code: "CATALOG_PRESET_EXPORT_EMPTY", message: t("issue.CATALOG_PRESET_EXPORT_EMPTY") }]);
           return;
         }
 
@@ -3512,12 +3677,12 @@
         }
         const source = Array.isArray(parsed?.presets) ? parsed.presets : parsed;
         if (!Array.isArray(source)) {
-          throw new Error("Formato preset catalogo non valido");
+          throw new Error(t("error.catalogPresetInvalidFormat"));
         }
 
         const incoming = normalizeCatalogValidationPresets(source);
         if (incoming.length === 0) {
-          renderIssues([{ level: "warning", code: "CATALOG_PRESET_IMPORT_EMPTY", message: "Nessun preset catalogo valido nel file" }]);
+          renderIssues([{ level: "warning", code: "CATALOG_PRESET_IMPORT_EMPTY", message: t("issue.CATALOG_PRESET_IMPORT_EMPTY") }]);
           return;
         }
 
@@ -3595,7 +3760,7 @@
         });
 
         if (imported === 0) {
-          renderIssues([{ level: "warning", code: "CATALOG_PRESET_IMPORT_NO_CHANGES", message: "Import completato senza modifiche" }]);
+          renderIssues([{ level: "warning", code: "CATALOG_PRESET_IMPORT_NO_CHANGES", message: t("issue.CATALOG_PRESET_IMPORT_NO_CHANGES") }]);
           return;
         }
 
@@ -3814,6 +3979,27 @@
         }
       }
 
+      function setPropertyTypeSelectValue(rawType) {
+        if (!propTypeSelect) return;
+
+        const selectedType = String(rawType || "").trim();
+        Array.from(propTypeSelect.querySelectorAll("option[data-custom-type='true']")).forEach((opt) => opt.remove());
+
+        if (selectedType && !Array.from(propTypeSelect.options).some((opt) => opt.value === selectedType)) {
+          const custom = document.createElement("option");
+          custom.value = selectedType;
+          custom.textContent = selectedType;
+          custom.dataset.customType = "true";
+          propTypeSelect.appendChild(custom);
+        }
+
+        if (selectedType) {
+          propTypeSelect.value = selectedType;
+        } else {
+          propTypeSelect.value = "TEXT";
+        }
+      }
+
       function setModelInputValue(value) {
         suppressModelInputEvent = true;
         modelInput.value = value;
@@ -3844,21 +4030,21 @@
 
       function clearAutosaveSnapshot() {
         localStorage.removeItem(AUTOSAVE_KEY);
-        autosaveStatus.textContent = `Autosave: nessuno snapshot (${coreState.autosaveMs} ms)`;
+        autosaveStatus.textContent = t("autosave.none", { ms: coreState.autosaveMs });
       }
 
       function restoreAutosaveSnapshot(interactive) {
         const raw = localStorage.getItem(AUTOSAVE_KEY);
         if (!raw) {
           if (interactive) {
-            autosaveStatus.textContent = "Autosave: nessuno snapshot da ripristinare";
+            autosaveStatus.textContent = t("autosave.noneToRestore");
           }
           return false;
         }
 
         try {
           const snapshot = JSON.parse(raw);
-          const mustRestore = interactive || window.confirm(`Trovato autosave per progetto '${snapshot.projectName}'. Ripristinare?`);
+          const mustRestore = interactive || window.confirm(t("autosave.confirmRestore", { projectName: snapshot.projectName }));
           if (!mustRestore) return false;
 
           currentProjectName = snapshot.projectName || currentProjectName;
@@ -3887,7 +4073,7 @@
           return true;
         } catch (_) {
           if (interactive) {
-            autosaveStatus.textContent = "Autosave: snapshot corrotto";
+            autosaveStatus.textContent = t("autosave.corrupted");
           }
           return false;
         }
@@ -3902,13 +4088,13 @@
             saveAutosaveSnapshot();
           }
         }, coreState.autosaveMs);
-        autosaveStatus.textContent = `Autosave: attivo (${coreState.autosaveMs} ms)`;
+        autosaveStatus.textContent = t("autosave.active", { ms: coreState.autosaveMs });
       }
 
       function applyAutosaveInterval() {
         const value = Number.parseInt(autosaveMsInput.value, 10);
         if (!Number.isFinite(value) || value < 1000) {
-          autosaveStatus.textContent = "Autosave: intervallo non valido (min 1000 ms)";
+          autosaveStatus.textContent = t("autosave.invalidInterval");
           return;
         }
         coreState.autosaveMs = Math.min(value, 600000);
@@ -3932,7 +4118,7 @@
         recentProjects.innerHTML = "";
         if (items.length === 0) {
           const li = document.createElement("li");
-          li.textContent = "Nessun progetto recente";
+          li.textContent = t("recent.none", {});
           recentProjects.appendChild(li);
           return;
         }
@@ -4240,19 +4426,19 @@
 
       function saveCurrentAsCustomPreset() {
         const proposed = presetNameFromValue(diagramPreset) || "Team preset";
-        const userValue = window.prompt("Nome preset personalizzato", proposed);
+        const userValue = window.prompt(t("prompt.presetCustomName"), proposed);
         if (!userValue) return;
         const name = normalizePresetName(userValue);
         if (!name) {
-          renderIssues([{ level: "warning", code: "PRESET_NAME_REQUIRED", message: "Inserire un nome preset valido" }]);
+          renderIssues([{ level: "warning", code: "PRESET_NAME_REQUIRED", message: t("issue.PRESET_NAME_REQUIRED") }]);
           return;
         }
         if (!isValidPresetName(name)) {
-          renderIssues([{ level: "warning", code: "PRESET_NAME_INVALID", message: "Nome non valido: usare 3-48 caratteri alfanumerici con spazio, _ o -" }]);
+          renderIssues([{ level: "warning", code: "PRESET_NAME_INVALID", message: t("issue.PRESET_NAME_INVALID") }]);
           return;
         }
         if (isBuiltinPresetName(name)) {
-          renderIssues([{ level: "warning", code: "PRESET_NAME_RESERVED", message: "Nome riservato: usare un nome diverso dai preset standard" }]);
+          renderIssues([{ level: "warning", code: "PRESET_NAME_RESERVED", message: t("issue.PRESET_NAME_RESERVED") }]);
           return;
         }
 
@@ -4282,10 +4468,10 @@
       function deleteSelectedCustomPreset() {
         const currentName = presetNameFromValue(diagramPreset);
         if (!currentName || !diagramCustomPresets[currentName]) {
-          renderIssues([{ level: "warning", code: "PRESET_DELETE_SELECT_CUSTOM", message: "Seleziona un preset custom da eliminare" }]);
+          renderIssues([{ level: "warning", code: "PRESET_DELETE_SELECT_CUSTOM", message: t("issue.PRESET_DELETE_SELECT_CUSTOM") }]);
           return;
         }
-        if (!window.confirm(`Eliminare il preset '${currentName}'?`)) return;
+        if (!window.confirm(t("confirm.deletePreset", { name: currentName }))) return;
 
         delete diagramCustomPresets[currentName];
         diagramPreset = "default";
@@ -4296,15 +4482,15 @@
       function setSelectedPresetOwner() {
         const presetName = selectedCustomPresetName();
         if (!presetName) {
-          renderIssues([{ level: "warning", code: "PRESET_OWNER_SELECT_CUSTOM", message: "Seleziona un preset custom" }]);
+          renderIssues([{ level: "warning", code: "PRESET_OWNER_SELECT_CUSTOM", message: t("issue.PRESET_OWNER_SELECT_CUSTOM") }]);
           return;
         }
         const current = normalizePresetConfig(diagramCustomPresets[presetName]);
-        const owner = window.prompt("Owner preset (utente/team)", current.owner || "");
+        const owner = window.prompt(t("prompt.presetOwner"), current.owner || "");
         if (owner == null) return;
         const trimmed = owner.trim();
         if (trimmed && !/^[A-Za-z0-9_.@-]{3,64}$/.test(trimmed)) {
-          renderIssues([{ level: "warning", code: "PRESET_OWNER_INVALID", message: "Owner non valido: usare 3-64 caratteri [A-Za-z0-9_.@-]" }]);
+          renderIssues([{ level: "warning", code: "PRESET_OWNER_INVALID", message: t("issue.PRESET_OWNER_INVALID") }]);
           return;
         }
         current.owner = trimmed;
@@ -4318,12 +4504,12 @@
       function togglePresetApproval() {
         const presetName = selectedCustomPresetName();
         if (!presetName) {
-          renderIssues([{ level: "warning", code: "PRESET_REVIEW_SELECT_CUSTOM", message: "Seleziona un preset custom" }]);
+          renderIssues([{ level: "warning", code: "PRESET_REVIEW_SELECT_CUSTOM", message: t("issue.PRESET_REVIEW_SELECT_CUSTOM") }]);
           return;
         }
         const current = normalizePresetConfig(diagramCustomPresets[presetName]);
         if (!current.owner) {
-          renderIssues([{ level: "warning", code: "PRESET_OWNER_REQUIRED", message: "Imposta prima un owner del preset" }]);
+          renderIssues([{ level: "warning", code: "PRESET_OWNER_REQUIRED", message: t("issue.PRESET_OWNER_REQUIRED") }]);
           return;
         }
 
@@ -4339,11 +4525,11 @@
           return;
         }
 
-        const reviewer = window.prompt("Reviewer che approva il preset", current.owner || "reviewer");
+        const reviewer = window.prompt(t("prompt.presetReviewer"), current.owner || "reviewer");
         if (!reviewer) return;
         const reviewerName = reviewer.trim();
         if (!/^[A-Za-z0-9_.@-]{3,64}$/.test(reviewerName)) {
-          renderIssues([{ level: "warning", code: "PRESET_REVIEWER_INVALID", message: "Reviewer non valido: usare 3-64 caratteri [A-Za-z0-9_.@-]" }]);
+          renderIssues([{ level: "warning", code: "PRESET_REVIEWER_INVALID", message: t("issue.PRESET_REVIEWER_INVALID") }]);
           return;
         }
 
@@ -4361,7 +4547,7 @@
         const presets = serializeDiagramCustomPresets();
         const names = Object.keys(presets);
         if (names.length === 0) {
-          renderIssues([{ level: "warning", code: "PRESET_EXPORT_EMPTY", message: "Nessun preset custom da esportare" }]);
+          renderIssues([{ level: "warning", code: "PRESET_EXPORT_EMPTY", message: t("issue.PRESET_EXPORT_EMPTY") }]);
           return;
         }
 
@@ -4391,7 +4577,7 @@
           ? parsed.presets
           : parsed;
         if (!source || typeof source !== "object") {
-          throw new Error("Formato preset non valido");
+          throw new Error(t("error.presetInvalidFormat"));
         }
 
         let imported = 0;
@@ -4409,7 +4595,7 @@
         }
 
         if (imported === 0) {
-          renderIssues([{ level: "warning", code: "PRESET_IMPORT_EMPTY", message: "Nessun preset custom valido trovato nel file" }]);
+          renderIssues([{ level: "warning", code: "PRESET_IMPORT_EMPTY", message: t("issue.PRESET_IMPORT_EMPTY") }]);
           return;
         }
 
@@ -4543,6 +4729,56 @@
         };
       }
 
+      const DIAGRAM_CANVAS_WIDTH = 1200;
+      const DIAGRAM_CANVAS_HEIGHT = 800;
+      let diagramTextMeasureContext = null;
+
+      function getDiagramTextMeasureContext() {
+        if (diagramTextMeasureContext) return diagramTextMeasureContext;
+        const canvas = document.createElement("canvas");
+        diagramTextMeasureContext = canvas.getContext("2d");
+        return diagramTextMeasureContext;
+      }
+
+      function measureDiagramTextWidth(text, fontSizePx, fontWeight = "400") {
+        const ctx = getDiagramTextMeasureContext();
+        if (!ctx) {
+          return String(text || "").length * (fontSizePx * 0.58);
+        }
+        ctx.font = `${fontWeight} ${fontSizePx}px "Segoe UI", sans-serif`;
+        return ctx.measureText(String(text || "")).width;
+      }
+
+      function getClassNodeMetrics(cls) {
+        const visibleAttrs = diagramHideAttributes ? [] : (cls.attributes || []).slice(0, 8);
+        const titleText = String(cls.name || "");
+        const stereotypeText = "<<ABSTRACT>>";
+        const attrTexts = visibleAttrs.map((attr) => `${attr.name}: ${attr.type}`);
+
+        let maxTextWidth = measureDiagramTextWidth(titleText, 12, "700");
+        if (cls.abstract) {
+          maxTextWidth = Math.max(maxTextWidth, measureDiagramTextWidth(stereotypeText, 10, "400"));
+        }
+        for (const text of attrTexts) {
+          maxTextWidth = Math.max(maxTextWidth, measureDiagramTextWidth(text, 11, "400"));
+        }
+
+        const width = clamp(Math.ceil(maxTextWidth + 22), 160, 520);
+        const titleY = cls.abstract ? 30 : 20;
+        const attrStartY = cls.abstract ? 50 : 40;
+        const lastTextY = visibleAttrs.length > 0 ? attrStartY + (visibleAttrs.length - 1) * 14 : titleY;
+        const minHeight = cls.abstract ? 56 : 44;
+        const height = Math.max(minHeight, Math.ceil(lastTextY + 14));
+
+        return {
+          width,
+          height,
+          titleY,
+          attrStartY,
+          visibleAttrs
+        };
+      }
+
       function fitDiagramToContent() {
         if (!diagramStage || coreState.model.classes.length === 0) return;
         ensureDiagramLayout();
@@ -4553,14 +4789,11 @@
 
         for (const cls of coreState.model.classes) {
           const pos = diagramLayout.positions[cls.name] || { x: 0, y: 0 };
-          const abstractExtra = cls.abstract ? 14 : 0;
-          const nodeHeight = diagramHideAttributes
-            ? 56 + abstractExtra
-            : Math.max(80 + abstractExtra, 36 + abstractExtra + cls.attributes.length * 16);
+          const metrics = getClassNodeMetrics(cls);
           minX = Math.min(minX, pos.x);
           minY = Math.min(minY, pos.y);
-          maxX = Math.max(maxX, pos.x + 220);
-          maxY = Math.max(maxY, pos.y + nodeHeight);
+          maxX = Math.max(maxX, pos.x + metrics.width);
+          maxY = Math.max(maxY, pos.y + metrics.height);
         }
 
         const contentWidth = Math.max(100, maxX - minX + 80);
@@ -4603,12 +4836,13 @@
 
         for (const cls of coreState.model.classes) {
           const pos = diagramLayout.positions[cls.name] || { x: 0, y: 0 };
+          const metrics = getClassNodeMetrics(cls);
           const rect = document.createElementNS(ns, "rect");
           rect.setAttribute("class", "minimap-node");
           rect.setAttribute("x", String(pos.x * sx));
           rect.setAttribute("y", String(pos.y * sy));
-          rect.setAttribute("width", String(220 * sx));
-          rect.setAttribute("height", String(60 * sy));
+          rect.setAttribute("width", String(metrics.width * sx));
+          rect.setAttribute("height", String(metrics.height * sy));
           diagramMinimap.appendChild(rect);
         }
 
@@ -4628,8 +4862,8 @@
 
         const ratioX = clamp((clientX - rect.left) / rect.width, 0, 1);
         const ratioY = clamp((clientY - rect.top) / rect.height, 0, 1);
-        const targetX = ratioX * 1200;
-        const targetY = ratioY * 800;
+        const targetX = ratioX * DIAGRAM_CANVAS_WIDTH;
+        const targetY = ratioY * DIAGRAM_CANVAS_HEIGHT;
 
         const maxLeft = Math.max(0, diagramStage.scrollWidth - diagramStage.clientWidth);
         const maxTop = Math.max(0, diagramStage.scrollHeight - diagramStage.clientHeight);
@@ -4643,8 +4877,8 @@
         ensureDiagramLayout();
 
         const ns = "http://www.w3.org/2000/svg";
-        const canvasWidth = 1200;
-        const canvasHeight = 800;
+        const canvasWidth = DIAGRAM_CANVAS_WIDTH;
+        const canvasHeight = DIAGRAM_CANVAS_HEIGHT;
         diagramCanvas.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
         diagramCanvas.style.width = `${Math.round(canvasWidth * diagramZoom)}px`;
         diagramCanvas.style.height = `${Math.round(canvasHeight * diagramZoom)}px`;
@@ -4683,15 +4917,13 @@
           if (!childPos || !parentPos) continue;
 
           const parentClass = coreState.model.classes.find((c) => c.name === parentName);
-          const parentAbstractExtra = parentClass?.abstract ? 14 : 0;
-          const parentHeight = diagramHideAttributes
-            ? 56 + parentAbstractExtra
-            : Math.max(80 + parentAbstractExtra, 36 + parentAbstractExtra + ((parentClass?.attributes.length) || 0) * 16);
+          const parentMetrics = parentClass ? getClassNodeMetrics(parentClass) : { width: 220, height: 60 };
+          const childMetrics = getClassNodeMetrics(cls);
 
-          const childX = childPos.x + 110;
+          const childX = childPos.x + childMetrics.width / 2;
           const childY = childPos.y;
-          const parentX = parentPos.x + 110;
-          const parentY = parentPos.y + parentHeight;
+          const parentX = parentPos.x + parentMetrics.width / 2;
+          const parentY = parentPos.y + parentMetrics.height;
 
           const inheritancePath = document.createElementNS(ns, "path");
           inheritancePath.setAttribute("class", "diagram-inheritance");
@@ -4713,10 +4945,14 @@
           const toPos = diagramLayout.positions[assoc.to_class];
           if (!fromPos || !toPos) continue;
 
-          const x1 = fromPos.x + 110;
-          const y1 = fromPos.y + 30;
-          const x2 = toPos.x + 110;
-          const y2 = toPos.y + 30;
+          const fromClass = coreState.model.classes.find((c) => c.name === assoc.from_class);
+          const toClass = coreState.model.classes.find((c) => c.name === assoc.to_class);
+          const fromMetrics = fromClass ? getClassNodeMetrics(fromClass) : { width: 220, height: 60 };
+          const toMetrics = toClass ? getClassNodeMetrics(toClass) : { width: 220, height: 60 };
+          const x1 = fromPos.x + fromMetrics.width / 2;
+          const y1 = fromPos.y + fromMetrics.height / 2;
+          const x2 = toPos.x + toMetrics.width / 2;
+          const y2 = toPos.y + toMetrics.height / 2;
           const pairKey = `${assoc.from_class}->${assoc.to_class}`;
           const pairIndex = pairCount.get(pairKey) || 0;
           pairCount.set(pairKey, pairIndex + 1);
@@ -4757,26 +4993,23 @@
 
         for (const cls of coreState.model.classes) {
           const pos = diagramLayout.positions[cls.name] || { x: 40, y: 40 };
+          const metrics = getClassNodeMetrics(cls);
           const group = document.createElementNS(ns, "g");
           const selected = selectedClass === cls.name;
           group.setAttribute("class", `diagram-node ${selected ? "selected" : ""} ${cls.abstract ? "abstract" : ""}`.trim());
           group.style.cursor = "pointer";
 
-          const abstractExtra = cls.abstract ? 14 : 0;
-          const height = diagramHideAttributes
-            ? 56 + abstractExtra
-            : Math.max(80 + abstractExtra, 36 + abstractExtra + cls.attributes.length * 16);
           const rect = document.createElementNS(ns, "rect");
           rect.setAttribute("x", String(pos.x));
           rect.setAttribute("y", String(pos.y));
-          rect.setAttribute("width", "220");
-          rect.setAttribute("height", String(height));
+          rect.setAttribute("width", String(metrics.width));
+          rect.setAttribute("height", String(metrics.height));
           group.appendChild(rect);
 
           const title = document.createElementNS(ns, "text");
           title.setAttribute("class", "title");
           title.setAttribute("x", String(pos.x + 10));
-          title.setAttribute("y", String(pos.y + (cls.abstract ? 30 : 20)));
+          title.setAttribute("y", String(pos.y + metrics.titleY));
           title.textContent = cls.name;
           group.appendChild(title);
 
@@ -4790,12 +5023,11 @@
           }
 
           if (!diagramHideAttributes) {
-            const attrStartY = cls.abstract ? 50 : 40;
-            cls.attributes.slice(0, 8).forEach((attr, idx) => {
+            metrics.visibleAttrs.forEach((attr, idx) => {
               const t = document.createElementNS(ns, "text");
               t.setAttribute("class", "attr");
               t.setAttribute("x", String(pos.x + 10));
-              t.setAttribute("y", String(pos.y + attrStartY + idx * 14));
+              t.setAttribute("y", String(pos.y + metrics.attrStartY + idx * 14));
               t.textContent = `${attr.name}: ${attr.type}`;
               group.appendChild(t);
             });
@@ -4834,7 +5066,7 @@
 
       function autoLayoutDiagram() {
         if (isNodeDragLocked()) {
-          renderIssues([{ level: "info", code: "DIAGRAM_LAYOUT_LOCKED", message: "Layout bloccato: disattiva lock per applicare auto-layout" }]);
+          renderIssues([{ level: "info", code: "DIAGRAM_LAYOUT_LOCKED", message: t("issue.DIAGRAM_LAYOUT_LOCKED") }]);
           return;
         }
         diagramLayout.positions = {};
@@ -4864,8 +5096,12 @@
 
         if (!diagramDragState) return;
         const point = svgModelPointFromClient(event.clientX, event.clientY);
-        const nextX = clamp(point.x - diagramDragState.dx, 10, 950);
-        const nextY = clamp(point.y - diagramDragState.dy, 10, 700);
+        const dragClass = coreState.model.classes.find((c) => c.name === diagramDragState.className);
+        const dragMetrics = dragClass ? getClassNodeMetrics(dragClass) : { width: 220, height: 60 };
+        const maxX = Math.max(10, DIAGRAM_CANVAS_WIDTH - dragMetrics.width - 10);
+        const maxY = Math.max(10, DIAGRAM_CANVAS_HEIGHT - dragMetrics.height - 10);
+        const nextX = clamp(point.x - diagramDragState.dx, 10, maxX);
+        const nextY = clamp(point.y - diagramDragState.dy, 10, maxY);
         diagramLayout.positions[diagramDragState.className] = { x: nextX, y: nextY };
         diagramDragState.moved = true;
         renderDiagramEditor();
@@ -5574,7 +5810,7 @@
         if (sel.kind === "attr") {
           const attr = coreState.model.classes[sel.classIndex].attributes[sel.attrIndex];
           propNameInput.value = attr.name;
-          propTypeSelect.value = attr.type;
+          setPropertyTypeSelectValue(attr.type);
           propAttrCardInput.value = normalizeAttributeCardinality(attr);
           propTypeRow.style.display = "grid";
           propAttrCardRow.style.display = "grid";
@@ -5584,7 +5820,7 @@
         if (sel.kind === "domain") {
           const domain = coreState.model.domains[sel.domainIndex];
           propNameInput.value = domain.name;
-          propTypeSelect.value = domain.type || "TEXT";
+          setPropertyTypeSelectValue(domain.type || "TEXT");
           propAttrCardRow.style.display = "none";
           propTypeRow.style.display = "grid";
           return;
@@ -5980,9 +6216,9 @@
         if (currentIssues.length === 0) {
           const div = document.createElement("div");
           div.className = "issue info";
-          div.textContent = "Nessun problema rilevato";
+          div.textContent = t("diag.none");
           issues.appendChild(div);
-          diagStatus.textContent = "0 errori, 0 warning";
+          diagStatus.textContent = t("diag.summary", { errors: 0, warnings: 0, visible: 0 });
           bus.emit(EVENTS.DIAGNOSTICS_UPDATED, { errors: 0, warnings: 0 });
           return;
         }
@@ -5998,7 +6234,7 @@
 
         const errors = currentIssues.filter((i) => i.level === "error").length;
         const warnings = currentIssues.filter((i) => i.level === "warning").length;
-        diagStatus.textContent = `${errors} errori, ${warnings} warning (${filtered.length} visibili)`;
+        diagStatus.textContent = t("diag.summary", { errors, warnings, visible: filtered.length });
         bus.emit(EVENTS.DIAGNOSTICS_UPDATED, { errors, warnings });
 
         const table = document.createElement("table");
@@ -6012,7 +6248,7 @@
           tr.innerHTML = `<td>${item.level || "info"}</td><td>${item.code || "N/A"}</td><td>${item.line ?? "-"}</td><td>${item.column ?? "-"}</td><td>${item.message || ""}</td>`;
           const issueSelection = inferSelectionFromIssue(item, coreState.model);
           if (issueSelection) {
-            tr.title = `Vai a: ${issueSelection}`;
+            tr.title = t("diag.goTo", { path: issueSelection });
             tr.addEventListener("click", () => {
               markDiagnosticJumpStart(issueSelection);
               dispatch({ type: "SELECT_ELEMENT", elementId: issueSelection, source: "diagnostics" }, { syncText: false, markDirty: false });
@@ -6027,7 +6263,7 @@
       }
 
       function diagnosticsAsText() {
-        if (!currentIssues.length) return "Nessun problema rilevato";
+        if (!currentIssues.length) return t("diag.none");
         return currentIssues
           .map((i) => `${i.level || "info"};${i.code || "N/A"};${i.line ?? ""};${i.column ?? ""};${i.message || ""}`)
           .join("\n");
@@ -6045,9 +6281,9 @@
       async function copyDiagnostics() {
         try {
           await navigator.clipboard.writeText(diagnosticsAsText());
-          diagStatus.textContent = `${diagStatus.textContent} | report copiato`;
+          diagStatus.textContent = `${diagStatus.textContent} | ${t("diag.reportCopied")}`;
         } catch (_) {
-          diagStatus.textContent = `${diagStatus.textContent} | clipboard non disponibile`;
+          diagStatus.textContent = `${diagStatus.textContent} | ${t("diag.clipboardUnavailable")}`;
         }
       }
 
@@ -6140,7 +6376,7 @@
         if (!docsPreview || !docsHits || !docsStatus) return;
 
         if (!lastDocsMarkdown.trim()) {
-          docsStatus.textContent = "Docs: nessun export in questa sessione";
+          docsStatus.textContent = t("docs.noneSession");
           docsHits.innerHTML = "";
           docsPreview.textContent = "";
           return;
@@ -6167,12 +6403,17 @@
           .map((sec) => `${sec.heading}\n${sec.content}`.trim())
           .join("\n\n");
 
-        docsPreview.textContent = preview || "Nessuna sezione corrisponde al filtro corrente";
+        docsPreview.textContent = preview || t("docs.noMatch");
         docsHits.innerHTML = visible
           .slice(0, 20)
           .map((sec) => `<li>L${sec.line}: ${sec.title}</li>`)
           .join("");
-        docsStatus.textContent = `Docs: ${lastDocsFileName || "documentazione"} | sezioni=${sections.length}, match=${visible.length}, filtro='${scope}'`;
+        docsStatus.textContent = t("docs.status", {
+          fileName: lastDocsFileName || "documentation",
+          sections: sections.length,
+          visible: visible.length,
+          scope
+        });
       }
 
       async function refreshOpsMetrics() {
@@ -6185,7 +6426,7 @@
             .join(", ");
           opsMetricsStatus.textContent = `Ops: total=${payload.total_requests || 0}, failed=${payload.failed_requests || 0}, since=${payload.started_unix_s || 0}, top=${endpoints || "-"}`;
         } catch (err) {
-          opsMetricsStatus.textContent = `Ops: errore caricamento metriche (${err.message || "unknown"})`;
+          opsMetricsStatus.textContent = t("status.opsMetricsError", { message: err.message || "unknown" });
         }
       }
 
@@ -6245,7 +6486,7 @@
           const payload = await getJson("/api/collab/git-refs");
           renderGitRefs(payload);
         } catch (err) {
-          collabRefsOutput.textContent = `Errore listing refs: ${err.message || "unknown"}`;
+          collabRefsOutput.textContent = t("status.collabRefsError", { message: err.message || "unknown" });
         }
       }
 
@@ -6256,12 +6497,12 @@
         }
         const incomingModel = parsed?.model;
         if (!incomingModel || typeof incomingModel !== "object") {
-          throw new Error("Bundle collaborazione non valido: model mancante");
+          throw new Error(t("error.collabBundleInvalid"));
         }
         lastCollabBundleModel = deepClone(incomingModel);
         await diffBundleAgainstCurrent(lastCollabBundleModel, "import-preview");
         dispatch({ type: "SET_MODEL", model: incomingModel, resetSelection: true, source: "collab-bundle-import" }, { markDirty: true });
-        renderIssues([{ level: "info", code: "COLLAB_BUNDLE_IMPORTED", message: "Bundle collaborazione importato nel modello corrente" }]);
+        renderIssues([{ level: "info", code: "COLLAB_BUNDLE_IMPORTED", message: t("issue.COLLAB_BUNDLE_IMPORTED") }]);
       }
 
       function exportCollabBundle() {
@@ -6272,7 +6513,7 @@
         a.download = `${(currentProjectName || "project").replace(/[^A-Za-z0-9_-]+/g, "_")}-collab-bundle.json`;
         a.click();
         URL.revokeObjectURL(a.href);
-        renderIssues([{ level: "info", code: "COLLAB_BUNDLE_EXPORTED", message: "Bundle collaborazione esportato" }]);
+        renderIssues([{ level: "info", code: "COLLAB_BUNDLE_EXPORTED", message: t("issue.COLLAB_BUNDLE_EXPORTED") }]);
       }
 
       async function refreshCollabStatus() {
@@ -6283,20 +6524,20 @@
           const caps = Array.isArray(payload.capabilities) ? payload.capabilities.join(",") : "-";
           collabStatusMeta.textContent = `Collab: repo=${payload.repository_detected ? "yes" : "no"}, branch=${branch}, head=${head}, cap=${caps}`;
         } catch (err) {
-          collabStatusMeta.textContent = `Collab: errore stato repository (${err.message || "unknown"})`;
+          collabStatusMeta.textContent = t("status.collabRepoError", { message: err.message || "unknown" });
         }
       }
 
       async function runBundleDiffFromState() {
         if (!lastCollabBundleModel) {
-          renderIssues([{ level: "warning", code: "COLLAB_DIFF_NEEDS_BUNDLE", message: "Importa prima un bundle per eseguire il diff semantico" }]);
+          renderIssues([{ level: "warning", code: "COLLAB_DIFF_NEEDS_BUNDLE", message: t("issue.COLLAB_DIFF_NEEDS_BUNDLE") }]);
           return;
         }
         try {
           await diffBundleAgainstCurrent(lastCollabBundleModel, "last-imported-bundle");
-          renderIssues([{ level: "info", code: "COLLAB_DIFF_READY", message: "Diff semantico bundle vs modello corrente aggiornato" }]);
+          renderIssues([{ level: "info", code: "COLLAB_DIFF_READY", message: t("issue.COLLAB_DIFF_READY") }]);
         } catch (err) {
-          renderIssues([{ level: "error", code: "COLLAB_DIFF_ERROR", message: err.message || "Errore calcolo diff semantico" }]);
+          renderIssues([{ level: "error", code: "COLLAB_DIFF_ERROR", message: err.message || t("error.collabDiff") }]);
         }
       }
 
@@ -6310,9 +6551,9 @@
             .map(([k, v]) => `- ${k}: ${v}`)
             .join("\n");
           commitDraftOutput.textContent = `${payload.title || "feat(imc): model-sync"}\n\n${payload.body || ""}\n\nStats\n${stats}`;
-          renderIssues([{ level: "info", code: "COLLAB_COMMIT_DRAFT_READY", message: "Draft commit generato" }]);
+          renderIssues([{ level: "info", code: "COLLAB_COMMIT_DRAFT_READY", message: t("issue.COLLAB_COMMIT_DRAFT_READY") }]);
         } catch (err) {
-          renderIssues([{ level: "error", code: "COLLAB_COMMIT_DRAFT_ERROR", message: err.message || "Errore generazione commit draft" }]);
+          renderIssues([{ level: "error", code: "COLLAB_COMMIT_DRAFT_ERROR", message: err.message || t("error.collabCommitDraft") }]);
         }
       }
 
@@ -6326,7 +6567,7 @@
             {
               level: "error",
               code: "INPUT_ERROR",
-              message: err.payload?.issues?.[0]?.message || err.message || "Errore inatteso"
+              message: err.payload?.issues?.[0]?.message || err.message || t("error.unexpected")
             }
           ]);
           finalizeFixTask("validate-error");
@@ -6351,7 +6592,7 @@
           setDirty(false);
         } catch (err) {
           output.textContent = "";
-          renderIssues(err.payload?.issues || [{ level: "error", code: "EXPORT_ERROR", message: err.message || "Errore export" }]);
+          renderIssues(err.payload?.issues || [{ level: "error", code: "EXPORT_ERROR", message: err.message || t("error.export") }]);
         }
       }
 
@@ -6368,7 +6609,7 @@
 
       function ensureCanDiscardDirty() {
         if (!isDirty) return true;
-        return window.confirm("Il progetto corrente ha modifiche non salvate. Continuare e scartare le modifiche?");
+        return window.confirm(t("confirm.discardDirty"));
       }
 
       async function newProject() {
@@ -6381,9 +6622,9 @@
           });
           syncFromProject(payload);
           output.textContent = "";
-          renderIssues([{ level: "info", code: "PROJECT_NEW", message: "Nuovo progetto creato" }]);
+          renderIssues([{ level: "info", code: "PROJECT_NEW", message: t("issue.PROJECT_NEW") }]);
         } catch (err) {
-          renderIssues([{ level: "error", code: "PROJECT_NEW_ERROR", message: err.message || "Errore creazione progetto" }]);
+          renderIssues([{ level: "error", code: "PROJECT_NEW_ERROR", message: err.message || t("error.projectCreate") }]);
         }
       }
 
@@ -6422,12 +6663,12 @@
           setDirty(false);
           rememberProject(currentProjectName);
         } catch (err) {
-          renderIssues(err.payload?.issues || [{ level: "error", code: "PROJECT_SAVE_ERROR", message: err.message || "Errore salvataggio progetto" }]);
+          renderIssues(err.payload?.issues || [{ level: "error", code: "PROJECT_SAVE_ERROR", message: err.message || t("error.projectSave") }]);
         }
       }
 
       async function saveAsProject() {
-        const newName = window.prompt("Nome progetto (.imcp)", currentProjectName || "Project");
+        const newName = window.prompt(t("prompt.projectName"), currentProjectName || "Project");
         if (!newName) return;
         currentProjectName = newName.trim() || "Project";
         await saveProject();
@@ -6435,7 +6676,7 @@
 
       function renameProject() {
         const proposed = currentProjectName || "Project";
-        const nextName = window.prompt("Nuovo nome progetto", proposed);
+        const nextName = window.prompt(t("prompt.newProjectName"), proposed);
         if (!nextName) return;
         const trimmed = nextName.trim();
         if (!trimmed || trimmed === currentProjectName) return;
@@ -6475,12 +6716,12 @@
         } catch (err) {
           const conflict = err.payload?.issues?.some((i) => i.code === "ILI_MODEL_CONFLICT");
           if (!conflict) {
-            renderIssues(err.payload?.issues || [{ level: "error", code: "ILI_LOAD_ERROR", message: err.message || "Errore import .ili" }]);
+            renderIssues(err.payload?.issues || [{ level: "error", code: "ILI_LOAD_ERROR", message: err.message || t("error.importIli") }]);
             output.textContent = "";
             return;
           }
 
-          const confirmed = window.confirm("Conflitto modello rilevato (nome uguale, versione/md5 diverso). Sovrascrivere?");
+          const confirmed = window.confirm(t("confirm.modelConflictOverwrite"));
           if (!confirmed) {
             renderIssues(err.payload?.issues || []);
             return;
@@ -6506,7 +6747,7 @@
           });
           renderIssues(payload.issues || []);
         } catch (err) {
-          renderIssues(err.payload?.issues || [{ level: "error", code: "XTF_IMPORT_ERROR", message: err.message || "Errore import .xtf/.xml" }]);
+          renderIssues(err.payload?.issues || [{ level: "error", code: "XTF_IMPORT_ERROR", message: err.message || t("error.importXtf") }]);
         }
       }
 
@@ -6519,7 +6760,7 @@
           });
           renderIssues(payload.issues || []);
         } catch (err) {
-          renderIssues(err.payload?.issues || [{ level: "error", code: "XTF_EXPORT_ERROR", message: err.message || "Errore export .xtf/.xml" }]);
+          renderIssues(err.payload?.issues || [{ level: "error", code: "XTF_EXPORT_ERROR", message: err.message || t("error.exportXtf") }]);
         }
       }
 
@@ -6538,13 +6779,13 @@
           a.click();
           URL.revokeObjectURL(a.href);
         } catch (err) {
-          renderIssues(err.payload?.issues || [{ level: "error", code: "DOCS_EXPORT_ERROR", message: err.message || "Errore export documentazione markdown" }]);
+          renderIssues(err.payload?.issues || [{ level: "error", code: "DOCS_EXPORT_ERROR", message: err.message || t("error.exportDocs") }]);
         }
       }
 
       function downloadIli() {
         if (!output.textContent.trim()) {
-          renderIssues([{ level: "warning", code: "NO_OUTPUT", message: "Genera prima il file INTERLIS" }]);
+          renderIssues([{ level: "warning", code: "NO_OUTPUT", message: t("warn.noOutput") }]);
           return;
         }
         const blob = new Blob([output.textContent], { type: "text/plain;charset=utf-8" });
@@ -6602,16 +6843,16 @@
       });
 
       document.getElementById("addTopicBtn").addEventListener("click", () => {
-        const topicName = window.prompt("Nome nuovo topic", "NewTopic");
+        const topicName = window.prompt(t("prompt.newTopic"), "NewTopic");
         if (!topicName) return;
         const candidate = topicName.trim();
         if (!candidate) return;
         if (!isInterlisIdentifier(candidate)) {
-          renderIssues([{ level: "warning", code: "TOPIC_NAME_INVALID", message: "Nome topic non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          renderIssues([{ level: "warning", code: "TOPIC_NAME_INVALID", message: t("issue.TOPIC_NAME_INVALID") }]);
           return;
         }
         if (isNameTakenInGroup(coreState.model.topics, candidate)) {
-          renderIssues([{ level: "warning", code: "TREE_DUPLICATE_TOPIC", message: `Topic '${candidate}' gia esistente` }]);
+          renderIssues([{ level: "warning", code: "TREE_DUPLICATE_TOPIC", message: t("issue.TREE_DUPLICATE_TOPIC", { name: candidate }) }]);
           return;
         }
         dispatch({ type: "ADD_TOPIC", topicName: candidate, source: "tree-add-topic" });
@@ -6621,36 +6862,36 @@
         const sel = resolveSelection(coreState.selection.elementId, coreState.model);
         const topicName = sel.kind === "topic" ? sel.topicName : sel.kind === "subtopic" ? sel.topicName : null;
         if (!topicName) {
-          renderIssues([{ level: "warning", code: "TREE_TOPIC_SELECTION_REQUIRED", message: "Seleziona un topic per aggiungere un subtopic" }]);
+          renderIssues([{ level: "warning", code: "TREE_TOPIC_SELECTION_REQUIRED", message: t("issue.TREE_TOPIC_SELECTION_REQUIRED") }]);
           return;
         }
-        const subtopicName = window.prompt("Nome nuovo subtopic", "NewSubtopic");
+        const subtopicName = window.prompt(t("prompt.newSubtopic"), "NewSubtopic");
         if (!subtopicName) return;
         const candidate = subtopicName.trim();
         if (!candidate) return;
         if (!isInterlisIdentifier(candidate)) {
-          renderIssues([{ level: "warning", code: "SUBTOPIC_NAME_INVALID", message: "Nome subtopic non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          renderIssues([{ level: "warning", code: "SUBTOPIC_NAME_INVALID", message: t("issue.SUBTOPIC_NAME_INVALID") }]);
           return;
         }
         const topic = coreState.model.topics.find((item) => item.name === topicName);
         if (isNameTakenInGroup(topic?.subtopics || [], candidate)) {
-          renderIssues([{ level: "warning", code: "TREE_DUPLICATE_SUBTOPIC", message: `Subtopic '${candidate}' gia presente in ${topicName}` }]);
+          renderIssues([{ level: "warning", code: "TREE_DUPLICATE_SUBTOPIC", message: t("issue.TREE_DUPLICATE_SUBTOPIC", { name: candidate, topicName }) }]);
           return;
         }
         dispatch({ type: "ADD_SUBTOPIC", topicName, subtopicName: candidate, source: "tree-add-subtopic" });
       });
 
       document.getElementById("addClassBtn").addEventListener("click", () => {
-        const className = window.prompt("Nome nuova classe", "NewClass");
+        const className = window.prompt(t("prompt.newClass"), "NewClass");
         if (!className) return;
         const candidate = className.trim();
         if (!candidate) return;
         if (!isInterlisIdentifier(candidate)) {
-          renderIssues([{ level: "warning", code: "CLASS_NAME_INVALID", message: "Nome classe non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          renderIssues([{ level: "warning", code: "CLASS_NAME_INVALID", message: t("issue.CLASS_NAME_INVALID") }]);
           return;
         }
         if (isNameTakenInGroup(coreState.model.classes, candidate)) {
-          renderIssues([{ level: "warning", code: "TREE_DUPLICATE_CLASS", message: `Classe '${candidate}' gia esistente` }]);
+          renderIssues([{ level: "warning", code: "TREE_DUPLICATE_CLASS", message: t("issue.TREE_DUPLICATE_CLASS", { name: candidate }) }]);
           return;
         }
         dispatch({ type: "ADD_CLASS", className: candidate, source: "tree-add-class" });
@@ -6660,20 +6901,20 @@
         const sel = resolveSelection(coreState.selection.elementId, coreState.model);
         const className = sel.kind === "class" ? sel.className : sel.kind === "attr" ? sel.className : null;
         if (!className) {
-          renderIssues([{ level: "warning", code: "TREE_SELECTION_REQUIRED", message: "Seleziona una classe per aggiungere un attributo" }]);
+          renderIssues([{ level: "warning", code: "TREE_SELECTION_REQUIRED", message: t("issue.TREE_SELECTION_REQUIRED") }]);
           return;
         }
-        const attrName = window.prompt("Nome attributo", "new_attr");
+        const attrName = window.prompt(t("prompt.newAttribute"), "new_attr");
         if (!attrName) return;
         const targetClass = coreState.model.classes.find((c) => c.name === className);
         const candidate = attrName.trim();
         if (!candidate) return;
         if (!isInterlisIdentifier(candidate)) {
-          renderIssues([{ level: "warning", code: "ATTRIBUTE_NAME_INVALID", message: "Nome attributo non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          renderIssues([{ level: "warning", code: "ATTRIBUTE_NAME_INVALID", message: t("issue.ATTRIBUTE_NAME_INVALID") }]);
           return;
         }
         if (isNameTakenInGroup(targetClass?.attributes || [], candidate)) {
-          renderIssues([{ level: "warning", code: "TREE_DUPLICATE_ATTRIBUTE", message: `Attributo '${candidate}' gia presente in ${className}` }]);
+          renderIssues([{ level: "warning", code: "TREE_DUPLICATE_ATTRIBUTE", message: t("issue.TREE_DUPLICATE_ATTRIBUTE", { name: candidate, className }) }]);
           return;
         }
         dispatch({
@@ -6687,32 +6928,32 @@
       });
 
       document.getElementById("addDomainBtn").addEventListener("click", () => {
-        const domainName = window.prompt("Nome nuovo domain", "NewDomain");
+        const domainName = window.prompt(t("prompt.newDomain"), "NewDomain");
         if (!domainName) return;
         const candidate = domainName.trim();
         if (!candidate) return;
         if (!isInterlisIdentifier(candidate)) {
-          renderIssues([{ level: "warning", code: "DOMAIN_NAME_INVALID", message: "Nome domain non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          renderIssues([{ level: "warning", code: "DOMAIN_NAME_INVALID", message: t("issue.DOMAIN_NAME_INVALID") }]);
           return;
         }
         if (isNameTakenInGroup(coreState.model.domains, candidate)) {
-          renderIssues([{ level: "warning", code: "TREE_DUPLICATE_DOMAIN", message: `Domain '${candidate}' gia esistente` }]);
+          renderIssues([{ level: "warning", code: "TREE_DUPLICATE_DOMAIN", message: t("issue.TREE_DUPLICATE_DOMAIN", { name: candidate }) }]);
           return;
         }
         dispatch({ type: "ADD_DOMAIN", domainName: candidate, domainType: "TEXT", source: "tree-add-domain" });
       });
 
       document.getElementById("addAssocBtn").addEventListener("click", () => {
-        const associationName = window.prompt("Nome nuova relazione", "NewAssociation");
+        const associationName = window.prompt(t("prompt.newAssociation"), "NewAssociation");
         if (!associationName) return;
         const candidate = associationName.trim();
         if (!candidate) return;
         if (!isInterlisIdentifier(candidate)) {
-          renderIssues([{ level: "warning", code: "ASSOCIATION_NAME_INVALID", message: "Nome relazione non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          renderIssues([{ level: "warning", code: "ASSOCIATION_NAME_INVALID", message: t("issue.ASSOCIATION_NAME_INVALID") }]);
           return;
         }
         if (isNameTakenInGroup(coreState.model.associations, candidate)) {
-          renderIssues([{ level: "warning", code: "TREE_DUPLICATE_ASSOC", message: `Relazione '${candidate}' gia esistente` }]);
+          renderIssues([{ level: "warning", code: "TREE_DUPLICATE_ASSOC", message: t("issue.TREE_DUPLICATE_ASSOC", { name: candidate }) }]);
           return;
         }
         dispatch({
@@ -6728,10 +6969,10 @@
       document.getElementById("deleteSelectedBtn").addEventListener("click", () => {
         const sel = resolveSelection(coreState.selection.elementId, coreState.model);
         if (sel.kind === "none" || sel.kind === "model") {
-          renderIssues([{ level: "warning", code: "TREE_DELETE_INVALID", message: "Seleziona classe o attributo da eliminare" }]);
+          renderIssues([{ level: "warning", code: "TREE_DELETE_INVALID", message: t("issue.TREE_DELETE_INVALID") }]);
           return;
         }
-        if (!window.confirm("Confermi eliminazione elemento selezionato?")) return;
+        if (!window.confirm(t("confirm.deleteSelected"))) return;
         dispatch({ type: "DELETE_SELECTED", source: "tree-delete" });
       });
 
@@ -6739,13 +6980,13 @@
         const sel = resolveSelection(coreState.selection.elementId, coreState.model);
         const name = propNameInput.value.trim();
         if (!name) {
-          renderIssues([{ level: "warning", code: "PROPERTIES_NAME_REQUIRED", message: "Il nome non puo essere vuoto" }]);
+          renderIssues([{ level: "warning", code: "PROPERTIES_NAME_REQUIRED", message: t("issue.PROPERTIES_NAME_REQUIRED") }]);
           return;
         }
 
         const needsInterlisIdentifier = ["model", "topic", "subtopic", "class", "attr", "domain", "association"].includes(sel.kind);
         if (needsInterlisIdentifier && !isInterlisIdentifier(name)) {
-          renderIssues([{ level: "warning", code: "NAME_INVALID", message: "Nome non valido: secondo INTERLIS 2 non sono ammessi spazi; usa identificatore (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          renderIssues([{ level: "warning", code: "NAME_INVALID", message: t("issue.NAME_INVALID") }]);
           return;
         }
 
@@ -6758,7 +6999,7 @@
 
         if (sel.kind === "class") {
           if (isNameTakenInGroup(coreState.model.classes, name, sel.classIndex)) {
-            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_CLASS", message: `Classe '${name}' gia esistente` }]);
+            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_CLASS", message: t("issue.PROPERTIES_DUPLICATE_CLASS", { name }) }]);
             return;
           }
 
@@ -6766,11 +7007,11 @@
           const classAbstract = !!propClassAbstractInput.checked;
           if (classExtends) {
             if (classExtends === name) {
-              renderIssues([{ level: "warning", code: "CLASS_EXTENDS_SELF", message: "Una classe non puo estendere se stessa" }]);
+              renderIssues([{ level: "warning", code: "CLASS_EXTENDS_SELF", message: t("issue.CLASS_EXTENDS_SELF") }]);
               return;
             }
             if (!coreState.model.classes.some((c, idx) => idx !== sel.classIndex && c.name === classExtends)) {
-              renderIssues([{ level: "warning", code: "CLASS_EXTENDS_UNKNOWN", message: `Classe base '${classExtends}' non trovata` }]);
+              renderIssues([{ level: "warning", code: "CLASS_EXTENDS_UNKNOWN", message: t("issue.CLASS_EXTENDS_UNKNOWN", { classExtends }) }]);
               return;
             }
           }
@@ -6787,7 +7028,7 @@
 
         if (sel.kind === "topic") {
           if (isNameTakenInGroup(coreState.model.topics, name, sel.topicIndex)) {
-            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_TOPIC", message: `Topic '${name}' gia esistente` }]);
+            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_TOPIC", message: t("issue.PROPERTIES_DUPLICATE_TOPIC", { name }) }]);
             return;
           }
         }
@@ -6795,20 +7036,20 @@
         if (sel.kind === "subtopic") {
           const subtopics = coreState.model.topics[sel.topicIndex].subtopics;
           if (isNameTakenInGroup(subtopics, name, sel.subtopicIndex)) {
-            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_SUBTOPIC", message: `Subtopic '${name}' gia presente nel topic ${sel.topicName}` }]);
+            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_SUBTOPIC", message: t("issue.PROPERTIES_DUPLICATE_SUBTOPIC", { name, topicName: sel.topicName }) }]);
             return;
           }
         }
 
         if (sel.kind === "attr") {
           if (isNameTakenInGroup(coreState.model.classes[sel.classIndex].attributes, name, sel.attrIndex)) {
-            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_ATTRIBUTE", message: `Attributo '${name}' gia presente nella classe ${sel.className}` }]);
+            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_ATTRIBUTE", message: t("issue.PROPERTIES_DUPLICATE_ATTRIBUTE", { name, className: sel.className }) }]);
             return;
           }
 
           const attrCardinality = propAttrCardInput.value.trim();
           if (!isInterlisCardinality(attrCardinality)) {
-            renderIssues([{ level: "warning", code: "ATTRIBUTE_CARDINALITY_INVALID", message: "Cardinality attributo non valida. Usa formato min..max (es. 0..1, 1..1, 0..*, 1..*)" }]);
+            renderIssues([{ level: "warning", code: "ATTRIBUTE_CARDINALITY_INVALID", message: t("issue.ATTRIBUTE_CARDINALITY_INVALID") }]);
             return;
           }
 
@@ -6824,14 +7065,14 @@
 
         if (sel.kind === "domain") {
           if (isNameTakenInGroup(coreState.model.domains, name, sel.domainIndex)) {
-            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_DOMAIN", message: `Domain '${name}' gia esistente` }]);
+            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_DOMAIN", message: t("issue.PROPERTIES_DUPLICATE_DOMAIN", { name }) }]);
             return;
           }
         }
 
         if (sel.kind === "association") {
           if (isNameTakenInGroup(coreState.model.associations, name, sel.associationIndex)) {
-            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_ASSOC", message: `Relazione '${name}' gia esistente` }]);
+            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_ASSOC", message: t("issue.PROPERTIES_DUPLICATE_ASSOC", { name }) }]);
             return;
           }
 
@@ -6840,19 +7081,19 @@
           const fromCardinality = propAssocFromCardInput.value.trim();
           const cardinality = propAssocCardInput.value.trim();
           if (!fromClass || !toClass) {
-            renderIssues([{ level: "warning", code: "ASSOC_CLASS_REQUIRED", message: "From/To class sono obbligatori" }]);
+            renderIssues([{ level: "warning", code: "ASSOC_CLASS_REQUIRED", message: t("issue.ASSOC_CLASS_REQUIRED") }]);
             return;
           }
           if (!coreState.model.classes.some((c) => c.name === fromClass) || !coreState.model.classes.some((c) => c.name === toClass)) {
-            renderIssues([{ level: "warning", code: "ASSOC_CLASS_INVALID", message: "From/To class devono riferire classi esistenti" }]);
+            renderIssues([{ level: "warning", code: "ASSOC_CLASS_INVALID", message: t("issue.ASSOC_CLASS_INVALID") }]);
             return;
           }
           if (!isInterlisCardinality(fromCardinality)) {
-            renderIssues([{ level: "warning", code: "ASSOC_FROM_CARDINALITY_INVALID", message: "From cardinality non valida. Usa formato min..max (es. 0..1, 1..*, 0..*)" }]);
+            renderIssues([{ level: "warning", code: "ASSOC_FROM_CARDINALITY_INVALID", message: t("issue.ASSOC_FROM_CARDINALITY_INVALID") }]);
             return;
           }
           if (!isInterlisCardinality(cardinality)) {
-            renderIssues([{ level: "warning", code: "ASSOC_CARDINALITY_INVALID", message: "Cardinality non valida. Usa formato min..max (es. 0..1, 1..*, 0..*)" }]);
+            renderIssues([{ level: "warning", code: "ASSOC_CARDINALITY_INVALID", message: t("issue.ASSOC_CARDINALITY_INVALID") }]);
             return;
           }
 
@@ -6902,7 +7143,7 @@
       });
 
       addProseSectionBtn.addEventListener("click", () => {
-        const raw = window.prompt("Titolo nuova sezione prosa", "Semantics");
+        const raw = window.prompt(t("prompt.newProseSection"), "Semantics");
         if (!raw) return;
         const title = raw.trim();
         if (!title) return;
@@ -6916,7 +7157,7 @@
 
       deleteProseSectionBtn.addEventListener("click", () => {
         if (!activeProseSectionTitle) return;
-        if (!window.confirm(`Eliminare la sezione '${activeProseSectionTitle}'?`)) return;
+        if (!window.confirm(t("confirm.deleteProseSection", { title: activeProseSectionTitle }))) return;
         const oldTitle = activeProseSectionTitle;
         activeProseSectionTitle = "";
         dispatch({ type: "DELETE_PROSE_SECTION", title: oldTitle, source: "b7-prose" });
@@ -6924,7 +7165,7 @@
 
       saveProseBtn.addEventListener("click", () => {
         if (!activeProseSectionTitle) {
-          renderIssues([{ level: "warning", code: "B7_PROSE_SELECT", message: "Seleziona una sezione prosa" }]);
+          renderIssues([{ level: "warning", code: "B7_PROSE_SELECT", message: t("issue.B7_PROSE_SELECT") }]);
           return;
         }
         dispatch({
@@ -6954,7 +7195,7 @@
       addCatalogPresetBtn.addEventListener("click", () => {
         const className = catalogPresetClassSelect.value || coreState.model.classes[0]?.name || "";
         if (!className) {
-          renderIssues([{ level: "warning", code: "B7_PRESET_NEEDS_CLASS", message: "Aggiungi almeno una classe prima di creare preset" }]);
+          renderIssues([{ level: "warning", code: "B7_PRESET_NEEDS_CLASS", message: t("issue.B7_PRESET_NEEDS_CLASS") }]);
           return;
         }
 
@@ -6986,11 +7227,11 @@
         const presetName = catalogPresetNameInput.value.trim();
         const targetClass = catalogPresetClassSelect.value;
         if (!presetName) {
-          renderIssues([{ level: "warning", code: "B7_PRESET_NAME_EMPTY", message: "Inserisci un nome preset" }]);
+          renderIssues([{ level: "warning", code: "B7_PRESET_NAME_EMPTY", message: t("issue.B7_PRESET_NAME_EMPTY") }]);
           return;
         }
         if (!targetClass) {
-          renderIssues([{ level: "warning", code: "B7_PRESET_CLASS_EMPTY", message: "Seleziona una classe target" }]);
+          renderIssues([{ level: "warning", code: "B7_PRESET_CLASS_EMPTY", message: t("issue.B7_PRESET_CLASS_EMPTY") }]);
           return;
         }
 
@@ -7029,11 +7270,11 @@
       setCatalogPresetOwnerBtn.addEventListener("click", () => {
         const preset = getCatalogPresetByName(activeCatalogPresetName || catalogPresetSelect.value);
         if (!preset) return;
-        const candidate = window.prompt("Owner preset catalogo", preset.owner || "");
+        const candidate = window.prompt(t("prompt.catalogPresetOwner"), preset.owner || "");
         if (candidate === null) return;
         const owner = candidate.trim();
         if (owner && !/^[A-Za-z0-9_.@-]{3,64}$/.test(owner)) {
-          renderIssues([{ level: "warning", code: "CATALOG_PRESET_OWNER_INVALID", message: "Owner non valido: usare 3-64 caratteri [A-Za-z0-9_.@-]" }]);
+          renderIssues([{ level: "warning", code: "CATALOG_PRESET_OWNER_INVALID", message: t("issue.CATALOG_PRESET_OWNER_INVALID") }]);
           return;
         }
         dispatch({
@@ -7073,11 +7314,11 @@
           return;
         }
 
-        const reviewer = window.prompt("Reviewer che approva il preset catalogo", preset.owner || "reviewer");
+        const reviewer = window.prompt(t("prompt.catalogPresetReviewer"), preset.owner || "reviewer");
         if (!reviewer) return;
         const reviewerName = reviewer.trim();
         if (!/^[A-Za-z0-9_.@-]{3,64}$/.test(reviewerName)) {
-          renderIssues([{ level: "warning", code: "CATALOG_PRESET_REVIEWER_INVALID", message: "Reviewer non valido: usare 3-64 caratteri [A-Za-z0-9_.@-]" }]);
+          renderIssues([{ level: "warning", code: "CATALOG_PRESET_REVIEWER_INVALID", message: t("issue.CATALOG_PRESET_REVIEWER_INVALID") }]);
           return;
         }
 
@@ -7100,7 +7341,7 @@
       deleteCatalogPresetBtn.addEventListener("click", () => {
         const selected = activeCatalogPresetName || catalogPresetSelect.value;
         if (!selected) return;
-        if (!window.confirm(`Eliminare il preset '${selected}'?`)) return;
+        if (!window.confirm(t("confirm.deleteCatalogPreset", { name: selected }))) return;
         activeCatalogPresetName = "";
         dispatch({ type: "DELETE_CATALOG_VALIDATION_PRESET", name: selected, source: "b7-catalog-preset" });
       });
@@ -7113,7 +7354,7 @@
 
       addCatalogInstanceBtn.addEventListener("click", () => {
         if (coreState.model.classes.length === 0) {
-          renderIssues([{ level: "warning", code: "B7_CATALOG_NEEDS_CLASS", message: "Aggiungi almeno una classe prima di creare istanze catalogo" }]);
+          renderIssues([{ level: "warning", code: "B7_CATALOG_NEEDS_CLASS", message: t("issue.B7_CATALOG_NEEDS_CLASS") }]);
           return;
         }
         const defaultCatalog = coreState.model.enums[0]?.name || "Catalog";
@@ -7142,12 +7383,12 @@
       });
 
       document.getElementById("diagramAddClassBtn").addEventListener("click", () => {
-        const className = window.prompt("Nome nuova classe nel diagramma", "NewClass");
+        const className = window.prompt(t("prompt.diagramNewClass"), "NewClass");
         if (!className) return;
         const candidate = className.trim();
         if (!candidate) return;
         if (!isInterlisIdentifier(candidate)) {
-          renderIssues([{ level: "warning", code: "CLASS_NAME_INVALID", message: "Nome classe non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          renderIssues([{ level: "warning", code: "CLASS_NAME_INVALID", message: t("issue.CLASS_NAME_INVALID") }]);
           return;
         }
         if (isNameTakenInGroup(coreState.model.classes, candidate)) {
@@ -7163,23 +7404,23 @@
 
       document.getElementById("diagramAddRelationBtn").addEventListener("click", () => {
         if (coreState.model.classes.length < 2) {
-          renderIssues([{ level: "warning", code: "DIAGRAM_ASSOC_NEEDS_CLASSES", message: "Servono almeno due classi per creare una relazione" }]);
+          renderIssues([{ level: "warning", code: "DIAGRAM_ASSOC_NEEDS_CLASSES", message: t("issue.DIAGRAM_ASSOC_NEEDS_CLASSES") }]);
           return;
         }
         const selectedClass = getClassSelectionName() || coreState.model.classes[0].name;
-        const relationName = window.prompt("Nome relazione", "NewAssociation");
+        const relationName = window.prompt(t("prompt.diagramRelationName"), "NewAssociation");
         if (!relationName) return;
         const candidate = relationName.trim();
         if (!candidate) return;
         if (!isInterlisIdentifier(candidate)) {
-          renderIssues([{ level: "warning", code: "ASSOCIATION_NAME_INVALID", message: "Nome relazione non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          renderIssues([{ level: "warning", code: "ASSOCIATION_NAME_INVALID", message: t("issue.ASSOCIATION_NAME_INVALID") }]);
           return;
         }
         if (isNameTakenInGroup(coreState.model.associations, candidate)) {
           renderIssues([{ level: "warning", code: "DIAGRAM_DUPLICATE_ASSOC", message: `Relazione '${candidate}' gia esistente` }]);
           return;
         }
-        const targetClass = window.prompt("Classe destinazione", coreState.model.classes.find((c) => c.name !== selectedClass)?.name || selectedClass);
+        const targetClass = window.prompt(t("prompt.diagramTargetClass"), coreState.model.classes.find((c) => c.name !== selectedClass)?.name || selectedClass);
         if (!targetClass) return;
         const toClass = targetClass.trim();
         if (!coreState.model.classes.some((c) => c.name === toClass)) {
@@ -7323,7 +7564,7 @@
           await importProjectObject(projectObj);
           output.textContent = "";
         } catch (err) {
-          renderIssues([{ level: "error", code: "PROJECT_LOAD_ERROR", message: err.message || "Errore caricamento progetto" }]);
+          renderIssues([{ level: "error", code: "PROJECT_LOAD_ERROR", message: err.message || t("error.projectLoad") }]);
         }
       });
 
@@ -7335,7 +7576,7 @@
           const text = await file.text();
           await importIliObject(text);
         } catch (err) {
-          renderIssues(err.payload?.issues || [{ level: "error", code: "ILI_LOAD_ERROR", message: err.message || "Errore import .ili" }]);
+          renderIssues(err.payload?.issues || [{ level: "error", code: "ILI_LOAD_ERROR", message: err.message || t("error.importIli") }]);
         }
       });
 
@@ -7348,7 +7589,7 @@
           const parsed = JSON.parse(text);
           importCustomPresetsFromObject(parsed);
         } catch (err) {
-          renderIssues([{ level: "error", code: "PRESET_IMPORT_ERROR", message: err.message || "Errore import preset" }]);
+          renderIssues([{ level: "error", code: "PRESET_IMPORT_ERROR", message: err.message || t("error.importPreset") }]);
         }
       });
 
@@ -7361,7 +7602,7 @@
           const parsed = JSON.parse(text);
           importCatalogValidationPresetsFromObject(parsed);
         } catch (err) {
-          renderIssues([{ level: "error", code: "CATALOG_PRESET_IMPORT_ERROR", message: err.message || "Errore import preset catalogo" }]);
+          renderIssues([{ level: "error", code: "CATALOG_PRESET_IMPORT_ERROR", message: err.message || t("error.importCatalogPreset") }]);
         }
       });
 
@@ -7374,7 +7615,7 @@
           const parsed = JSON.parse(text);
           await importCollabBundleFromObject(parsed);
         } catch (err) {
-          renderIssues([{ level: "error", code: "COLLAB_BUNDLE_IMPORT_ERROR", message: err.message || "Errore import bundle collaborazione" }]);
+          renderIssues([{ level: "error", code: "COLLAB_BUNDLE_IMPORT_ERROR", message: err.message || t("error.importCollabBundle") }]);
         }
       });
 
