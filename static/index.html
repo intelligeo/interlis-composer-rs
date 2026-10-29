@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>INTERLIS Model Composer • UML Studio</title>
     <meta name="theme-color" content="#0b1020" />
+    <link rel="icon" href="data:," />
     <style>
       :root {
         --bg: #081522;
@@ -1364,9 +1365,9 @@
 
       <div class="status-bar" aria-label="Project status bar">
         <div class="status-bar-group">
-          <span><span class="status-dot"></span> Project: <strong id="statusBarProject">NewProject</strong></span>
-          <span>Mode: <strong>INTERLIS 2</strong></span>
-          <span>Version: <strong id="statusBarVersion">draft</strong></span>
+          <span><span class="status-dot"></span> <span id="statusProjectLabel">Project:</span> <strong id="statusBarProject">NewProject</strong></span>
+          <span><span id="statusModeLabel">Mode:</span> <strong>INTERLIS 2</strong></span>
+          <span><span id="statusVersionLabel">Version:</span> <strong id="statusBarVersion">draft</strong></span>
         </div>
         <div class="status-bar-group">
           <a href="#" id="statusBarAbout">About</a>
@@ -1378,7 +1379,7 @@
             <option value="it_IT">Italiano (IT)</option>
             <option value="en_US">English (US)</option>
           </select>
-          <span>Last sync: <strong id="statusBarSync">idle</strong></span>
+          <span><span id="statusLastSyncLabel">Last sync:</span> <strong id="statusBarSync">idle</strong></span>
         </div>
       </div>
       <article class="card" id="recentPanel" data-panel-name="recentPanel">
@@ -2534,13 +2535,14 @@
         setTextBySelector("#diagramPanel > h2", "panel.diagram");
         setTextBySelector("#statusBarAbout", "status.about");
         setTextBySelector("#uiLocaleLabel", "status.language");
-
-        const leftGroupSpans = document.querySelectorAll(".status-bar .status-bar-group:first-child span");
-        if (leftGroupSpans[0]) leftGroupSpans[0].childNodes[1].textContent = ` ${t("status.project")}: `;
-        if (leftGroupSpans[1]) leftGroupSpans[1].childNodes[0].textContent = `${t("status.mode")}: `;
-        if (leftGroupSpans[2]) leftGroupSpans[2].childNodes[0].textContent = `${t("status.version")}: `;
-        const lastSyncSpan = document.querySelector(".status-bar .status-bar-group:last-child span");
-        if (lastSyncSpan) lastSyncSpan.childNodes[0].textContent = `${t("status.lastSync")}: `;
+        const statusProjectLabel = document.getElementById("statusProjectLabel");
+        if (statusProjectLabel) statusProjectLabel.textContent = `${t("status.project")}:`;
+        const statusModeLabel = document.getElementById("statusModeLabel");
+        if (statusModeLabel) statusModeLabel.textContent = `${t("status.mode")}:`;
+        const statusVersionLabel = document.getElementById("statusVersionLabel");
+        if (statusVersionLabel) statusVersionLabel.textContent = `${t("status.version")}:`;
+        const statusLastSyncLabel = document.getElementById("statusLastSyncLabel");
+        if (statusLastSyncLabel) statusLastSyncLabel.textContent = `${t("status.lastSync")}:`;
 
         setPlaceholderBySelector("#treeSearch", "tree.searchPlaceholder");
         setOptionTextByValue("treeTypeFilter", "all", "tree.filter.all");
@@ -6368,7 +6370,11 @@
           output.textContent = "";
         } catch (err) {
           const conflict = err.payload?.issues?.some((i) => i.code === "ILI_MODEL_CONFLICT");
-          if (!conflict) throw err;
+          if (!conflict) {
+            renderIssues(err.payload?.issues || [{ level: "error", code: "ILI_LOAD_ERROR", message: err.message || "Errore import .ili" }]);
+            output.textContent = "";
+            return;
+          }
 
           const confirmed = window.confirm("Conflitto modello rilevato (nome uguale, versione/md5 diverso). Sovrascrivere?");
           if (!confirmed) {
