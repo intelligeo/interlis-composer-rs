@@ -316,10 +316,6 @@ impl ParseFailure {
 }
 
 pub fn is_supported_type(value: &str) -> bool {
-    let trimmed = value.trim();
-    if trimmed.starts_with('(') && trimmed.ends_with(')') {
-        return trimmed.len() > 2;
-    }
     matches!(
         normalize_type(value).as_str(),
         "TEXT" | "BOOLEAN" | "NUMERIC" | "DATE" | "TIMEOFDAY" | "DATETIME" | "UUID"
@@ -497,15 +493,6 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
     })
 }
 
-fn format_domain_definition(domain: &Domain) -> String {
-    let type_expr = domain.r#type.trim();
-    if type_expr.starts_with('(') && type_expr.ends_with(')') {
-        format!("DOMAIN {} = {};", domain.name, type_expr)
-    } else {
-        format!("DOMAIN {} = {};", domain.name, to_interlis_type(type_expr))
-    }
-}
-
 impl InterlisModel {
     pub fn to_interlis(&self) -> String {
         let mut out = String::new();
@@ -526,7 +513,11 @@ impl InterlisModel {
         }
 
         for domain in &self.domains {
-            out.push_str(&format!("    {}\n", format_domain_definition(domain)));
+            out.push_str(&format!(
+                "    !! DOMAIN {}: {};\n",
+                domain.name,
+                to_interlis_type(&domain.r#type)
+            ));
         }
 
         for class in &self.classes {

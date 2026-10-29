@@ -1,0 +1,9 @@
+app_name: versatili.app
+app_version: 0.1.0
+product_line: INTERLIS Model Composer
+organization: INTELLIGEO.ch by Dr. Sara Lanini-Maggi
+homepage: https://github.com/intelligeo/interlis-composer-rs
+support_email: ask@intelligeo.ch
+build_date: 2026-10-29
+copyright: (c) 2026 INTELLIGEO.ch
+license: Apache License v2.0

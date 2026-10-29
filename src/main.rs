@@ -873,6 +873,13 @@ fn semantic_model_diff(
         &mut details,
     );
     diff_named_collection(
+        "enums",
+        current_model.enums.iter().map(|v| v.name.as_str()),
+        bundle_model.enums.iter().map(|v| v.name.as_str()),
+        &mut summary,
+        &mut details,
+    );
+    diff_named_collection(
         "prose_sections",
         current_model.prose_sections.iter().map(|v| v.title.as_str()),
         bundle_model.prose_sections.iter().map(|v| v.title.as_str()),
@@ -1376,25 +1383,6 @@ fn validate_catalog_validation_presets(
     }
 }
 
-fn parse_domain_enum_values(value: &str) -> Option<HashSet<String>> {
-    let trimmed = value.trim();
-    if !(trimmed.starts_with('(') && trimmed.ends_with(')')) {
-        return None;
-    }
-
-    let inner = trimmed.strip_prefix('(')?.strip_suffix(')')?;
-    if inner.trim().is_empty() {
-        return Some(HashSet::new());
-    }
-
-    let values = inner
-        .split(',')
-        .map(|v| v.trim().trim_matches('"').trim().to_string())
-        .filter(|v| !v.is_empty())
-        .collect::<HashSet<_>>();
-    Some(values)
-}
-
 fn validate_catalog_instances(
     instances: &[CatalogInstance],
     classes: &[Class],
@@ -1403,11 +1391,6 @@ fn validate_catalog_instances(
     issues: &mut Vec<ValidationIssue>,
 ) {
     let class_names: HashSet<&str> = classes.iter().map(|c| c.name.as_str()).collect();
-    let domain_names: HashSet<&str> = domains.iter().map(|d| d.name.as_str()).collect();
-    let domain_values_by_name: HashMap<&str, HashSet<String>> = domains
-        .iter()
-        .filter_map(|d| parse_domain_enum_values(&d.r#type).map(|values| (d.name.as_str(), values)))
-        .collect();
     let class_by_name: HashMap<&str, &Class> = classes.iter().map(|c| (c.name.as_str(), c)).collect();
     let domain_by_name: HashMap<String, &Domain> = domains
         .iter()
@@ -1433,12 +1416,6 @@ fn validate_catalog_instances(
                 "Catalog instance catalog cannot be empty",
                 Some(path.clone()),
             ));
-        } else if !domain_names.contains(catalog) {
-            issues.push(warn_issue_at(
-                "CATALOG_INSTANCE_DOMAIN_UNKNOWN",
-                &format!("Catalog '{}' is not defined as a DOMAIN", catalog),
-                Some(path.clone()),
-            ));
         }
 
         if code.is_empty() {
@@ -1453,23 +1430,6 @@ fn validate_catalog_instances(
                 &format!("Catalog instance code '{}' is not a valid INTERLIS identifier", code),
                 Some(path.clone()),
             ));
-        } else if let Some(values) = domain_values_by_name.get(catalog) {
-            if values.is_empty() {
-                issues.push(warn_issue_at(
-                    "CATALOG_INSTANCE_DOMAIN_EMPTY",
-                    &format!("Catalog '{}' has no DOMAIN values defined", catalog),
-                    Some(path.clone()),
-                ));
-            } else if !values.contains(code) {
-                issues.push(warn_issue_at(
-                    "CATALOG_INSTANCE_CODE_NOT_IN_DOMAIN",
-                    &format!(
-                        "Catalog instance code '{}:{}' is not present in DOMAIN '{}' values",
-                        catalog, code, catalog
-                    ),
-                    Some(path.clone()),
-                ));
-            }
         }
 
         if label.is_empty() {
@@ -2098,6 +2058,7 @@ fn validate_duplicates(
             ));
         }
     }
+
 }
 
 fn is_cardinality(value: &str) -> bool {

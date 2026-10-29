@@ -5,42 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>INTERLIS Model Composer • UML Studio</title>
     <meta name="theme-color" content="#0b1020" />
-    <link rel="stylesheet" href="https://unpkg.com/@carbon/styles@1.77.0/css/styles.css" />
     <style>
       :root {
-        --bg: #090f1a;
-        --bg-alt: #101a2b;
-        --panel: rgba(15, 23, 35, 0.9);
-        --panel-strong: #111b2d;
-        --panel-soft: #132238;
-        --panel-elevated: #18293d;
-        --ink: #edf5ff;
-        --ink-soft: #9bb0c8;
-        --accent: #5eead4;
-        --accent-2: #8ab4ff;
-        --ok: #34d399;
-        --warn: #fbbf24;
-        --err: #f87171;
-        --line: rgba(148, 163, 184, 0.18);
-        --shadow: 0 24px 80px rgba(2, 6, 23, 0.72);
+        --bg: #081522;
+        --bg-alt: #0d1b2a;
+        --panel: rgba(11, 22, 35, 0.92);
+        --panel-strong: #10233a;
+        --panel-soft: #12273d;
+        --panel-elevated: #14314d;
+        --ink: #dfeaf8;
+        --ink-soft: #9bb1cb;
+        --accent: #4da3ff;
+        --accent-2: #3cc5ff;
+        --ok: #63d39c;
+        --warn: #f6c453;
+        --err: #f46d6d;
+        --line: rgba(125, 170, 214, 0.2);
+        --shadow: 0 18px 42px rgba(2, 6, 17, 0.55);
+        --input-bg: #0c1d2f;
+        --input-border: rgba(115, 157, 210, 0.28);
+        --subtle: rgba(159, 178, 204, 0.18);
       }
 
       * { box-sizing: border-box; }
 
       html, body {
         height: 100%;
-        min-height: 100%;
       }
 
       body {
         margin: 0;
         color: var(--ink);
-        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
-        overflow: hidden;
+        font-family: "Segoe UI", "Trebuchet MS", sans-serif;
         background:
-          radial-gradient(circle at top left, rgba(75, 85, 255, 0.18), transparent 30%),
-          radial-gradient(circle at 90% 10%, rgba(45, 212, 191, 0.12), transparent 28%),
-          linear-gradient(180deg, #070d18 0%, #0b1020 100%);
+          radial-gradient(circle at top left, rgba(77, 163, 255, 0.18), transparent 30%),
+          linear-gradient(180deg, #071421 0%, #0a1627 18%, #0d1b2d 100%);
+        overflow: hidden;
       }
 
       body::before {
@@ -48,25 +48,23 @@
         position: fixed;
         inset: 0;
         pointer-events: none;
-        background: linear-gradient(transparent, rgba(255,255,255,0.02));
+        background: linear-gradient(180deg, rgba(77, 163, 255, 0.05), transparent 35%);
       }
 
       .wrap {
-        width: calc(100% - 1rem);
-        max-width: none;
-        margin: 0.75rem auto 1.25rem;
-        height: calc(100vh - 1.5rem);
-        max-height: calc(100vh - 1.5rem);
+        width: min(1600px, calc(100% - 1.5rem));
+        height: calc(100vh - 2rem);
+        margin: 1rem auto 0;
         display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr);
         gap: 1rem;
-        overflow: hidden;
       }
 
       .hero {
         position: relative;
-        background: linear-gradient(135deg, rgba(15, 118, 110, 0.92), rgba(37, 99, 235, 0.72), rgba(8, 15, 30, 0.96));
-        color: #effdfd;
-        border: 1px solid rgba(94, 234, 212, 0.35);
+        background: linear-gradient(135deg, rgba(17, 46, 78, 0.95), rgba(24, 61, 104, 0.86), rgba(7, 18, 31, 0.95));
+        color: #edf6ff;
+        border: 1px solid rgba(77, 163, 255, 0.35);
         border-radius: 18px;
         padding: 1.3rem 1.35rem 1.2rem;
         box-shadow: var(--shadow);
@@ -114,10 +112,10 @@
       }
 
       .app-ribbon {
-        background: linear-gradient(180deg, rgba(15, 23, 33, 0.98), rgba(11, 17, 25, 0.98));
-        border: 1px solid rgba(148, 163, 184, 0.18);
-        border-radius: 10px;
-        box-shadow: 0 4px 18px rgba(2, 6, 23, 0.28);
+        background: rgba(10, 19, 32, 0.96);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: 0 8px 28px rgba(2, 6, 17, 0.42);
         overflow: hidden;
       }
 
@@ -126,17 +124,17 @@
         align-items: center;
         gap: 0.2rem;
         padding: 0.45rem 0.6rem 0;
-        border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-        background: rgba(148, 163, 184, 0.02);
+        border-bottom: 1px solid rgba(125, 170, 214, 0.18);
+        background: rgba(17, 31, 49, 0.7);
       }
 
       .ribbon-tab {
         appearance: none;
         border: 1px solid transparent;
         border-bottom: none;
-        border-radius: 6px 6px 0 0;
+        border-radius: 8px 8px 0 0;
         background: transparent;
-        color: rgba(226, 232, 240, 0.68);
+        color: var(--ink-soft);
         font-weight: 700;
         padding: 0.45rem 0.7rem;
         cursor: pointer;
@@ -145,9 +143,9 @@
       }
 
       .ribbon-tab.active {
-        background: rgba(148, 163, 184, 0.06);
+        background: rgba(18, 39, 61, 0.9);
         color: var(--ink);
-        border-color: rgba(148, 163, 184, 0.16);
+        border-color: var(--line);
       }
 
       .ribbon-panel {
@@ -166,9 +164,9 @@
       }
 
       .ribbon-group {
-        background: rgba(15, 23, 42, 0.5);
-        border: 1px solid rgba(148, 163, 184, 0.12);
-        border-radius: 8px;
+        background: rgba(15, 30, 47, 0.88);
+        border: 1px solid var(--line);
+        border-radius: 10px;
         padding: 0.34rem 0.4rem;
         min-width: 145px;
       }
@@ -177,7 +175,7 @@
         font-size: 0.6rem;
         letter-spacing: 0.09em;
         text-transform: uppercase;
-        color: rgba(191, 219, 254, 0.7);
+        color: rgba(157, 196, 235, 0.9);
         margin: 0 0 0.25rem;
       }
 
@@ -185,70 +183,49 @@
         display: flex;
         flex-wrap: wrap;
         gap: 0.24rem;
-        align-items: flex-end;
-      }
-
-      .ribbon-field-group {
-        display: grid;
-        gap: 0.2rem;
-        min-width: 150px;
-      }
-
-      .ribbon-field-group label {
-        color: rgba(191, 219, 254, 0.75);
-        font-size: 0.58rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        margin: 0;
-      }
-
-      .ribbon-field-group select {
-        appearance: none;
-        width: 100%;
-        min-height: 2.1rem;
-        border: 1px solid rgba(148, 163, 184, 0.18);
-        border-radius: 6px;
-        background: rgba(15, 23, 42, 0.9);
-        color: var(--ink);
-        padding: 0.38rem 0.5rem;
-        font-size: 0.72rem;
       }
 
       .ribbon-button {
         display: inline-flex;
         align-items: center;
         gap: 0.38rem;
-        background: rgba(17, 24, 39, 0.9);
-        border: 1px solid rgba(148, 163, 184, 0.16);
-        border-radius: 6px;
+        background: rgba(11, 22, 35, 0.8);
+        border: 1px solid var(--line);
+        border-radius: 8px;
         color: var(--ink);
         padding: 0.38rem 0.5rem;
         font-weight: 600;
         font-size: 0.72rem;
         cursor: pointer;
-        transition: border-color 0.15s ease, background 0.15s ease;
+        transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
         line-height: 1.2;
       }
 
       .ribbon-button:hover {
-        border-color: rgba(191, 219, 254, 0.2);
+        border-color: rgba(77, 163, 255, 0.45);
+        box-shadow: 0 6px 16px rgba(77, 163, 255, 0.08);
       }
 
       .ribbon-button.active,
       .ribbon-button[aria-pressed="true"] {
-        background: rgba(30, 41, 59, 0.96);
-        border-color: rgba(147, 197, 253, 0.38);
+        background: rgba(77, 163, 255, 0.12);
+        border-color: rgba(77, 163, 255, 0.42);
       }
 
       .ribbon-icon {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 0.92rem;
-        height: 0.92rem;
+        width: 1.05rem;
+        height: 1.05rem;
+        padding: 0.12rem;
+        border-radius: 0.45rem;
+        background: linear-gradient(180deg, rgba(77, 163, 255, 0.12), rgba(77, 163, 255, 0.04));
+        border: 1px solid rgba(125, 170, 214, 0.18);
         color: #dfeaf8;
-        flex: 0 0 0.92rem;
+        flex: 0 0 1.05rem;
         opacity: 0.96;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
       }
 
       .ribbon-icon svg {
@@ -257,9 +234,10 @@
         display: block;
         stroke: currentColor;
         fill: none;
-        stroke-width: 1.8;
+        stroke-width: 1.85;
         stroke-linecap: round;
         stroke-linejoin: round;
+        shape-rendering: geometricPrecision;
       }
 
       .ribbon-button strong {
@@ -268,6 +246,10 @@
 
       .card.is-hidden {
         display: none !important;
+      }
+
+      .card[data-panel-name]:not(#structurePanel):not(#propertiesPanel):not(#diagramPanel) {
+        display: none;
       }
 
       .sync-meta {
@@ -306,8 +288,8 @@
       }
 
       .workspace-shell > .card {
+        min-height: 0;
         height: 100%;
-        min-height: 420px;
       }
 
       .workspace-shell .diagram-card {
@@ -320,9 +302,9 @@
 
       .card {
         position: relative;
-        background: #161616;
-        border: 1px solid #393939;
-        border-radius: 0;
+        background: linear-gradient(180deg, rgba(12, 23, 38, 0.95), rgba(10, 20, 32, 0.97));
+        border: 1px solid var(--line);
+        border-radius: 18px;
         overflow: hidden;
         box-shadow: var(--shadow);
         min-height: 220px;
@@ -330,22 +312,6 @@
         display: flex;
         flex-direction: column;
         transition: flex-basis 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
-      }
-
-      .card.supplemental-panel {
-        position: fixed;
-        top: 10.2rem;
-        right: 1rem;
-        width: min(480px, 42vw);
-        height: calc(100vh - 11.2rem);
-        max-height: calc(100vh - 11.2rem);
-        z-index: 40;
-        border-radius: 0;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-      }
-
-      .card.supplemental-panel .content {
-        max-height: calc(100vh - 14rem);
       }
 
       .card.dragging {
@@ -362,6 +328,7 @@
       }
 
       .panel-resize-handle {
+        display: none !important;
         position: absolute;
         right: 10px;
         bottom: 8px;
@@ -397,9 +364,9 @@
         gap: 0.5rem;
         margin: 0;
         padding: 0.85rem 1rem;
-        border-bottom: 1px solid #393939;
-        background: #262626;
-        color: #f4f4f4;
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(18, 39, 61, 0.9), rgba(10, 19, 32, 0.9));
+        color: var(--ink);
         font-size: 0.96rem;
         letter-spacing: 0.02em;
       }
@@ -440,90 +407,62 @@
 
       .card .content {
         padding: 0.9rem;
-        flex: 1 1 auto;
+        overflow: auto;
         min-height: 0;
-        overflow-y: auto;
-        overscroll-behavior: contain;
+        flex: 1 1 auto;
       }
 
-      .card .content::-webkit-scrollbar {
-        width: 10px;
+      .card .actions,
+      .card .diag-tools,
+      .card .diagram-toolbar,
+      .card .kpi-actions,
+      .card .panel-header-actions {
+        display: none !important;
       }
 
-      .card .content::-webkit-scrollbar-track {
-        background: rgba(15, 23, 42, 0.55);
-      }
-
-      .card .content::-webkit-scrollbar-thumb {
-        background: rgba(148, 163, 184, 0.45);
-        border-radius: 999px;
-        border: 2px solid rgba(15, 23, 42, 0.8);
-      }
-
-      .panel-command-hub {
-        border: 1px solid var(--line);
+      .panel-context-menu {
+        position: fixed;
+        z-index: 9999;
+        background: rgba(10, 21, 33, 0.98);
+        border: 1px solid rgba(125, 170, 214, 0.28);
         border-radius: 10px;
-        background: rgba(8, 15, 30, 0.62);
-        margin-bottom: 0.75rem;
-        padding: 0.3rem 0.45rem;
-      }
-
-      .panel-command-hub > summary {
-        cursor: pointer;
-        font-weight: 700;
-        color: #dbeafe;
-        list-style: none;
-      }
-
-      .panel-command-hub > summary::-webkit-details-marker {
+        box-shadow: 0 14px 32px rgba(2, 6, 17, 0.6);
+        min-width: 180px;
+        padding: 0.35rem;
         display: none;
       }
 
-      .panel-command-stack {
-        margin-top: 0.4rem;
-        display: grid;
-        gap: 0.3rem;
+      .panel-context-menu.visible {
+        display: block;
       }
 
-      .panel-command-group {
-        border: 1px solid rgba(148, 163, 184, 0.2);
+      .panel-context-menu button {
+        display: block;
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--ink);
+        text-align: left;
+        padding: 0.5rem 0.65rem;
         border-radius: 8px;
-        background: rgba(15, 23, 42, 0.42);
-        padding: 0.22rem 0.35rem;
-      }
-
-      .panel-command-group > summary {
+        font-size: 0.84rem;
         cursor: pointer;
-        color: var(--ink-soft);
-        font-size: 0.82rem;
-        font-weight: 700;
-        list-style: none;
       }
 
-      .panel-command-group > summary::-webkit-details-marker {
-        display: none;
-      }
-
-      .panel-command-body {
-        margin-top: 0.25rem;
-      }
-
-      .panel-command-body .diag-tools,
-      .panel-command-body .actions,
-      .panel-command-body .diagram-toolbar {
-        margin: 0;
+      .panel-context-menu button:hover {
+        background: rgba(77, 163, 255, 0.12);
       }
 
       textarea,
       input,
       select {
         width: 100%;
-        border: 1px solid #525252;
-        border-radius: 0;
-        background: #262626;
-        color: #f4f4f4;
+        border: 1px solid var(--input-border);
+        border-radius: 10px;
+        background: var(--input-bg);
+        color: var(--ink);
         padding: 0.7rem 0.8rem;
-        font-family: "IBM Plex Sans", sans-serif;
+        font-family: "Segoe UI", sans-serif;
         font-size: 0.92rem;
         transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
       }
@@ -532,14 +471,15 @@
         min-height: 300px;
         resize: vertical;
         font-family: Consolas, "Courier New", monospace;
+        background: linear-gradient(180deg, #091923, #0b1f31);
       }
 
       textarea:focus,
       input:focus,
       select:focus {
         outline: none;
-        border-color: #0f62fe;
-        box-shadow: 0 0 0 1px #0f62fe;
+        border-color: rgba(94, 234, 212, 0.75);
+        box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.18);
       }
 
       .actions {
@@ -550,8 +490,8 @@
       }
 
       button {
-        border: 1px solid #525252;
-        border-radius: 0;
+        border: 1px solid rgba(125, 170, 214, 0.2);
+        border-radius: 999px;
         padding: 0.58rem 0.9rem;
         font-weight: 700;
         font-size: 0.84rem;
@@ -564,28 +504,28 @@
       }
 
       .primary {
-        background: #0f62fe;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
         color: #ffffff;
-        border-color: #0f62fe;
-        box-shadow: none;
+        border-color: rgba(59, 130, 246, 0.2);
+        box-shadow: 0 8px 18px rgba(59, 130, 246, 0.18);
       }
 
       .secondary {
-        background: #0043ce;
-        color: #ffffff;
-        border-color: #0043ce;
+        background: linear-gradient(135deg, rgba(77, 163, 255, 0.18), rgba(60, 197, 255, 0.14));
+        color: #edf6ff;
+        border-color: rgba(77, 163, 255, 0.28);
       }
 
       .ghost {
-        background: #262626;
-        color: #f4f4f4;
+        background: rgba(15, 30, 47, 0.7);
+        color: var(--ink);
       }
 
       pre {
         margin: 0;
         padding: 0.8rem;
         border-radius: 12px;
-        background: #07111d;
+        background: linear-gradient(180deg, #081522, #0b1f31);
         color: #dfeaf8;
         min-height: 300px;
         overflow: auto;
@@ -615,7 +555,7 @@
         border-radius: 8px;
         padding: 0.35rem 0.45rem;
         background: rgba(8, 15, 30, 0.75);
-        color: var(--ink);
+        color: #edf6ff;
       }
 
       .diag-table {
@@ -682,13 +622,48 @@
         color: #a3312a;
       }
 
-      .issue.error { background: rgba(248, 113, 113, 0.12); color: #fca5a5; border: 1px solid rgba(248, 113, 113, 0.2); }
-      .issue.warning { background: rgba(251, 191, 36, 0.12); color: #fcd34d; border: 1px solid rgba(251, 191, 36, 0.2); }
-      .issue.info { background: rgba(52, 211, 153, 0.12); color: #a7f3d0; border: 1px solid rgba(52, 211, 153, 0.2); }
+      .issue.error { background: rgba(244, 109, 109, 0.12); color: #ffb1b1; border: 1px solid rgba(244, 109, 109, 0.2); }
+      .issue.warning { background: rgba(246, 196, 83, 0.12); color: #f8d57c; border: 1px solid rgba(246, 196, 83, 0.2); }
+      .issue.info { background: rgba(99, 211, 156, 0.12); color: #b4edd0; border: 1px solid rgba(99, 211, 156, 0.2); }
 
-      .foot {
+      .status-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.7rem;
+        flex-wrap: wrap;
+        padding: 0.55rem 0.85rem;
+        border-radius: 12px;
+        background: rgba(10, 20, 32, 0.88);
+        border: 1px solid var(--line);
         color: var(--ink-soft);
-        font-size: 0.86rem;
+        font-size: 0.82rem;
+        box-shadow: 0 8px 22px rgba(2, 6, 17, 0.28);
+      }
+
+      .status-bar-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .status-bar a {
+        color: #bfe0ff;
+        text-decoration: none;
+      }
+
+      .status-bar a:hover {
+        text-decoration: underline;
+      }
+
+      .status-dot {
+        display: inline-block;
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: var(--ok);
+        box-shadow: 0 0 10px rgba(99, 211, 156, 0.8);
       }
 
       .recent {
@@ -716,18 +691,22 @@
         border: 1px solid var(--line);
         border-radius: 10px;
         padding: 0.38rem 0.5rem;
-        background: rgba(8, 15, 30, 0.75);
-        color: var(--ink);
+        background: rgba(10, 20, 32, 0.9);
+        color: #edf6ff;
         cursor: pointer;
       }
 
       .tree-item.selected {
-        border-color: rgba(94, 234, 212, 0.7);
-        background: rgba(94, 234, 212, 0.12);
+        border-color: rgba(77, 163, 255, 0.7);
+        background: rgba(77, 163, 255, 0.12);
       }
 
       .tree-item.attr {
         margin-left: 1rem;
+      }
+
+      .tree-item.enum-value {
+        margin-left: 2rem;
       }
 
       .tree-item.subtopic {
@@ -778,10 +757,25 @@
         padding: 0.4rem 0.45rem;
       }
 
+      #propertiesPanel .content.form-grid {
+        align-content: start;
+        gap: 0.4rem;
+        padding-top: 0.6rem;
+      }
+
+      #propertiesPanel .form-row {
+        gap: 0.18rem;
+      }
+
+      #propertiesPanel .form-row label {
+        margin: 0;
+        line-height: 1.2;
+      }
+
       .diagram-stage {
         border: 1px solid var(--line);
         border-radius: 14px;
-        background: linear-gradient(180deg, rgba(9, 15, 26, 0.96), rgba(19, 30, 46, 0.92));
+        background: linear-gradient(180deg, rgba(9, 18, 30, 0.98), rgba(15, 29, 46, 0.96));
         min-height: 360px;
         overflow: auto;
       }
@@ -793,8 +787,8 @@
       }
 
       .diagram-node rect {
-        fill: rgba(15, 23, 35, 0.95);
-        stroke: rgba(148, 163, 184, 0.3);
+        fill: rgba(16, 31, 48, 0.98);
+        stroke: rgba(125, 170, 214, 0.35);
         stroke-width: 1.2;
         rx: 8;
       }
@@ -854,9 +848,9 @@
       }
 
       .ghost.active {
-        background: rgba(94, 234, 212, 0.12);
+        background: rgba(77, 163, 255, 0.12);
         color: var(--ink);
-        border-color: rgba(94, 234, 212, 0.5);
+        border-color: rgba(77, 163, 255, 0.5);
       }
 
       .diagram-toolbar {
@@ -900,10 +894,10 @@
       .flow-step {
         border: 1px solid var(--line);
         border-radius: 10px;
-        background: rgba(8, 15, 30, 0.7);
+        background: rgba(11, 22, 35, 0.8);
         padding: 0.6rem 0.7rem;
         font-size: 0.88rem;
-        color: var(--ink);
+        color: #edf6ff;
       }
 
       .kpi-panel {
@@ -914,6 +908,7 @@
         padding: 0.6rem;
         display: grid;
         gap: 0.35rem;
+        color: #edf6ff;
       }
 
       .kpi-line {
@@ -927,131 +922,9 @@
         flex-wrap: wrap;
         gap: 0.35rem;
       }
-
-      .context-menu {
-        position: fixed;
-        z-index: 120;
-        min-width: 240px;
-        max-width: min(360px, calc(100vw - 1rem));
-        background: #161616;
-        border: 1px solid #393939;
-        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
-        display: none;
-      }
-
-      .context-menu.active {
-        display: block;
-      }
-
-      .context-menu-header {
-        padding: 0.6rem 0.8rem;
-        border-bottom: 1px solid #393939;
-        color: #f4f4f4;
-        font-size: 0.82rem;
-        font-weight: 600;
-      }
-
-      .context-menu-list {
-        margin: 0;
-        padding: 0.2rem 0;
-        list-style: none;
-      }
-
-      .context-menu-item {
-        width: 100%;
-        border: none;
-        border-radius: 0;
-        background: transparent;
-        color: #f4f4f4;
-        text-align: left;
-        padding: 0.58rem 0.8rem;
-        font-size: 0.86rem;
-        font-weight: 500;
-      }
-
-      .context-menu-item:hover {
-        transform: none;
-        background: #262626;
-      }
-
-      .context-menu-item:disabled {
-        color: #8d8d8d;
-        cursor: not-allowed;
-      }
-
-      .imc-modal-backdrop {
-        position: fixed;
-        inset: 0;
-        z-index: 130;
-        background: rgba(0, 0, 0, 0.55);
-        display: none;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .imc-modal-backdrop.active {
-        display: flex;
-      }
-
-      .imc-modal {
-        width: min(520px, calc(100vw - 1rem));
-        background: #262626;
-        border: 1px solid #525252;
-        color: #f4f4f4;
-      }
-
-      .imc-modal-head {
-        padding: 0.9rem 1rem;
-        border-bottom: 1px solid #393939;
-        font-weight: 600;
-      }
-
-      .imc-modal-body {
-        padding: 0.9rem 1rem;
-        display: grid;
-        gap: 0.6rem;
-      }
-
-      .imc-modal-actions {
-        padding: 0.7rem 1rem 1rem;
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.5rem;
-      }
-
-      @media (max-width: 1080px) {
-        body {
-          overflow: auto;
-        }
-
-        .wrap {
-          height: auto;
-          max-height: none;
-          overflow: visible;
-        }
-
-        .workspace-shell {
-          grid-template-columns: 1fr;
-          height: auto;
-        }
-
-        .workspace-shell > .card {
-          min-height: 340px;
-        }
-
-        .card.supplemental-panel {
-          top: auto;
-          right: 0.5rem;
-          left: 0.5rem;
-          bottom: 0.5rem;
-          width: auto;
-          height: min(70vh, 560px);
-          max-height: min(70vh, 560px);
-        }
-      }
     </style>
   </head>
-  <body class="cds-theme-zone-g100">
+  <body>
     <main class="wrap">
       <section class="hero" style="display: none;" aria-hidden="true">
         <div class="window-controls" aria-hidden="true">
@@ -1146,32 +1019,10 @@
               </div>
             </div>
             <div class="ribbon-group">
-              <div class="ribbon-group-header">Preset &amp; contesto</div>
+              <div class="ribbon-group-header">Preset</div>
               <div class="ribbon-actions">
-                <div class="ribbon-field-group">
-                  <label for="diagramPresetSelect">Preset</label>
-                  <select id="diagramPresetSelect">
-                    <option value="default">Default</option>
-                    <option value="structure">Analisi strutturale</option>
-                    <option value="presentation">Presentazione</option>
-                    <option value="debugging">Debug diagnostica</option>
-                  </select>
-                </div>
-                <div class="ribbon-field-group">
-                  <label for="diagramPresetContextSelect">Contesto</label>
-                  <select id="diagramPresetContextSelect">
-                    <option value="all">Tutti</option>
-                    <option value="authoring">Authoring</option>
-                    <option value="review">Review</option>
-                    <option value="validation">Validation</option>
-                  </select>
-                </div>
-                <button class="ribbon-button" data-action="diagramSavePresetBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M9 4v5h6V4M8 16h8"/></svg></span>Salva</button>
-                <button class="ribbon-button" data-action="diagramDeletePresetBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13"/></svg></span>Elimina</button>
-                <button class="ribbon-button" data-action="diagramSetPresetOwnerBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 20a8 8 0 0 1 16 0"/></svg></span>Owner</button>
+                <button class="ribbon-button" data-action="diagramSavePresetBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M9 4v5h6V4M8 16h8"/></svg></span>Preset</button>
                 <button class="ribbon-button" data-action="diagramReviewPresetBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 2"/></svg></span>Approva</button>
-                <button class="ribbon-button" data-action="diagramExportPresetsBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20V10"/><path d="m8 14 4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>Export</button>
-                <button class="ribbon-button" data-action="diagramImportPresetsBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v10"/><path d="m8 20 4 4 4-4"/><path d="M4 16h16"/></svg></span>Import</button>
               </div>
             </div>
           </div>
@@ -1239,7 +1090,7 @@
 
       <section class="workspace-shell">
         <article class="card" id="structurePanel" data-panel-name="structurePanel">
-          <h2>Structure Tree (sync)</h2>
+          <h2>Structure Tree</h2>
           <div class="content">
             <div class="diag-tools">
               <input id="treeSearch" type="text" placeholder="Cerca nodo..." />
@@ -1267,7 +1118,7 @@
         </article>
 
         <article class="card" id="propertiesPanel" data-panel-name="propertiesPanel">
-          <h2>Properties Editor (sync)</h2>
+          <h2>Properties Editor</h2>
           <div class="content form-grid">
             <div class="form-row">
               <label for="selectedPathInput">Elemento selezionato</label>
@@ -1311,7 +1162,7 @@
         </article>
 
         <article class="card diagram-card" id="diagramPanel" data-panel-name="diagramPanel">
-          <h2>Diagram Editor (B6 avvio)</h2>
+          <h2>Diagram Editor</h2>
           <div class="content">
             <div class="diag-tools">
               <label for="diagramZoomInput">Zoom</label>
@@ -1323,6 +1174,26 @@
               <button class="ghost" id="diagramLockLayoutBtn">Lock layout: OFF</button>
               <button class="ghost" id="diagramLockNodesBtn">Lock nodi: OFF</button>
               <button class="ghost" id="diagramLockRelationsBtn">Lock connessioni: OFF</button>
+              <label for="diagramPresetSelect">Preset</label>
+              <select id="diagramPresetSelect">
+                <option value="default">Default</option>
+                <option value="structure">Analisi strutturale</option>
+                <option value="presentation">Presentazione</option>
+                <option value="debugging">Debug diagnostica</option>
+              </select>
+              <label for="diagramPresetContextSelect">Contesto</label>
+              <select id="diagramPresetContextSelect">
+                <option value="all">Tutti</option>
+                <option value="authoring">Authoring</option>
+                <option value="review">Review</option>
+                <option value="validation">Validation</option>
+              </select>
+              <button class="ghost" id="diagramSavePresetBtn">Salva preset</button>
+              <button class="ghost" id="diagramDeletePresetBtn">Elimina preset</button>
+              <button class="ghost" id="diagramSetPresetOwnerBtn">Owner preset</button>
+              <button class="ghost" id="diagramReviewPresetBtn">Approva/Riapri</button>
+              <button class="ghost" id="diagramExportPresetsBtn">Export preset</button>
+              <button class="ghost" id="diagramImportPresetsBtn">Import preset</button>
               <button class="ghost" id="diagramResetBtn">Reset vista</button>
             </div>
             <div class="status" id="diagramPresetMeta">Preset: standard</div>
@@ -1343,7 +1214,7 @@
 
       <section class="grid">
         <article class="card" id="inputPanel" data-panel-name="inputPanel">
-          <h2>Input Modello (JSON)</h2>
+          <h2>Input Modello</h2>
           <div class="content">
             <textarea id="modelInput"></textarea>
             <div class="actions">
@@ -1386,7 +1257,6 @@
             <pre id="output"></pre>
             <div class="actions">
               <button class="ghost" id="downloadBtn">Scarica .ili</button>
-              <button class="ghost" id="runUiSmokeBtn">UI smoke tests</button>
             </div>
           </div>
         </article>
@@ -1414,7 +1284,18 @@
         </article>
       </section>
 
-      <p class="foot">Fonti considerate: umleditor storico (Java), interlis.ch, specifica locale in HTML/PDF.</p>
+      <div class="status-bar" aria-label="Project status bar">
+        <div class="status-bar-group">
+          <span><span class="status-dot"></span> Project: <strong id="statusBarProject">NewProject</strong></span>
+          <span>Mode: <strong>INTERLIS 2</strong></span>
+          <span>Version: <strong id="statusBarVersion">draft</strong></span>
+        </div>
+        <div class="status-bar-group">
+          <a href="#" id="statusBarAbout">About</a>
+          <a href="https://github.com/intelligeo/interlis-composer-rs" target="_blank" rel="noreferrer">GitHub Repo</a>
+          <span>Last sync: <strong id="statusBarSync">idle</strong></span>
+        </div>
+      </div>
       <article class="card" id="recentPanel" data-panel-name="recentPanel">
         <h2>Recent Projects</h2>
         <div class="content">
@@ -1423,7 +1304,7 @@
       </article>
 
       <article class="card" id="syncPanel" data-panel-name="syncPanel">
-        <h2>Core Sync (B4 avvio)</h2>
+        <h2>Core Sync</h2>
         <div class="content">
           <div class="diag-tools">
             <label for="autosaveMsInput">Autosave (ms)</label>
@@ -1459,7 +1340,7 @@
       </article>
 
       <article class="card" id="flowPanel" data-panel-name="flowPanel">
-        <h2>User Flow Mapping (B6)</h2>
+        <h2>User Flow Mapping</h2>
         <div class="content flow-map" id="flowMapPanel">
           <div class="flow-step">1. Entra con progetto aperto e stato sync attivo.</div>
           <div class="flow-step">2. Seleziona elemento in tree per focus nel diagramma.</div>
@@ -1529,217 +1410,83 @@
           </div>
         </article>
       </section>
-
-        <article class="card">
-          <h2>User Flow Mapping (B6)</h2>
-          <div class="content flow-map" id="flowMapPanel">
-            <div class="flow-step">1. Entra con progetto aperto e stato sync attivo.</div>
-            <div class="flow-step">2. Seleziona elemento in tree per focus nel diagramma.</div>
-            <div class="flow-step">3. Regola zoom/layout per ispezionare classi e relazioni.</div>
-            <div class="flow-step">4. Aggiorna proprieta (name/type/cardinality) e verifica propagazione.</div>
-            <div class="flow-step">5. Esegui validazione e usa diagnostica per tornare al nodo interessato.</div>
-            <div class="kpi-panel" id="uxKpiPanel">
-              <div class="kpi-line" id="kpiT1Line">KPI T1: n/a</div>
-              <div class="kpi-line" id="kpiT2Line">KPI T2: n/a</div>
-              <div class="kpi-line" id="kpiT3Line">KPI T3: n/a</div>
-              <div class="kpi-line" id="kpiTaskLine">Task fix attivo: no</div>
-              <div class="kpi-actions">
-                <button class="ghost" id="exportKpiBtn">Export KPI</button>
-                <button class="ghost" id="resetKpiBtn">Reset KPI</button>
-              </div>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section class="grid">
-        <article class="card">
-          <h2>B7 - Prose Editor</h2>
-          <div class="content">
-            <div class="diag-tools">
-              <label for="proseSectionSelect">Sezione</label>
-              <select id="proseSectionSelect"></select>
-              <button class="ghost" id="addProseSectionBtn">+ Sezione</button>
-              <button class="ghost" id="deleteProseSectionBtn">Elimina sezione</button>
-            </div>
-            <textarea id="proseContentInput" style="min-height: 140px" placeholder="Contenuto descrittivo della sezione"></textarea>
-            <div class="actions">
-              <button class="primary" id="saveProseBtn">Salva testo sezione</button>
-            </div>
-          </div>
-        </article>
-
-        <article class="card">
-          <h2>B7 - Catalog/Instance Editor</h2>
-          <div class="content">
-            <div class="diag-tools">
-              <button class="ghost" id="addCatalogInstanceBtn">+ Istanza catalogo</button>
-            </div>
-            <div class="diag-tools" style="margin-top:0.7rem">
-              <label for="catalogPresetSelect">Preset validazione</label>
-              <select id="catalogPresetSelect"></select>
-              <button class="ghost" id="addCatalogPresetBtn">+ Preset</button>
-              <button class="ghost" id="deleteCatalogPresetBtn">Elimina preset</button>
-              <button class="ghost" id="setCatalogPresetOwnerBtn">Owner preset</button>
-              <button class="ghost" id="reviewCatalogPresetBtn">Approva/Riapri</button>
-              <button class="ghost" id="exportCatalogPresetBtn">Export preset</button>
-              <button class="ghost" id="importCatalogPresetBtn">Import preset</button>
-            </div>
-            <div class="diag-tools">
-              <label for="catalogPresetNameInput">Nome</label>
-              <input id="catalogPresetNameInput" placeholder="StrictParcelProfile" />
-              <label for="catalogPresetClassSelect">Classe target</label>
-              <select id="catalogPresetClassSelect"></select>
-              <button class="primary" id="saveCatalogPresetBtn">Salva preset</button>
-            </div>
-            <div class="diag-tools" style="margin-top:0.4rem">
-              <span>Regole preset</span>
-              <button class="ghost" id="addCatalogPresetRuleBtn">+ Regola</button>
-            </div>
-            <div class="status" id="catalogPresetMeta">Preset catalogo: -</div>
-            <div id="catalogPresetRulesWrap"></div>
-            <div id="catalogInstanceWrap"></div>
-          </div>
-        </article>
-      </section>
     </main>
-
-    <div id="contextMenu" class="context-menu" role="menu" aria-hidden="true">
-      <div id="contextMenuHeader" class="context-menu-header">Azioni contestuali</div>
-      <ul id="contextMenuList" class="context-menu-list"></ul>
-    </div>
-
-    <div id="modalBackdrop" class="imc-modal-backdrop" aria-hidden="true">
-      <div class="imc-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <div class="imc-modal-head" id="modalTitle">Dialog</div>
-        <div class="imc-modal-body">
-          <div id="modalMessage"></div>
-          <input id="modalInput" type="text" />
-        </div>
-        <div class="imc-modal-actions">
-          <button id="modalCancelBtn" class="ghost" type="button">Annulla</button>
-          <button id="modalConfirmBtn" class="primary" type="button">Conferma</button>
-        </div>
-      </div>
-    </div>
 
     <script>
       const ribbonTabs = document.querySelectorAll('.ribbon-tab');
       const ribbonPanels = document.querySelectorAll('.ribbon-panel');
       const ribbonButtons = document.querySelectorAll('.ribbon-button');
 
-      function compactPanelControls() {
-        const panelMenuLabels = {
-          structurePanel: ['Filtri tree', 'Azioni struttura'],
-          propertiesPanel: ['Azioni proprietà'],
-          diagramPanel: ['Vista diagramma', 'Azioni nodi'],
-          inputPanel: ['Comandi progetto', 'Diagnostica'],
-          docsPanel: ['Filtri documentazione'],
-          syncPanel: ['Autosave', 'Propagazione selezione'],
-          collabPanel: ['Azioni collaborazione'],
-          prosePanel: ['Gestione sezioni', 'Salvataggio testo'],
-          catalogPanel: ['Istanze', 'Preset', 'Regole']
-        };
+      const panelContextMenu = document.createElement('div');
+      panelContextMenu.className = 'panel-context-menu';
+      document.body.appendChild(panelContextMenu);
 
-        document.querySelectorAll('article.card .content').forEach((content) => {
-          const panel = content.closest('article.card');
-          const blocks = Array.from(content.children).filter((node) =>
-            node.matches('.diag-tools, .actions, .diagram-toolbar')
-          );
-
-          if (!blocks.length) return;
-
-          const hub = document.createElement('details');
-          hub.className = 'panel-command-hub';
-          hub.open = false;
-
-          const hubSummary = document.createElement('summary');
-          hubSummary.textContent = 'Menu pannello';
-          hub.appendChild(hubSummary);
-
-          const stack = document.createElement('div');
-          stack.className = 'panel-command-stack';
-          hub.appendChild(stack);
-
-          const labels = panel ? (panelMenuLabels[panel.id] || []) : [];
-
-          blocks.forEach((block, index) => {
-            const section = document.createElement('details');
-            section.className = 'panel-command-group';
-            section.open = index === 0;
-
-            const sectionSummary = document.createElement('summary');
-            const fallbackLabel = block.classList.contains('actions')
-              ? 'Azioni'
-              : block.classList.contains('diagram-toolbar')
-                ? 'Diagramma'
-                : `Strumenti ${index + 1}`;
-            sectionSummary.textContent = block.dataset.menuLabel || labels[index] || fallbackLabel;
-            section.appendChild(sectionSummary);
-
-            const sectionBody = document.createElement('div');
-            sectionBody.className = 'panel-command-body';
-            sectionBody.appendChild(block);
-            section.appendChild(sectionBody);
-
-            stack.appendChild(section);
-          });
-
-          content.insertBefore(hub, content.firstChild);
-        });
+      function closePanelContextMenu() {
+        panelContextMenu.classList.remove('visible');
+        panelContextMenu.innerHTML = '';
       }
 
-      compactPanelControls();
+      document.addEventListener('click', (event) => {
+        if (!event.target.closest('.panel-context-menu')) {
+          closePanelContextMenu();
+        }
+      });
 
-      document.querySelectorAll('article.card').forEach((panel) => {
-        const header = panel.querySelector('h2');
-        if (header) {
-          const actions = document.createElement('div');
-          actions.className = 'panel-header-actions';
-          const collapseBtn = document.createElement('button');
-          collapseBtn.type = 'button';
-          collapseBtn.className = 'panel-toggle';
-          collapseBtn.textContent = '—';
-          collapseBtn.setAttribute('aria-label', 'Minimize panel');
-          collapseBtn.addEventListener('click', () => {
-            panel.classList.toggle('is-collapsed');
-            collapseBtn.textContent = panel.classList.contains('is-collapsed') ? '+' : '—';
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          closePanelContextMenu();
+        }
+      });
+
+      function showPanelContextMenu(panel, x, y) {
+        const buttons = Array.from(panel.querySelectorAll('button')).filter((button) => !button.closest('.ribbon-button') && !button.classList.contains('panel-toggle'));
+
+        const options = [];
+        if (buttons.length > 0) {
+          buttons.forEach((button) => {
+            const label = (button.textContent || '').trim();
+            if (label) {
+              options.push({ label, action: () => button.click() });
+            }
           });
-          actions.appendChild(collapseBtn);
-          header.appendChild(actions);
         }
 
-        const handle = document.createElement('div');
-        handle.className = 'panel-resize-handle';
-        handle.setAttribute('aria-label', 'Resize panel');
-        panel.appendChild(handle);
-
-        let activeDrag = false;
-        let startY = 0;
-        let startHeight = 0;
-
-        const stopDrag = () => {
-          activeDrag = false;
-        };
-
-        handle.addEventListener('pointerdown', (event) => {
-          activeDrag = true;
-          startY = event.clientY;
-          startHeight = panel.offsetHeight;
-          handle.setPointerCapture(event.pointerId);
+        options.unshift({
+          label: panel.classList.contains('is-collapsed') ? 'Expand panel' : 'Collapse panel',
+          action: () => {
+            panel.classList.toggle('is-collapsed');
+          }
         });
 
-        handle.addEventListener('pointermove', (event) => {
-          if (!activeDrag) return;
-          const delta = event.clientY - startY;
-          const maxHeight = Math.max(300, window.innerHeight - 120);
-          const nextHeight = Math.min(maxHeight, Math.max(200, startHeight + delta));
-          panel.style.height = `${nextHeight}px`;
+        options.push({
+          label: 'Reset panel size',
+          action: () => {
+            panel.style.height = '';
+          }
         });
 
-        handle.addEventListener('pointerup', stopDrag);
-        handle.addEventListener('pointercancel', stopDrag);
-        handle.addEventListener('pointerleave', stopDrag);
+        panelContextMenu.innerHTML = '';
+        options.forEach(({ label, action }) => {
+          const item = document.createElement('button');
+          item.type = 'button';
+          item.textContent = label;
+          item.addEventListener('click', () => {
+            action();
+            closePanelContextMenu();
+          });
+          panelContextMenu.appendChild(item);
+        });
+
+        panelContextMenu.style.left = `${Math.min(x, window.innerWidth - 220)}px`;
+        panelContextMenu.style.top = `${Math.min(y, window.innerHeight - 200)}px`;
+        panelContextMenu.classList.add('visible');
+      }
+
+      document.querySelectorAll('article.card[data-panel-name]').forEach((panel) => {
+        panel.addEventListener('contextmenu', (event) => {
+          event.preventDefault();
+          showPanelContextMenu(panel, event.clientX, event.clientY);
+        });
       });
 
       document.querySelectorAll('.grid').forEach((grid) => {
@@ -1830,6 +1577,21 @@
         });
       });
 
+      function triggerDomAction(actionName) {
+        if (!actionName) return;
+
+        const candidates = [
+          ...document.querySelectorAll(`#${CSS.escape(actionName)}`),
+          ...document.querySelectorAll(`[data-action="${CSS.escape(actionName)}"]`),
+          ...document.querySelectorAll(`[data-panel-name="${CSS.escape(actionName)}"]`)
+        ];
+
+        if (candidates.length === 0) return;
+
+        const preferred = candidates.find((element) => !element.closest('.is-hidden')) || candidates[0];
+        preferred.click();
+      }
+
       ribbonButtons.forEach((button) => {
         button.addEventListener('click', () => {
           const toggleTargetName = button.dataset.togglePanel;
@@ -1844,26 +1606,14 @@
             return;
           }
 
-          const targetId = button.dataset.action;
-          const target = targetId ? document.getElementById(targetId) : null;
-          if (target) {
-            target.click();
-            return;
-          }
-
-          const fallback = document.querySelector(`[id="${CSS.escape(targetId)}"]`);
-          if (fallback) {
-            fallback.click();
-          }
+          triggerDomAction(button.dataset.action);
         });
       });
 
       const corePanelNames = new Set(['structurePanel', 'propertiesPanel', 'diagramPanel']);
       document.querySelectorAll('.card[data-panel-name]').forEach((panel) => {
-        if (!corePanelNames.has(panel.dataset.panelName)) {
-          panel.classList.add('supplemental-panel');
-          panel.classList.add('is-hidden');
-        }
+        const isCore = corePanelNames.has(panel.dataset.panelName);
+        panel.classList.toggle('is-hidden', !isCore);
       });
 
       document.querySelectorAll('[data-toggle-panel]').forEach((button) => {
@@ -1872,20 +1622,6 @@
           const visible = !target.classList.contains('is-hidden');
           button.setAttribute('aria-pressed', String(visible));
           button.classList.toggle('active', visible);
-        }
-      });
-
-      document.addEventListener("click", (event) => {
-        if (!contextMenu.classList.contains("active")) return;
-        if (contextMenu.contains(event.target)) return;
-        hideContextMenu();
-      });
-
-      window.addEventListener("resize", hideContextMenu);
-      window.addEventListener("scroll", hideContextMenu, true);
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-          hideContextMenu();
         }
       });
 
@@ -1902,11 +1638,13 @@
         ],
         domains: [
           { name: "ParcelId", type: "UUID" },
-          { name: "OwnerName", type: "TEXT" },
-          { name: "ParcelStatus", type: "(active, retired)" }
+          { name: "OwnerName", type: "TEXT" }
         ],
         associations: [
           { name: "Ownership", from_class: "Owner", to_class: "Parcel", cardinality: "1..*" }
+        ],
+        enums: [
+          { name: "ParcelStatus", values: ["active", "retired"] }
         ],
         classes: [
           {
@@ -1963,6 +1701,10 @@
       const diagStatus = document.getElementById("diagStatus");
       const projectMeta = document.getElementById("projectMeta");
       const syncMeta = document.getElementById("syncMeta");
+      const statusBarProject = document.getElementById("statusBarProject");
+      const statusBarVersion = document.getElementById("statusBarVersion");
+      const statusBarSync = document.getElementById("statusBarSync");
+      const statusBarAbout = document.getElementById("statusBarAbout");
       const recentProjects = document.getElementById("recentProjects");
       const imcpFileInput = document.getElementById("imcpFileInput");
       const iliFileInput = document.getElementById("iliFileInput");
@@ -2051,20 +1793,16 @@
       const collabRefsOutput = document.getElementById("collabRefsOutput");
       const collabDiffOutput = document.getElementById("collabDiffOutput");
       const commitDraftOutput = document.getElementById("commitDraftOutput");
-      const contextMenu = document.getElementById("contextMenu");
-      const contextMenuHeader = document.getElementById("contextMenuHeader");
-      const contextMenuList = document.getElementById("contextMenuList");
-      const modalBackdrop = document.getElementById("modalBackdrop");
-      const modalTitle = document.getElementById("modalTitle");
-      const modalMessage = document.getElementById("modalMessage");
-      const modalInput = document.getElementById("modalInput");
-      const modalCancelBtn = document.getElementById("modalCancelBtn");
-      const modalConfirmBtn = document.getElementById("modalConfirmBtn");
-      const runUiSmokeBtn = document.getElementById("runUiSmokeBtn");
 
       let lastFileName = "model.ili";
       let currentProjectName = "NewProject";
       let isDirty = false;
+
+      function updateStatusBar() {
+        if (statusBarProject) statusBarProject.textContent = currentProjectName;
+        if (statusBarVersion) statusBarVersion.textContent = modelInput && modelInput.value ? "draft" : "empty";
+        if (statusBarSync) statusBarSync.textContent = syncMeta ? syncMeta.textContent.replace(/^Sync:\s*/i, "") : "idle";
+      }
       let currentIssues = [];
       let debounceTimer = null;
       let autosaveTimer = null;
@@ -2080,8 +1818,6 @@
       let diagramLayoutLocked = false;
       let diagramLockNodes = false;
       let diagramLockRelations = false;
-      let contextMenuState = null;
-      let modalResolver = null;
       let diagramPreset = "default";
       let diagramPresetContextFilter = "all";
       let activeProseSectionTitle = "";
@@ -2345,6 +2081,62 @@
         syncMeta.textContent = `Sync: ${message}`;
       }
 
+      function parseMetadataText(rawText) {
+        const out = {};
+        const lines = String(rawText || "").split(/\r?\n/);
+        for (const rawLine of lines) {
+          const line = rawLine.trim();
+          if (!line || line.startsWith("#")) continue;
+          const separatorAt = line.indexOf(":");
+          if (separatorAt <= 0) continue;
+          const key = line.slice(0, separatorAt).trim();
+          const value = line.slice(separatorAt + 1).trim();
+          if (!key || !value) continue;
+          out[key] = value;
+        }
+        return out;
+      }
+
+      async function showAboutWindow() {
+        const fallback = {
+          app_name: "INTERLIS Model Composer",
+          app_version: "unknown",
+          product_line: "UML Studio",
+          organization: "Unknown organization",
+          homepage: "-",
+          support_email: "-",
+          build_date: "-",
+          copyright: "-",
+          license: "-"
+        };
+
+        let metadata = { ...fallback };
+        try {
+          const response = await fetch("/metadata.txt", { cache: "no-store" });
+          if (response.ok) {
+            metadata = {
+              ...fallback,
+              ...parseMetadataText(await response.text())
+            };
+          }
+        } catch (_) {
+          // Fallback is used if metadata file is not available.
+        }
+
+        const message = [
+          `${metadata.app_name} (${metadata.product_line})`,
+          `Version: ${metadata.app_version}`,
+          `Organization: ${metadata.organization}`,
+          `Build date: ${metadata.build_date}`,
+          `Homepage: ${metadata.homepage}`,
+          `Support: ${metadata.support_email}`,
+          `License: ${metadata.license}`,
+          `${metadata.copyright}`
+        ].join("\n");
+
+        window.alert(message);
+      }
+
       bus.on(EVENTS.MODEL_CHANGED, (payload) => {
         setSyncMeta(`modello aggiornato da ${payload.source} alle ${stamp()}`);
       });
@@ -2377,6 +2169,8 @@
         if (type === "attr") return `attr:${className}:${attrName}`;
         if (type === "domain") return `domain:${className}`;
         if (type === "association") return `association:${className}`;
+        if (type === "enum") return `enum:${className}`;
+        if (type === "enumval") return `enumval:${className}:${attrName}`;
         return "";
       }
 
@@ -2433,6 +2227,23 @@
           return { kind: "association", associationIndex, associationName };
         }
 
+        if (parts[0] === "enum") {
+          const enumName = parts[1] || "";
+          const enumIndex = model.enums.findIndex((e) => e.name === enumName);
+          if (enumIndex < 0) return { kind: "none" };
+          return { kind: "enum", enumIndex, enumName };
+        }
+
+        if (parts[0] === "enumval") {
+          const enumName = parts[1] || "";
+          const enumValue = parts[2] || "";
+          const enumIndex = model.enums.findIndex((e) => e.name === enumName);
+          if (enumIndex < 0) return { kind: "none" };
+          const valueIndex = model.enums[enumIndex].values.findIndex((v) => v === enumValue);
+          if (valueIndex < 0) return { kind: "none" };
+          return { kind: "enumval", enumIndex, valueIndex, enumName, enumValue };
+        }
+
         return { kind: "none" };
       }
 
@@ -2442,6 +2253,7 @@
         if (!Array.isArray(normalized.classes)) normalized.classes = [];
         if (!Array.isArray(normalized.domains)) normalized.domains = [];
         if (!Array.isArray(normalized.associations)) normalized.associations = [];
+        if (!Array.isArray(normalized.enums)) normalized.enums = [];
         if (!Array.isArray(normalized.prose_sections)) normalized.prose_sections = [];
         if (!Array.isArray(normalized.catalog_instances)) normalized.catalog_instances = [];
         if (!Array.isArray(normalized.catalog_validation_presets)) normalized.catalog_validation_presets = [];
@@ -2454,6 +2266,9 @@
         }
         for (const topic of normalized.topics) {
           if (!Array.isArray(topic.subtopics)) topic.subtopics = [];
+        }
+        for (const en of normalized.enums) {
+          if (!Array.isArray(en.values)) en.values = [];
         }
         normalized.prose_sections = normalized.prose_sections
           .map((item) => ({
@@ -2936,6 +2751,17 @@
               pushMark(selectionPathOf("association", assoc.name), issue.level);
             }
           }
+
+          for (const en of model.enums) {
+            if (issue.message.includes(en.name.toLowerCase())) {
+              pushMark(selectionPathOf("enum", en.name), issue.level);
+            }
+            for (const value of en.values) {
+              if (issue.message.includes(String(value).toLowerCase())) {
+                pushMark(selectionPathOf("enumval", en.name, value), issue.level);
+              }
+            }
+          }
         }
 
         return map;
@@ -2985,6 +2811,17 @@
         for (const assoc of model.associations) {
           if (text.includes(assoc.name.toLowerCase())) {
             return selectionPathOf("association", assoc.name);
+          }
+        }
+
+        for (const en of model.enums) {
+          for (const value of en.values) {
+            if (text.includes(String(value).toLowerCase())) {
+              return selectionPathOf("enumval", en.name, value);
+            }
+          }
+          if (text.includes(en.name.toLowerCase())) {
+            return selectionPathOf("enum", en.name);
           }
         }
 
@@ -3043,7 +2880,7 @@
         autosaveStatus.textContent = `Autosave: nessuno snapshot (${coreState.autosaveMs} ms)`;
       }
 
-      async function restoreAutosaveSnapshot(interactive) {
+      function restoreAutosaveSnapshot(interactive) {
         const raw = localStorage.getItem(AUTOSAVE_KEY);
         if (!raw) {
           if (interactive) {
@@ -3054,7 +2891,7 @@
 
         try {
           const snapshot = JSON.parse(raw);
-          const mustRestore = interactive ? true : await askConfirm("Ripristino autosave", `Trovato autosave per progetto '${snapshot.projectName}'. Ripristinare?`);
+          const mustRestore = interactive || window.confirm(`Trovato autosave per progetto '${snapshot.projectName}'. Ripristinare?`);
           if (!mustRestore) return false;
 
           currentProjectName = snapshot.projectName || currentProjectName;
@@ -3158,291 +2995,6 @@
 
       function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
-      }
-
-      function applyCarbonClasses() {
-        document.querySelectorAll("button").forEach((btn) => {
-          btn.classList.add("cds--btn");
-          if (btn.classList.contains("primary")) {
-            btn.classList.add("cds--btn--primary");
-          } else if (btn.classList.contains("secondary")) {
-            btn.classList.add("cds--btn--secondary");
-          } else {
-            btn.classList.add("cds--btn--ghost");
-          }
-        });
-
-        document.querySelectorAll("input[type='text'], input[type='number'], textarea, select").forEach((el) => {
-          el.classList.add("cds--text-input");
-        });
-      }
-
-      function closeModal(result) {
-        if (!modalResolver) return;
-        const resolve = modalResolver;
-        modalResolver = null;
-        modalBackdrop.classList.remove("active");
-        modalBackdrop.setAttribute("aria-hidden", "true");
-        resolve(result);
-      }
-
-      function askText(title, message, defaultValue = "") {
-        return new Promise((resolve) => {
-          modalResolver = resolve;
-          modalTitle.textContent = title;
-          modalMessage.textContent = message || "";
-          modalInput.style.display = "block";
-          modalInput.value = defaultValue;
-          modalBackdrop.classList.add("active");
-          modalBackdrop.setAttribute("aria-hidden", "false");
-          setTimeout(() => modalInput.focus(), 0);
-        });
-      }
-
-      function askConfirm(title, message) {
-        return new Promise((resolve) => {
-          modalResolver = resolve;
-          modalTitle.textContent = title;
-          modalMessage.textContent = message || "";
-          modalInput.style.display = "none";
-          modalBackdrop.classList.add("active");
-          modalBackdrop.setAttribute("aria-hidden", "false");
-          setTimeout(() => modalConfirmBtn.focus(), 0);
-        });
-      }
-
-      function connectModalHandlers() {
-        modalCancelBtn.addEventListener("click", () => closeModal(null));
-        modalConfirmBtn.addEventListener("click", () => {
-          if (modalInput.style.display === "none") {
-            closeModal(true);
-          } else {
-            closeModal(modalInput.value);
-          }
-        });
-        modalBackdrop.addEventListener("click", (event) => {
-          if (event.target === modalBackdrop) {
-            closeModal(null);
-          }
-        });
-        document.addEventListener("keydown", (event) => {
-          if (!modalResolver) return;
-          if (event.key === "Escape") {
-            event.preventDefault();
-            closeModal(null);
-          }
-          if (event.key === "Enter") {
-            event.preventDefault();
-            if (modalInput.style.display === "none") {
-              closeModal(true);
-            } else {
-              closeModal(modalInput.value);
-            }
-          }
-        });
-      }
-
-      function runUiSmokeTests() {
-        const results = [];
-        const beforeClasses = coreState.model.classes.length;
-        const beforeAssoc = coreState.model.associations.length;
-
-        showContextMenu("Smoke", [{ label: "noop", onSelect: () => {} }], { clientX: 20, clientY: 20 });
-        results.push(contextMenu.classList.contains("active") ? "ok:context-menu-open" : "fail:context-menu-open");
-        hideContextMenu();
-
-        const smokeClassName = `SmokeClass_${Date.now().toString().slice(-4)}`;
-        dispatch({ type: "ADD_CLASS", className: smokeClassName, source: "ui-smoke" }, { syncText: false, markDirty: false });
-        results.push(coreState.model.classes.some((c) => c.name === smokeClassName) ? "ok:add-class" : "fail:add-class");
-
-        if (coreState.model.classes.length > 1) {
-          const fromClass = coreState.model.classes[0].name;
-          const toClass = coreState.model.classes[1].name;
-          const assocName = `SmokeAssoc_${Date.now().toString().slice(-4)}`;
-          dispatch({
-            type: "ADD_ASSOCIATION",
-            associationName: assocName,
-            fromClass,
-            toClass,
-            cardinality: "1..*",
-            source: "ui-smoke"
-          }, { syncText: false, markDirty: false });
-          results.push(coreState.model.associations.some((a) => a.name === assocName) ? "ok:add-assoc" : "fail:add-assoc");
-        } else {
-          results.push("skip:add-assoc");
-        }
-
-        dispatch({ type: "SET_MODEL", model: sample, resetSelection: true, source: "ui-smoke-reset" }, { syncText: false, markDirty: false });
-        results.push(coreState.model.classes.length >= 1 ? "ok:reset-model" : "fail:reset-model");
-
-        const summary = `UI smoke tests: ${results.join(" | ")} | before classes=${beforeClasses}, before assoc=${beforeAssoc}`;
-        renderIssues([{ level: results.some((r) => r.startsWith("fail")) ? "warning" : "info", code: "UI_SMOKE", message: summary }]);
-      }
-
-      function hideContextMenu() {
-        contextMenu.classList.remove("active");
-        contextMenu.setAttribute("aria-hidden", "true");
-        contextMenuList.innerHTML = "";
-        contextMenuState = null;
-      }
-
-      function showContextMenu(header, items, eventData) {
-        contextMenuHeader.textContent = header;
-        contextMenuList.innerHTML = "";
-
-        items.forEach((item) => {
-          const li = document.createElement("li");
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "context-menu-item";
-          btn.textContent = item.label;
-          btn.disabled = !!item.disabled;
-          btn.setAttribute("role", "menuitem");
-          btn.addEventListener("click", () => {
-            hideContextMenu();
-            item.onSelect();
-          });
-          li.appendChild(btn);
-          contextMenuList.appendChild(li);
-        });
-
-        contextMenu.classList.add("active");
-        contextMenu.setAttribute("aria-hidden", "false");
-        contextMenuState = {
-          x: eventData.clientX,
-          y: eventData.clientY
-        };
-
-        const bounds = contextMenu.getBoundingClientRect();
-        const maxX = Math.max(8, window.innerWidth - bounds.width - 8);
-        const maxY = Math.max(8, window.innerHeight - bounds.height - 8);
-        contextMenu.style.left = `${clamp(eventData.clientX, 8, maxX)}px`;
-        contextMenu.style.top = `${clamp(eventData.clientY, 8, maxY)}px`;
-      }
-
-      async function promptNewClass(defaultName, sourceTag) {
-        const className = await askText("Nuova classe", "Inserisci il nome della classe", defaultName || "NewClass");
-        if (!className) return;
-        const candidate = className.trim();
-        if (!candidate) return;
-        if (isNameTakenInGroup(coreState.model.classes, candidate)) {
-          renderIssues([{ level: "warning", code: "CTX_DUPLICATE_CLASS", message: `Classe '${candidate}' gia esistente` }]);
-          return;
-        }
-        dispatch({ type: "ADD_CLASS", className: candidate, source: sourceTag });
-      }
-
-      async function promptNewRelation(fromClass, sourceTag) {
-        const associationName = await askText("Nuova relazione", "Inserisci il nome della relazione", "NewAssociation");
-        if (!associationName) return;
-        const assoc = associationName.trim();
-        if (!assoc) return;
-        if (isNameTakenInGroup(coreState.model.associations, assoc)) {
-          renderIssues([{ level: "warning", code: "CTX_DUPLICATE_ASSOC", message: `Relazione '${assoc}' gia esistente` }]);
-          return;
-        }
-        const allClasses = coreState.model.classes.map((c) => c.name);
-        if (allClasses.length === 0) {
-          renderIssues([{ level: "warning", code: "CTX_NEEDS_CLASS", message: "Aggiungi prima una classe" }]);
-          return;
-        }
-        const proposedTo = allClasses.find((name) => name !== fromClass) || fromClass || allClasses[0];
-        const toClass = await askText("Classe destinazione", "Inserisci la classe di destinazione", proposedTo || "");
-        if (!toClass) return;
-        const toCandidate = toClass.trim();
-        if (!toCandidate || !coreState.model.classes.some((c) => c.name === toCandidate)) {
-          renderIssues([{ level: "warning", code: "CTX_ASSOC_CLASS_INVALID", message: "Classe destinazione non valida" }]);
-          return;
-        }
-        const fromCandidate = fromClass && coreState.model.classes.some((c) => c.name === fromClass)
-          ? fromClass
-          : (allClasses[0] || "");
-        dispatch({
-          type: "ADD_ASSOCIATION",
-          associationName: assoc,
-          fromClass: fromCandidate,
-          toClass: toCandidate,
-          cardinality: "1..*",
-          source: sourceTag
-        });
-      }
-
-      async function applyRenameFromContext(path) {
-        const sel = resolveSelection(path, coreState.model);
-        if (sel.kind === "none" || sel.kind === "model") return;
-        dispatch({ type: "SELECT_ELEMENT", elementId: path, source: "context-menu" }, { syncText: false, markDirty: false });
-
-        if (sel.kind === "class") {
-          const nextName = await askText("Rinomina classe", "Nuovo nome classe", sel.className);
-          if (!nextName) return;
-          const trimmed = nextName.trim();
-          if (!trimmed) return;
-          if (isNameTakenInGroup(coreState.model.classes, trimmed, sel.classIndex)) {
-            renderIssues([{ level: "warning", code: "CTX_DUPLICATE_CLASS", message: `Classe '${trimmed}' gia esistente` }]);
-            return;
-          }
-          dispatch({ type: "UPDATE_SELECTED", name: trimmed, source: "context-menu" });
-          return;
-        }
-
-        if (sel.kind === "topic") {
-          const nextName = await askText("Rinomina topic", "Nuovo nome topic", sel.topicName);
-          if (!nextName) return;
-          dispatch({ type: "UPDATE_SELECTED", name: nextName.trim(), source: "context-menu" });
-          return;
-        }
-
-        if (sel.kind === "subtopic") {
-          const nextName = await askText("Rinomina subtopic", "Nuovo nome subtopic", sel.subtopicName);
-          if (!nextName) return;
-          dispatch({ type: "UPDATE_SELECTED", name: nextName.trim(), source: "context-menu" });
-          return;
-        }
-
-        if (sel.kind === "attr") {
-          const attr = coreState.model.classes[sel.classIndex].attributes[sel.attrIndex];
-          const nextName = await askText("Rinomina attributo", "Nuovo nome attributo", attr.name);
-          if (!nextName) return;
-          dispatch({
-            type: "UPDATE_SELECTED",
-            name: nextName.trim(),
-            attrType: attr.type,
-            mandatory: !!attr.mandatory,
-            source: "context-menu"
-          });
-          return;
-        }
-
-        if (sel.kind === "domain") {
-          const domain = coreState.model.domains[sel.domainIndex];
-          const nextName = await askText("Rinomina domain", "Nuovo nome domain", domain.name);
-          if (!nextName) return;
-          dispatch({ type: "UPDATE_SELECTED", name: nextName.trim(), attrType: domain.type || "TEXT", source: "context-menu" });
-          return;
-        }
-
-        if (sel.kind === "association") {
-          const assoc = coreState.model.associations[sel.associationIndex];
-          const nextName = await askText("Rinomina relazione", "Nuovo nome relazione", assoc.name);
-          if (!nextName) return;
-          dispatch({
-            type: "UPDATE_SELECTED",
-            name: nextName.trim(),
-            fromClass: assoc.from_class,
-            toClass: assoc.to_class,
-            cardinality: assoc.cardinality,
-            source: "context-menu"
-          });
-        }
-      }
-
-      async function deleteFromContext(path) {
-        const sel = resolveSelection(path, coreState.model);
-        if (sel.kind === "none" || sel.kind === "model") return;
-        dispatch({ type: "SELECT_ELEMENT", elementId: path, source: "context-menu" }, { syncText: false, markDirty: false });
-        const confirmed = await askConfirm("Conferma eliminazione", "Confermi eliminazione elemento selezionato?");
-        if (!confirmed) return;
-        dispatch({ type: "DELETE_SELECTED", source: "context-menu" });
       }
 
       function serializeDiagramPositions() {
@@ -3719,10 +3271,10 @@
         };
       }
 
-      async function saveCurrentAsCustomPreset() {
+      function saveCurrentAsCustomPreset() {
         const proposed = presetNameFromValue(diagramPreset) || "Team preset";
-        const userValue = await askText("Nome preset personalizzato", "Inserisci il nome del preset", proposed);
-        if (userValue == null) return;
+        const userValue = window.prompt("Nome preset personalizzato", proposed);
+        if (!userValue) return;
         const name = normalizePresetName(userValue);
         if (!name) {
           renderIssues([{ level: "warning", code: "PRESET_NAME_REQUIRED", message: "Inserire un nome preset valido" }]);
@@ -3760,14 +3312,13 @@
         renderIssues([{ level: "info", code: "PRESET_SAVED", message: `Preset '${targetName}' salvato (v${nextConfig.version})` }]);
       }
 
-      async function deleteSelectedCustomPreset() {
+      function deleteSelectedCustomPreset() {
         const currentName = presetNameFromValue(diagramPreset);
         if (!currentName || !diagramCustomPresets[currentName]) {
           renderIssues([{ level: "warning", code: "PRESET_DELETE_SELECT_CUSTOM", message: "Seleziona un preset custom da eliminare" }]);
           return;
         }
-        const confirmed = await askConfirm("Conferma eliminazione", `Eliminare il preset '${currentName}'?`);
-        if (!confirmed) return;
+        if (!window.confirm(`Eliminare il preset '${currentName}'?`)) return;
 
         delete diagramCustomPresets[currentName];
         diagramPreset = "default";
@@ -3775,14 +3326,14 @@
         renderIssues([{ level: "info", code: "PRESET_DELETED", message: `Preset '${currentName}' eliminato` }]);
       }
 
-      async function setSelectedPresetOwner() {
+      function setSelectedPresetOwner() {
         const presetName = selectedCustomPresetName();
         if (!presetName) {
           renderIssues([{ level: "warning", code: "PRESET_OWNER_SELECT_CUSTOM", message: "Seleziona un preset custom" }]);
           return;
         }
         const current = normalizePresetConfig(diagramCustomPresets[presetName]);
-        const owner = await askText("Owner preset (utente/team)", "Inserisci owner preset", current.owner || "");
+        const owner = window.prompt("Owner preset (utente/team)", current.owner || "");
         if (owner == null) return;
         const trimmed = owner.trim();
         if (trimmed && !/^[A-Za-z0-9_.@-]{3,64}$/.test(trimmed)) {
@@ -3797,7 +3348,7 @@
         renderIssues([{ level: "info", code: "PRESET_OWNER_SET", message: `Owner preset '${presetName}' impostato a '${trimmed || "-"}'` }]);
       }
 
-      async function togglePresetApproval() {
+      function togglePresetApproval() {
         const presetName = selectedCustomPresetName();
         if (!presetName) {
           renderIssues([{ level: "warning", code: "PRESET_REVIEW_SELECT_CUSTOM", message: "Seleziona un preset custom" }]);
@@ -3821,8 +3372,8 @@
           return;
         }
 
-        const reviewer = await askText("Reviewer che approva il preset", "Inserisci il reviewer", current.owner || "reviewer");
-        if (reviewer == null) return;
+        const reviewer = window.prompt("Reviewer che approva il preset", current.owner || "reviewer");
+        if (!reviewer) return;
         const reviewerName = reviewer.trim();
         if (!/^[A-Za-z0-9_.@-]{3,64}$/.test(reviewerName)) {
           renderIssues([{ level: "warning", code: "PRESET_REVIEWER_INVALID", message: "Reviewer non valido: usare 3-64 caratteri [A-Za-z0-9_.@-]" }]);
@@ -4153,13 +3704,11 @@
 
           const path = document.createElementNS(ns, "path");
           path.setAttribute("class", "diagram-link");
-          path.dataset.assocName = assoc.name;
           path.setAttribute("d", `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`);
           diagramCanvas.appendChild(path);
 
           const label = document.createElementNS(ns, "text");
           label.setAttribute("class", "diagram-link-label");
-          label.dataset.assocName = assoc.name;
           label.setAttribute("x", String(midX + 4));
           label.setAttribute("y", String((y1 + y2) / 2 - 6));
           label.textContent = `${assoc.name} ${assoc.cardinality || ""}`;
@@ -4167,7 +3716,6 @@
 
           const handle = document.createElementNS(ns, "circle");
           handle.setAttribute("class", `diagram-link-handle ${isRelationDragLocked() ? "disabled" : ""}`.trim());
-          handle.dataset.assocName = assoc.name;
           handle.setAttribute("cx", String(midX));
           handle.setAttribute("cy", String((y1 + y2) / 2));
           handle.setAttribute("r", "5");
@@ -4192,7 +3740,6 @@
           const group = document.createElementNS(ns, "g");
           const selected = selectedClass === cls.name;
           group.setAttribute("class", `diagram-node ${selected ? "selected" : ""}`.trim());
-          group.dataset.className = cls.name;
           group.style.cursor = "pointer";
 
           const height = diagramHideAttributes ? 56 : Math.max(80, 36 + cls.attributes.length * 16);
@@ -4236,42 +3783,6 @@
               moved: false
             };
             event.preventDefault();
-          });
-
-          group.addEventListener("contextmenu", (event) => {
-            event.preventDefault();
-            const path = selectionPathOf("class", cls.name);
-            dispatch({ type: "SELECT_ELEMENT", elementId: path, source: "diagram-context" }, { syncText: false, markDirty: false });
-            showContextMenu(`Diagramma • Classe ${cls.name}`, [
-              {
-                label: "Aggiungi attributo",
-                onSelect: async () => {
-                  const attrName = await askText("Nuovo attributo", "Inserisci il nome dell'attributo", "new_attr");
-                  if (!attrName) return;
-                  const candidate = attrName.trim();
-                  if (!candidate) return;
-                  const classIndex = coreState.model.classes.findIndex((c) => c.name === cls.name);
-                  if (classIndex < 0) return;
-                  if (isNameTakenInGroup(coreState.model.classes[classIndex].attributes, candidate)) {
-                    renderIssues([{ level: "warning", code: "CTX_DUPLICATE_ATTRIBUTE", message: `Attributo '${candidate}' gia presente` }]);
-                    return;
-                  }
-                  dispatch({ type: "ADD_ATTRIBUTE", className: cls.name, attrName: candidate, attrType: "TEXT", mandatory: false, source: "diagram-context" });
-                }
-              },
-              {
-                label: "Aggiungi relazione da classe",
-                onSelect: () => promptNewRelation(cls.name, "diagram-context")
-              },
-              {
-                label: "Rinomina classe",
-                onSelect: () => applyRenameFromContext(path)
-              },
-              {
-                label: "Elimina classe",
-                onSelect: () => deleteFromContext(path)
-              }
-            ], event);
           });
 
           diagramCanvas.appendChild(group);
@@ -4368,67 +3879,7 @@
         diagramStage.addEventListener("scroll", () => {
           renderDiagramMinimap();
         });
-
-        diagramStage.addEventListener("contextmenu", (event) => {
-          const node = event.target.closest(".diagram-node");
-          const assocNode = event.target.closest("[data-assoc-name]");
-          if (node || assocNode) return;
-          event.preventDefault();
-          showContextMenu("Diagramma UML", [
-            {
-              label: "Nuova classe qui",
-              onSelect: async () => {
-                const point = svgModelPointFromClient(event.clientX, event.clientY);
-                const className = await askText("Nuova classe", "Inserisci il nome della classe", "NewClass");
-                if (!className) return;
-                const candidate = className.trim();
-                if (!candidate) return;
-                if (isNameTakenInGroup(coreState.model.classes, candidate)) {
-                  renderIssues([{ level: "warning", code: "CTX_DUPLICATE_CLASS", message: `Classe '${candidate}' gia esistente` }]);
-                  return;
-                }
-                dispatch({ type: "ADD_CLASS", className: candidate, source: "diagram-context" });
-                diagramLayout.positions[candidate] = { x: clamp(point.x - 110, 10, 950), y: clamp(point.y - 30, 10, 700) };
-                setDirty(true);
-                renderDiagramEditor();
-              }
-            },
-            {
-              label: "Nuova relazione",
-              onSelect: () => promptNewRelation("", "diagram-context")
-            },
-            {
-              label: "Auto-layout",
-              onSelect: () => autoLayoutDiagram()
-            },
-            {
-              label: "Adatta vista",
-              onSelect: () => fitDiagramToContent()
-            }
-          ], event);
-        });
       }
-
-      diagramCanvas.addEventListener("contextmenu", (event) => {
-        const assocEl = event.target.closest("[data-assoc-name]");
-        if (!assocEl) return;
-        event.preventDefault();
-        const assocName = assocEl.dataset.assocName;
-        const assoc = coreState.model.associations.find((item) => item.name === assocName);
-        if (!assoc) return;
-        const assocPath = selectionPathOf("association", assocName);
-        dispatch({ type: "SELECT_ELEMENT", elementId: assocPath, source: "diagram-context" }, { syncText: false, markDirty: false });
-        showContextMenu(`Diagramma • Relazione ${assocName}`, [
-          {
-            label: "Rinomina relazione",
-            onSelect: () => applyRenameFromContext(assocPath)
-          },
-          {
-            label: "Elimina relazione",
-            onSelect: () => deleteFromContext(assocPath)
-          }
-        ], event);
-      });
 
       function reducer(state, action) {
         const next = {
@@ -4522,6 +3973,29 @@
           selectionChanged = true;
         }
 
+        if (action.type === "ADD_ENUM") {
+          next.model.enums.push({ name: action.enumName, values: [] });
+          next.selection = {
+            source: action.source || "tree",
+            elementId: selectionPathOf("enum", action.enumName)
+          };
+          modelChanged = true;
+          selectionChanged = true;
+        }
+
+        if (action.type === "ADD_ENUM_VALUE") {
+          const enumIndex = next.model.enums.findIndex((e) => e.name === action.enumName);
+          if (enumIndex >= 0) {
+            next.model.enums[enumIndex].values.push(action.enumValue);
+            next.selection = {
+              source: action.source || "tree",
+              elementId: selectionPathOf("enumval", action.enumName, action.enumValue)
+            };
+            modelChanged = true;
+            selectionChanged = true;
+          }
+        }
+
         if (action.type === "UPDATE_SELECTED") {
           const sel = resolveSelection(state.selection.elementId, next.model);
           if (sel.kind === "class") {
@@ -4596,6 +4070,25 @@
             selectionChanged = true;
           }
 
+          if (sel.kind === "enum") {
+            next.model.enums[sel.enumIndex].name = action.name;
+            next.selection = {
+              source: action.source || "properties",
+              elementId: selectionPathOf("enum", action.name)
+            };
+            modelChanged = true;
+            selectionChanged = true;
+          }
+
+          if (sel.kind === "enumval") {
+            next.model.enums[sel.enumIndex].values[sel.valueIndex] = action.name;
+            next.selection = {
+              source: action.source || "properties",
+              elementId: selectionPathOf("enumval", next.model.enums[sel.enumIndex].name, action.name)
+            };
+            modelChanged = true;
+            selectionChanged = true;
+          }
         }
 
         if (action.type === "DELETE_SELECTED") {
@@ -4645,6 +4138,22 @@
             selectionChanged = true;
           }
 
+          if (sel.kind === "enum") {
+            next.model.enums.splice(sel.enumIndex, 1);
+            next.selection = { source: action.source || "tree", elementId: "model" };
+            modelChanged = true;
+            selectionChanged = true;
+          }
+
+          if (sel.kind === "enumval") {
+            next.model.enums[sel.enumIndex].values.splice(sel.valueIndex, 1);
+            next.selection = {
+              source: action.source || "tree",
+              elementId: selectionPathOf("enum", next.model.enums[sel.enumIndex].name)
+            };
+            modelChanged = true;
+            selectionChanged = true;
+          }
         }
 
         if (action.type === "MOVE_NODE") {
@@ -4661,11 +4170,17 @@
           if (from.kind === "association" && to.kind === "association") {
             moved = moveArrayItem(next.model.associations, from.associationIndex, to.associationIndex);
           }
+          if (from.kind === "enum" && to.kind === "enum") {
+            moved = moveArrayItem(next.model.enums, from.enumIndex, to.enumIndex);
+          }
           if (from.kind === "topic" && to.kind === "topic") {
             moved = moveArrayItem(next.model.topics, from.topicIndex, to.topicIndex);
           }
           if (from.kind === "attr" && to.kind === "attr" && from.className === to.className) {
             moved = moveArrayItem(next.model.classes[from.classIndex].attributes, from.attrIndex, to.attrIndex);
+          }
+          if (from.kind === "enumval" && to.kind === "enumval" && from.enumName === to.enumName) {
+            moved = moveArrayItem(next.model.enums[from.enumIndex].values, from.valueIndex, to.valueIndex);
           }
           if (from.kind === "subtopic" && to.kind === "subtopic" && from.topicName === to.topicName) {
             moved = moveArrayItem(next.model.topics[from.topicIndex].subtopics, from.subtopicIndex, to.subtopicIndex);
@@ -4820,81 +4335,6 @@
           btn.className = `tree-item ${extraClass || ""} ${coreState.selection.elementId === path ? "selected" : ""} ${mark === "error" ? "error-mark" : ""} ${mark === "warning" ? "warn-mark" : ""}`.trim();
           btn.textContent = label;
           btn.addEventListener("click", () => dispatch({ type: "SELECT_ELEMENT", elementId: path, source: "tree" }, { syncText: false, markDirty: false }));
-          btn.addEventListener("contextmenu", (event) => {
-            event.preventDefault();
-            dispatch({ type: "SELECT_ELEMENT", elementId: path, source: "tree-context" }, { syncText: false, markDirty: false });
-            const sel = resolveSelection(path, coreState.model);
-
-            const actions = [
-              {
-                label: "Rinomina elemento",
-                disabled: sel.kind === "model" || sel.kind === "none",
-                onSelect: () => applyRenameFromContext(path)
-              },
-              {
-                label: "Elimina elemento",
-                disabled: sel.kind === "model" || sel.kind === "none",
-                onSelect: () => deleteFromContext(path)
-              }
-            ];
-
-            if (sel.kind === "model" || sel.kind === "none") {
-              actions.unshift(
-                { label: "Nuovo topic", onSelect: () => document.getElementById("addTopicBtn").click() },
-                { label: "Nuova classe", onSelect: () => promptNewClass("NewClass", "tree-context") },
-                { label: "Nuovo domain", onSelect: () => document.getElementById("addDomainBtn").click() }
-              );
-            }
-
-            if (sel.kind === "topic" || sel.kind === "subtopic") {
-              const topicName = sel.kind === "topic" ? sel.topicName : sel.topicName;
-              actions.unshift({
-                label: "Nuovo subtopic",
-                onSelect: async () => {
-                  const subtopicName = await askText("Nuovo subtopic", "Inserisci il nome del subtopic", "NewSubtopic");
-                  if (!subtopicName) return;
-                  const candidate = subtopicName.trim();
-                  if (!candidate) return;
-                  const topicIndex = coreState.model.topics.findIndex((t) => t.name === topicName);
-                  if (topicIndex < 0) return;
-                  const values = coreState.model.topics[topicIndex].subtopics || [];
-                  if (values.some((s) => s.name === candidate)) {
-                    renderIssues([{ level: "warning", code: "CTX_DUPLICATE_SUBTOPIC", message: `Subtopic '${candidate}' gia esistente` }]);
-                    return;
-                  }
-                  dispatch({ type: "ADD_SUBTOPIC", topicName, subtopicName: candidate, source: "tree-context" });
-                }
-              });
-            }
-
-            if (sel.kind === "class" || sel.kind === "attr") {
-              const className = sel.kind === "class" ? sel.className : sel.className;
-              actions.unshift(
-                {
-                  label: "Nuovo attributo",
-                  onSelect: async () => {
-                    const attrName = await askText("Nuovo attributo", "Inserisci il nome dell'attributo", "new_attr");
-                    if (!attrName) return;
-                    const candidate = attrName.trim();
-                    if (!candidate) return;
-                    const classIndex = coreState.model.classes.findIndex((c) => c.name === className);
-                    if (classIndex < 0) return;
-                    if (isNameTakenInGroup(coreState.model.classes[classIndex].attributes, candidate)) {
-                      renderIssues([{ level: "warning", code: "CTX_DUPLICATE_ATTRIBUTE", message: `Attributo '${candidate}' gia presente` }]);
-                      return;
-                    }
-                    dispatch({ type: "ADD_ATTRIBUTE", className, attrName: candidate, attrType: "TEXT", mandatory: false, source: "tree-context" });
-                  }
-                },
-                {
-                  label: "Nuova relazione da classe",
-                  onSelect: () => promptNewRelation(className, "tree-context")
-                }
-              );
-            }
-
-            showContextMenu(`Structure Tree • ${label}`, actions, event);
-          });
 
           btn.addEventListener("dragstart", (event) => {
             dragState = { path, kind };
@@ -4919,8 +4359,10 @@
               (source.kind === "class" && target.kind === "class") ||
               (source.kind === "domain" && target.kind === "domain") ||
               (source.kind === "association" && target.kind === "association") ||
+              (source.kind === "enum" && target.kind === "enum") ||
               (source.kind === "topic" && target.kind === "topic") ||
               (source.kind === "attr" && target.kind === "attr" && source.className === target.className) ||
+              (source.kind === "enumval" && target.kind === "enumval" && source.enumName === target.enumName) ||
               (source.kind === "subtopic" && target.kind === "subtopic" && source.topicName === target.topicName);
 
             if (!sameGroup) return;
@@ -4944,8 +4386,10 @@
               (source.kind === "class" && target.kind === "class") ||
               (source.kind === "domain" && target.kind === "domain") ||
               (source.kind === "association" && target.kind === "association") ||
+              (source.kind === "enum" && target.kind === "enum") ||
               (source.kind === "topic" && target.kind === "topic") ||
               (source.kind === "attr" && target.kind === "attr" && source.className === target.className) ||
+              (source.kind === "enumval" && target.kind === "enumval" && source.enumName === target.enumName) ||
               (source.kind === "subtopic" && target.kind === "subtopic" && source.topicName === target.topicName);
 
             if (!sameGroup) {
@@ -5017,7 +4461,6 @@
             kind: "association"
           });
         }
-
       }
 
       function renderPropertiesEditor() {
@@ -5084,6 +4527,20 @@
           propAssocCardRow.style.display = "grid";
           populateAssociationClassSelects(assoc.from_class, assoc.to_class);
           propAssocCardInput.value = assoc.cardinality || "1..*";
+          return;
+        }
+
+        if (sel.kind === "enum") {
+          propNameInput.value = coreState.model.enums[sel.enumIndex].name;
+          propTypeRow.style.display = "none";
+          propMandatoryRow.style.display = "none";
+          return;
+        }
+
+        if (sel.kind === "enumval") {
+          propNameInput.value = coreState.model.enums[sel.enumIndex].values[sel.valueIndex];
+          propTypeRow.style.display = "none";
+          propMandatoryRow.style.display = "none";
           return;
         }
 
@@ -5188,7 +4645,7 @@
         const rows = coreState.model.catalog_instances || [];
         const presets = normalizeCatalogValidationPresets(coreState.model.catalog_validation_presets || []);
         coreState.model.catalog_validation_presets = presets;
-        const domainNames = (coreState.model.domains || []).map((item) => item.name).filter(Boolean);
+        const enumNames = (coreState.model.enums || []).map((item) => item.name).filter(Boolean);
         const classNames = (coreState.model.classes || []).map((item) => item.name).filter(Boolean);
         const classAttrMap = new Map(
           (coreState.model.classes || []).map((cls) => [
@@ -5237,11 +4694,11 @@
             const catalogCell = document.createElement("td");
             const catalogInput = document.createElement("input");
             catalogInput.value = row.catalog || "";
-            if (domainNames.length) {
+            if (enumNames.length) {
               const listId = `catalogNameList-${index}`;
               const dataList = document.createElement("datalist");
               dataList.id = listId;
-              domainNames.forEach((name) => {
+              enumNames.forEach((name) => {
                 const option = document.createElement("option");
                 option.value = name;
                 dataList.appendChild(option);
@@ -5834,14 +5291,14 @@
         rememberProject(currentProjectName);
       }
 
-      async function ensureCanDiscardDirty() {
+      function ensureCanDiscardDirty() {
         if (!isDirty) return true;
-        return await askConfirm("Modifiche non salvate", "Il progetto corrente ha modifiche non salvate. Continuare e scartare le modifiche?");
+        return window.confirm("Il progetto corrente ha modifiche non salvate. Continuare e scartare le modifiche?");
       }
 
       async function newProject() {
         try {
-          if (!(await ensureCanDiscardDirty())) return;
+          if (!ensureCanDiscardDirty()) return;
           const payload = await postJson("/api/project/new", {
             project_name: "NewProject",
             model_name: sample.model_name,
@@ -5895,7 +5352,7 @@
       }
 
       async function saveAsProject() {
-        const newName = await askText("Salva con nome", "Nome progetto (.imcp)", currentProjectName || "Project");
+        const newName = window.prompt("Nome progetto (.imcp)", currentProjectName || "Project");
         if (!newName) return;
         currentProjectName = newName.trim() || "Project";
         await saveProject();
@@ -5907,8 +5364,8 @@
         renderIssues(payload.issues || []);
       }
 
-      async function loadProject() {
-        if (!(await ensureCanDiscardDirty())) return;
+      function loadProject() {
+        if (!ensureCanDiscardDirty()) return;
         imcpFileInput.value = "";
         imcpFileInput.click();
       }
@@ -5933,7 +5390,7 @@
           const conflict = err.payload?.issues?.some((i) => i.code === "ILI_MODEL_CONFLICT");
           if (!conflict) throw err;
 
-          const confirmed = await askConfirm("Conflitto modello", "Conflitto modello rilevato (nome uguale, versione/md5 diverso). Sovrascrivere?");
+          const confirmed = window.confirm("Conflitto modello rilevato (nome uguale, versione/md5 diverso). Sovrascrivere?");
           if (!confirmed) {
             renderIssues(err.payload?.issues || []);
             return;
@@ -6034,6 +5491,12 @@
       document.getElementById("restoreAutosaveBtn").addEventListener("click", () => restoreAutosaveSnapshot(true));
       document.getElementById("clearAutosaveBtn").addEventListener("click", clearAutosaveSnapshot);
       document.getElementById("selectElementBtn").addEventListener("click", propagateSelection);
+      if (statusBarAbout) {
+        statusBarAbout.addEventListener("click", async (event) => {
+          event.preventDefault();
+          await showAboutWindow();
+        });
+      }
       docsSearchInput.addEventListener("input", renderDocsExplorer);
       docsScopeFilter.addEventListener("change", renderDocsExplorer);
       refreshOpsBtn.addEventListener("click", refreshOpsMetrics);
@@ -6047,8 +5510,8 @@
         collabBundleFileInput.click();
       });
 
-      document.getElementById("addTopicBtn").addEventListener("click", async () => {
-        const topicName = await askText("Nuovo topic", "Nome nuovo topic", "NewTopic");
+      document.getElementById("addTopicBtn").addEventListener("click", () => {
+        const topicName = window.prompt("Nome nuovo topic", "NewTopic");
         if (!topicName) return;
         const candidate = topicName.trim();
         if (!candidate) return;
@@ -6059,14 +5522,14 @@
         dispatch({ type: "ADD_TOPIC", topicName: candidate, source: "tree-add-topic" });
       });
 
-      document.getElementById("addSubtopicBtn").addEventListener("click", async () => {
+      document.getElementById("addSubtopicBtn").addEventListener("click", () => {
         const sel = resolveSelection(coreState.selection.elementId, coreState.model);
         const topicName = sel.kind === "topic" ? sel.topicName : sel.kind === "subtopic" ? sel.topicName : null;
         if (!topicName) {
           renderIssues([{ level: "warning", code: "TREE_TOPIC_SELECTION_REQUIRED", message: "Seleziona un topic per aggiungere un subtopic" }]);
           return;
         }
-        const subtopicName = await askText("Nuovo subtopic", "Nome nuovo subtopic", "NewSubtopic");
+        const subtopicName = window.prompt("Nome nuovo subtopic", "NewSubtopic");
         if (!subtopicName) return;
         const candidate = subtopicName.trim();
         if (!candidate) return;
@@ -6078,8 +5541,8 @@
         dispatch({ type: "ADD_SUBTOPIC", topicName, subtopicName: candidate, source: "tree-add-subtopic" });
       });
 
-      document.getElementById("addClassBtn").addEventListener("click", async () => {
-        const className = await askText("Nuova classe", "Nome nuova classe", "NewClass");
+      document.getElementById("addClassBtn").addEventListener("click", () => {
+        const className = window.prompt("Nome nuova classe", "NewClass");
         if (!className) return;
         const candidate = className.trim();
         if (!candidate) return;
@@ -6090,14 +5553,14 @@
         dispatch({ type: "ADD_CLASS", className: candidate, source: "tree-add-class" });
       });
 
-      document.getElementById("addAttrBtn").addEventListener("click", async () => {
+      document.getElementById("addAttrBtn").addEventListener("click", () => {
         const sel = resolveSelection(coreState.selection.elementId, coreState.model);
         const className = sel.kind === "class" ? sel.className : sel.kind === "attr" ? sel.className : null;
         if (!className) {
           renderIssues([{ level: "warning", code: "TREE_SELECTION_REQUIRED", message: "Seleziona una classe per aggiungere un attributo" }]);
           return;
         }
-        const attrName = await askText("Nuovo attributo", "Nome attributo", "new_attr");
+        const attrName = window.prompt("Nome attributo", "new_attr");
         if (!attrName) return;
         const targetClass = coreState.model.classes.find((c) => c.name === className);
         const candidate = attrName.trim();
@@ -6116,8 +5579,8 @@
         });
       });
 
-      document.getElementById("addDomainBtn").addEventListener("click", async () => {
-        const domainName = await askText("Nuovo domain", "Nome nuovo domain", "NewDomain");
+      document.getElementById("addDomainBtn").addEventListener("click", () => {
+        const domainName = window.prompt("Nome nuovo domain", "NewDomain");
         if (!domainName) return;
         const candidate = domainName.trim();
         if (!candidate) return;
@@ -6128,8 +5591,8 @@
         dispatch({ type: "ADD_DOMAIN", domainName: candidate, domainType: "TEXT", source: "tree-add-domain" });
       });
 
-      document.getElementById("addAssocBtn").addEventListener("click", async () => {
-        const associationName = await askText("Nuova relazione", "Nome nuova relazione", "NewAssociation");
+      document.getElementById("addAssocBtn").addEventListener("click", () => {
+        const associationName = window.prompt("Nome nuova relazione", "NewAssociation");
         if (!associationName) return;
         const candidate = associationName.trim();
         if (!candidate) return;
@@ -6147,14 +5610,13 @@
         });
       });
 
-      document.getElementById("deleteSelectedBtn").addEventListener("click", async () => {
+      document.getElementById("deleteSelectedBtn").addEventListener("click", () => {
         const sel = resolveSelection(coreState.selection.elementId, coreState.model);
         if (sel.kind === "none" || sel.kind === "model") {
           renderIssues([{ level: "warning", code: "TREE_DELETE_INVALID", message: "Seleziona classe o attributo da eliminare" }]);
           return;
         }
-        const confirmed = await askConfirm("Conferma eliminazione", "Confermi eliminazione elemento selezionato?");
-        if (!confirmed) return;
+        if (!window.confirm("Confermi eliminazione elemento selezionato?")) return;
         dispatch({ type: "DELETE_SELECTED", source: "tree-delete" });
       });
 
@@ -6242,6 +5704,21 @@
           return;
         }
 
+        if (sel.kind === "enum") {
+          if (isNameTakenInGroup(coreState.model.enums, name, sel.enumIndex)) {
+            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_ENUM", message: `Enum '${name}' gia esistente` }]);
+            return;
+          }
+        }
+
+        if (sel.kind === "enumval") {
+          const values = coreState.model.enums[sel.enumIndex].values;
+          if (values.some((value, index) => index !== sel.valueIndex && value === name)) {
+            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_ENUM_VALUE", message: `Valore enum '${name}' gia esistente` }]);
+            return;
+          }
+        }
+
         dispatch({
           type: "UPDATE_SELECTED",
           name,
@@ -6261,8 +5738,8 @@
         renderProseEditor();
       });
 
-      addProseSectionBtn.addEventListener("click", async () => {
-        const raw = await askText("Nuova sezione prosa", "Titolo nuova sezione prosa", "Semantics");
+      addProseSectionBtn.addEventListener("click", () => {
+        const raw = window.prompt("Titolo nuova sezione prosa", "Semantics");
         if (!raw) return;
         const title = raw.trim();
         if (!title) return;
@@ -6274,10 +5751,9 @@
         dispatch({ type: "ADD_PROSE_SECTION", title, content: "", source: "b7-prose" });
       });
 
-      deleteProseSectionBtn.addEventListener("click", async () => {
+      deleteProseSectionBtn.addEventListener("click", () => {
         if (!activeProseSectionTitle) return;
-        const confirmed = await askConfirm("Conferma eliminazione", `Eliminare la sezione '${activeProseSectionTitle}'?`);
-        if (!confirmed) return;
+        if (!window.confirm(`Eliminare la sezione '${activeProseSectionTitle}'?`)) return;
         const oldTitle = activeProseSectionTitle;
         activeProseSectionTitle = "";
         dispatch({ type: "DELETE_PROSE_SECTION", title: oldTitle, source: "b7-prose" });
@@ -6387,10 +5863,10 @@
         });
       });
 
-      setCatalogPresetOwnerBtn.addEventListener("click", async () => {
+      setCatalogPresetOwnerBtn.addEventListener("click", () => {
         const preset = getCatalogPresetByName(activeCatalogPresetName || catalogPresetSelect.value);
         if (!preset) return;
-        const candidate = await askText("Owner preset catalogo", "Inserisci owner preset catalogo", preset.owner || "");
+        const candidate = window.prompt("Owner preset catalogo", preset.owner || "");
         if (candidate === null) return;
         const owner = candidate.trim();
         if (owner && !/^[A-Za-z0-9_.@-]{3,64}$/.test(owner)) {
@@ -6412,7 +5888,7 @@
         });
       });
 
-      reviewCatalogPresetBtn.addEventListener("click", async () => {
+      reviewCatalogPresetBtn.addEventListener("click", () => {
         const preset = getCatalogPresetByName(activeCatalogPresetName || catalogPresetSelect.value);
         if (!preset) return;
         const status = normalizeCatalogPresetReviewStatus(preset.review_status);
@@ -6434,7 +5910,7 @@
           return;
         }
 
-        const reviewer = await askText("Approvazione preset catalogo", "Reviewer che approva il preset catalogo", preset.owner || "reviewer");
+        const reviewer = window.prompt("Reviewer che approva il preset catalogo", preset.owner || "reviewer");
         if (!reviewer) return;
         const reviewerName = reviewer.trim();
         if (!/^[A-Za-z0-9_.@-]{3,64}$/.test(reviewerName)) {
@@ -6458,11 +5934,10 @@
         renderIssues([{ level: "info", code: "CATALOG_PRESET_APPROVED", message: `Preset '${preset.name}' approvato da '${reviewerName}'` }]);
       });
 
-      deleteCatalogPresetBtn.addEventListener("click", async () => {
+      deleteCatalogPresetBtn.addEventListener("click", () => {
         const selected = activeCatalogPresetName || catalogPresetSelect.value;
         if (!selected) return;
-        const confirmed = await askConfirm("Conferma eliminazione", `Eliminare il preset '${selected}'?`);
-        if (!confirmed) return;
+        if (!window.confirm(`Eliminare il preset '${selected}'?`)) return;
         activeCatalogPresetName = "";
         dispatch({ type: "DELETE_CATALOG_VALIDATION_PRESET", name: selected, source: "b7-catalog-preset" });
       });
@@ -6478,7 +5953,7 @@
           renderIssues([{ level: "warning", code: "B7_CATALOG_NEEDS_CLASS", message: "Aggiungi almeno una classe prima di creare istanze catalogo" }]);
           return;
         }
-        const defaultCatalog = coreState.model.domains[0]?.name || "Catalog";
+        const defaultCatalog = coreState.model.enums[0]?.name || "Catalog";
         const baseCode = "code";
         let nextCode = baseCode;
         let suffix = 1;
@@ -6503,8 +5978,8 @@
         });
       });
 
-      document.getElementById("diagramAddClassBtn").addEventListener("click", async () => {
-        const className = await askText("Nuova classe nel diagramma", "Nome nuova classe nel diagramma", "NewClass");
+      document.getElementById("diagramAddClassBtn").addEventListener("click", () => {
+        const className = window.prompt("Nome nuova classe nel diagramma", "NewClass");
         if (!className) return;
         const candidate = className.trim();
         if (!candidate) return;
@@ -6519,13 +5994,13 @@
         focusDiagramOnSelection();
       });
 
-      document.getElementById("diagramAddRelationBtn").addEventListener("click", async () => {
+      document.getElementById("diagramAddRelationBtn").addEventListener("click", () => {
         if (coreState.model.classes.length < 2) {
           renderIssues([{ level: "warning", code: "DIAGRAM_ASSOC_NEEDS_CLASSES", message: "Servono almeno due classi per creare una relazione" }]);
           return;
         }
         const selectedClass = getClassSelectionName() || coreState.model.classes[0].name;
-        const relationName = await askText("Nuova relazione", "Nome relazione", "NewAssociation");
+        const relationName = window.prompt("Nome relazione", "NewAssociation");
         if (!relationName) return;
         const candidate = relationName.trim();
         if (!candidate) return;
@@ -6533,7 +6008,7 @@
           renderIssues([{ level: "warning", code: "DIAGRAM_DUPLICATE_ASSOC", message: `Relazione '${candidate}' gia esistente` }]);
           return;
         }
-        const targetClass = await askText("Classe destinazione", "Classe destinazione", coreState.model.classes.find((c) => c.name !== selectedClass)?.name || selectedClass);
+        const targetClass = window.prompt("Classe destinazione", coreState.model.classes.find((c) => c.name !== selectedClass)?.name || selectedClass);
         if (!targetClass) return;
         const toClass = targetClass.trim();
         if (!coreState.model.classes.some((c) => c.name === toClass)) {
@@ -6748,7 +6223,6 @@
       refreshOpsMetrics();
       refreshCollabStatus();
       listGitRefs();
-      connectModalHandlers();
       startAutosaveLoop();
       restoreAutosaveSnapshot(false);
     </script>
