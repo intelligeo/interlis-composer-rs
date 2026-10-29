@@ -52,6 +52,37 @@
         background: linear-gradient(180deg, rgba(77, 163, 255, 0.05), transparent 35%);
       }
 
+      .app-logo-corner {
+        position: fixed;
+        top: 0.9rem;
+        right: 1rem;
+        z-index: 1200;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: clamp(84px, 9vw, 128px);
+        padding: 0.2rem;
+        border-radius: 12px;
+        background: rgba(7, 20, 33, 0.58);
+        border: 1px solid rgba(125, 170, 214, 0.28);
+        box-shadow: 0 10px 26px rgba(2, 6, 17, 0.42);
+        backdrop-filter: blur(2px);
+      }
+
+      .app-logo-corner img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      @media (max-width: 720px) {
+        .app-logo-corner {
+          top: 0.6rem;
+          right: 0.6rem;
+          width: clamp(70px, 22vw, 96px);
+        }
+      }
+
       .wrap {
         width: min(1600px, calc(100% - 1.5rem));
         height: calc(100vh - 2rem);
@@ -419,6 +450,20 @@
       .card .kpi-actions,
       .card .panel-header-actions {
         display: none !important;
+      }
+
+      #diagramPanel > h2 .panel-header-actions {
+        display: flex !important;
+        margin-left: auto;
+      }
+
+      #diagramPanel > h2 .panel-header-actions label {
+        font-size: 0.82rem;
+        color: var(--ink-soft);
+      }
+
+      #diagramPanel > h2 .panel-header-actions input[type="range"] {
+        width: 140px;
       }
 
       .panel-context-menu {
@@ -989,6 +1034,9 @@
     </style>
   </head>
   <body>
+    <div class="app-logo-corner" aria-label="INTERLIS Model Composer logo">
+      <img src="img/logo.png" alt="INTERLIS Model Composer logo" />
+    </div>
     <main class="wrap">
       <section class="hero" style="display: none;" aria-hidden="true">
         <div class="window-controls" aria-hidden="true">
@@ -1240,11 +1288,15 @@
         </article>
 
         <article class="card diagram-card" id="diagramPanel" data-panel-name="diagramPanel">
-          <h2>Diagram Editor</h2>
-          <div class="content">
-            <div class="diag-tools">
+          <h2>
+            <span id="diagramPanelTitle">Diagram Editor</span>
+            <span class="panel-header-actions">
               <label for="diagramZoomInput">Zoom</label>
               <input id="diagramZoomInput" type="range" min="60" max="180" step="10" value="100" />
+            </span>
+          </h2>
+          <div class="content">
+            <div class="diag-tools">
               <button class="ghost" id="diagramAutoLayoutBtn">Auto-layout</button>
               <button class="ghost" id="diagramFitBtn">Fit content</button>
               <button class="ghost" id="diagramToggleAttrsBtn">Nascondi attributi</button>
@@ -2532,7 +2584,7 @@
         applyRibbonI18n();
         setTextBySelector("#structurePanel > h2", "panel.structure");
         setTextBySelector("#propertiesPanel > h2", "panel.properties");
-        setTextBySelector("#diagramPanel > h2", "panel.diagram");
+        setTextBySelector("#diagramPanelTitle", "panel.diagram");
         setTextBySelector("#statusBarAbout", "status.about");
         setTextBySelector("#uiLocaleLabel", "status.language");
         const statusProjectLabel = document.getElementById("statusProjectLabel");
@@ -2591,6 +2643,8 @@
       let currentIssues = [];
       let debounceTimer = null;
       let autosaveTimer = null;
+      let modelSyncTimer = null;
+      let modelSyncRequestId = 0;
       let suppressModelInputEvent = false;
       let dragState = null;
       let diagramZoom = 1;
@@ -2903,6 +2957,44 @@
         syncMeta.textContent = `${t("status.syncPrefix")}: ${message}`;
       }
 
+      async function syncDerivedPanelsFromModel(sourceTag) {
+        const syncId = ++modelSyncRequestId;
+        const modelSnapshot = deepClone(coreState.model);
+
+        try {
+          const iliPayload = await postJson("/api/model/export/ili", modelSnapshot);
+          if (syncId !== modelSyncRequestId) return;
+          output.textContent = iliPayload.interlis || "";
+          lastFileName = iliPayload.file_name || "model.ili";
+        } catch (_) {
+          if (syncId !== modelSyncRequestId) return;
+          // Keep last successful output if current model is temporarily invalid.
+        }
+
+        try {
+          const docsPayload = await postJson("/api/docs/export/markdown", modelSnapshot);
+          if (syncId !== modelSyncRequestId) return;
+          lastDocsMarkdown = String(docsPayload.markdown || "");
+          lastDocsFileName = String(docsPayload.file_name || "");
+          renderDocsExplorer();
+        } catch (_) {
+          if (syncId !== modelSyncRequestId) return;
+          // Keep last successful docs if current model is temporarily invalid.
+        }
+
+        if (syncId === modelSyncRequestId) {
+          setSyncMeta(`modello sincronizzato su pannelli derivati (${sourceTag}) alle ${stamp()}`);
+        }
+      }
+
+      function scheduleCrossPanelModelSync(sourceTag) {
+        if (sourceTag === "text-editor-invalid-json") return;
+        if (modelSyncTimer) clearTimeout(modelSyncTimer);
+        modelSyncTimer = setTimeout(() => {
+          syncDerivedPanelsFromModel(sourceTag || "ui");
+        }, 260);
+      }
+
       function parseMetadataText(rawText) {
         const out = {};
         const lines = String(rawText || "").split(/\r?\n/);
@@ -2961,6 +3053,7 @@
 
       bus.on(EVENTS.MODEL_CHANGED, (payload) => {
         setSyncMeta(`modello aggiornato da ${payload.source} alle ${stamp()}`);
+        scheduleCrossPanelModelSync(payload.source || "ui");
       });
 
       bus.on(EVENTS.DIAGNOSTICS_UPDATED, (payload) => {
@@ -7279,6 +7372,7 @@
       uiLocale = resolveInitialUiLocale();
       if (uiLocaleSelect) uiLocaleSelect.value = uiLocale;
       applyI18nToUi();
+      scheduleCrossPanelModelSync("bootstrap");
       setDirty(false);
       renderRecentProjects();
       renderStructureTree();
