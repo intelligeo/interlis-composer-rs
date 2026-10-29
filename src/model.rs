@@ -445,13 +445,21 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
                     }
 
                     let mut extends_raw = String::new();
-                    if let Some(keyword) = tokens.next() {
-                        if keyword.eq_ignore_ascii_case("EXTENDS")
-                            || keyword.eq_ignore_ascii_case("EXTEND")
-                            || keyword.eq_ignore_ascii_case("EXTENT")
+                    let mut rest = tokens.peekable();
+                    while let Some(token) = rest.next() {
+                        if token.eq_ignore_ascii_case("(ABSTRACT)")
+                            || token.eq_ignore_ascii_case("ABSTRACT")
                         {
-                            let base_name = tokens.next().unwrap_or("").trim();
-                            if base_name.is_empty() || tokens.next().is_some() {
+                            is_abstract = true;
+                            continue;
+                        }
+
+                        if token.eq_ignore_ascii_case("EXTENDS")
+                            || token.eq_ignore_ascii_case("EXTEND")
+                            || token.eq_ignore_ascii_case("EXTENT")
+                        {
+                            let base_name = rest.next().unwrap_or("").trim();
+                            if base_name.is_empty() {
                                 return Err(ParseFailure::new(
                                     "Invalid EXTENDS clause in CLASS declaration",
                                     line_no,
@@ -459,13 +467,14 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
                                 ));
                             }
                             extends_raw = base_name.to_string();
-                        } else {
-                            return Err(ParseFailure::new(
-                                "Invalid CLASS declaration",
-                                line_no,
-                                1,
-                            ));
+                            continue;
                         }
+
+                        return Err(ParseFailure::new(
+                            "Invalid CLASS declaration",
+                            line_no,
+                            1,
+                        ));
                     }
 
                     current_class = Some(Class {
