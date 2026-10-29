@@ -1209,7 +1209,7 @@
               <input id="propClassAbstractInput" type="checkbox" />
             </div>
             <div class="form-row" id="propClassExtendsRow">
-              <label for="propClassExtendsSelect">EXTEND</label>
+              <label for="propClassExtendsSelect">EXTENDS</label>
               <select id="propClassExtendsSelect"></select>
             </div>
             <div class="form-row" id="propAttrCardRow">
@@ -4589,14 +4589,14 @@
 
           const inheritancePath = document.createElementNS(ns, "path");
           inheritancePath.setAttribute("class", "diagram-inheritance");
-          inheritancePath.setAttribute("d", `M ${childX} ${childY} L ${parentX} ${parentY}`);
+          inheritancePath.setAttribute("d", `M ${parentX} ${parentY} L ${childX} ${childY}`);
           diagramCanvas.appendChild(inheritancePath);
 
           const label = document.createElementNS(ns, "text");
           label.setAttribute("class", "diagram-inheritance-label");
           label.setAttribute("x", String((childX + parentX) / 2 + 4));
           label.setAttribute("y", String((childY + parentY) / 2 - 5));
-          label.textContent = "EXTEND";
+          label.textContent = "EXTENDS";
           diagramCanvas.appendChild(label);
         }
 

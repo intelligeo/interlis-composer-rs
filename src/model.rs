@@ -416,7 +416,7 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
             continue;
         }
 
-        if line.ends_with('=') && (line.starts_with("ABSTRACT CLASS ") || line.starts_with("CLASS ")) {
+        if line.ends_with('=') {
             if current_class.is_some() {
                 return Err(ParseFailure::new(
                     "Nested CLASS definitions are not supported",
@@ -426,36 +426,57 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
             }
 
             let decl = line.trim_end_matches('=').trim();
-            let (is_abstract, class_decl) = if let Some(rest) = decl.strip_prefix("ABSTRACT ") {
-                (true, rest.trim_start())
-            } else {
-                (false, decl)
+            let mut tokens = decl.split_whitespace();
+            let first = tokens.next();
+            let mut is_abstract = false;
+            let class_kw = match first {
+                Some(tok) if tok.eq_ignore_ascii_case("ABSTRACT") => {
+                    is_abstract = true;
+                    tokens.next()
+                }
+                _ => first,
             };
 
-            let class_body = class_decl
-                .strip_prefix("CLASS ")
-                .ok_or_else(|| ParseFailure::new("Invalid CLASS declaration", line_no, 1))?;
+            if let Some(class_token) = class_kw {
+                if class_token.eq_ignore_ascii_case("CLASS") {
+                    let name_raw = tokens.next().unwrap_or("").trim();
+                    if name_raw.is_empty() {
+                        return Err(ParseFailure::new("CLASS name cannot be empty", line_no, 1));
+                    }
 
-            let (name_raw, extends_raw) = if let Some((lhs, rhs)) = class_body.split_once(" EXTENDS ") {
-                (lhs.trim(), rhs.trim())
-            } else {
-                (class_body.trim(), "")
-            };
+                    let mut extends_raw = String::new();
+                    if let Some(keyword) = tokens.next() {
+                        if keyword.eq_ignore_ascii_case("EXTENDS")
+                            || keyword.eq_ignore_ascii_case("EXTEND")
+                            || keyword.eq_ignore_ascii_case("EXTENT")
+                        {
+                            let base_name = tokens.next().unwrap_or("").trim();
+                            if base_name.is_empty() || tokens.next().is_some() {
+                                return Err(ParseFailure::new(
+                                    "Invalid EXTENDS clause in CLASS declaration",
+                                    line_no,
+                                    1,
+                                ));
+                            }
+                            extends_raw = base_name.to_string();
+                        } else {
+                            return Err(ParseFailure::new(
+                                "Invalid CLASS declaration",
+                                line_no,
+                                1,
+                            ));
+                        }
+                    }
 
-            if name_raw.is_empty() {
-                return Err(ParseFailure::new("CLASS name cannot be empty", line_no, 1));
+                    current_class = Some(Class {
+                        name: name_raw.to_string(),
+                        is_abstract,
+                        extends: extends_raw,
+                        attributes: Vec::new(),
+                    });
+                    continue;
+                }
             }
-            if !extends_raw.is_empty() && extends_raw.split_whitespace().count() != 1 {
-                return Err(ParseFailure::new("Invalid EXTENDS clause in CLASS declaration", line_no, 1));
-            }
-
-            current_class = Some(Class {
-                name: name_raw.to_string(),
-                is_abstract,
-                extends: extends_raw.to_string(),
-                attributes: Vec::new(),
-            });
-            continue;
         }
 
         if line.starts_with("END ") {
