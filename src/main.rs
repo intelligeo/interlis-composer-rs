@@ -1077,7 +1077,7 @@ fn validate(model: &InterlisModel) -> Vec<ValidationIssue> {
     if !is_identifier(&model.model_name) {
         issues.push(error_issue_at(
             "MODEL_NAME_INVALID",
-            "Model name must be a valid INTERLIS identifier",
+            "Model name is invalid: INTERLIS identifiers must start with a letter and then contain only A-Z, a-z, 0-9 or '_' (no spaces)",
             Some("model".to_string()),
         ));
     }
@@ -1420,7 +1420,7 @@ fn validate_catalog_instances(
         } else if !is_identifier(code) {
             issues.push(error_issue_at(
                 "CATALOG_INSTANCE_CODE_INVALID",
-                &format!("Catalog instance code '{}' is not a valid INTERLIS identifier", code),
+                &format!("Catalog instance code '{}' is invalid: INTERLIS identifiers must start with a letter and then contain only A-Z, a-z, 0-9 or '_' (no spaces)", code),
                 Some(path.clone()),
             ));
         }
@@ -1860,7 +1860,7 @@ fn validate_class(class: &Class, issues: &mut Vec<ValidationIssue>) {
     if !is_identifier(&class.name) {
         issues.push(error_issue_at(
             "CLASS_NAME_INVALID",
-            &format!("Class '{}' is not a valid INTERLIS identifier", class.name),
+            &format!("Class '{}' is invalid: INTERLIS identifiers must start with a letter and then contain only A-Z, a-z, 0-9 or '_' (no spaces)", class.name),
             Some(class_path.clone()),
         ));
     }
@@ -1882,7 +1882,7 @@ fn validate_class(class: &Class, issues: &mut Vec<ValidationIssue>) {
             issues.push(error_issue_at(
                 "ATTRIBUTE_NAME_INVALID",
                 &format!(
-                    "Attribute '{}.{}' is not a valid INTERLIS identifier",
+                    "Attribute '{}.{}' is invalid: INTERLIS identifiers must start with a letter and then contain only A-Z, a-z, 0-9 or '_' (no spaces)",
                     class.name, attr.name
                 ),
                 Some(attr_path.clone()),
@@ -1919,7 +1919,7 @@ fn validate_domains(domains: &[Domain], issues: &mut Vec<ValidationIssue>) {
         if !is_identifier(&domain.name) {
             issues.push(error_issue_at(
                 "DOMAIN_NAME_INVALID",
-                &format!("Domain '{}' is not a valid INTERLIS identifier", domain.name),
+                &format!("Domain '{}' is invalid: INTERLIS identifiers must start with a letter and then contain only A-Z, a-z, 0-9 or '_' (no spaces)", domain.name),
                 Some(path.clone()),
             ));
         }
@@ -1944,7 +1944,7 @@ fn validate_associations(associations: &[Association], classes: &[Class], issues
         if !is_identifier(&assoc.name) {
             issues.push(error_issue_at(
                 "ASSOCIATION_NAME_INVALID",
-                &format!("Association '{}' is not a valid INTERLIS identifier", assoc.name),
+                &format!("Association '{}' is invalid: INTERLIS identifiers must start with a letter and then contain only A-Z, a-z, 0-9 or '_' (no spaces)", assoc.name),
                 Some(path.clone()),
             ));
         }
@@ -1979,7 +1979,7 @@ fn validate_topics(topics: &[Topic], issues: &mut Vec<ValidationIssue>) {
         if !is_identifier(&topic.name) {
             issues.push(error_issue_at(
                 "TOPIC_NAME_INVALID",
-                &format!("Topic '{}' is not a valid INTERLIS identifier", topic.name),
+                &format!("Topic '{}' is invalid: INTERLIS identifiers must start with a letter and then contain only A-Z, a-z, 0-9 or '_' (no spaces)", topic.name),
                 Some(topic_path.clone()),
             ));
         }
@@ -1998,7 +1998,7 @@ fn validate_topics(topics: &[Topic], issues: &mut Vec<ValidationIssue>) {
             if !is_identifier(&subtopic.name) {
                 issues.push(error_issue_at(
                     "SUBTOPIC_NAME_INVALID",
-                    &format!("Subtopic '{}.{}' is not a valid INTERLIS identifier", topic.name, subtopic.name),
+                    &format!("Subtopic '{}.{}' is invalid: INTERLIS identifiers must start with a letter and then contain only A-Z, a-z, 0-9 or '_' (no spaces)", topic.name, subtopic.name),
                     Some(subtopic_path.clone()),
                 ));
             }

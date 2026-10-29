@@ -427,7 +427,10 @@
         border: 1px solid rgba(125, 170, 214, 0.28);
         border-radius: 10px;
         box-shadow: 0 14px 32px rgba(2, 6, 17, 0.6);
-        min-width: 180px;
+        min-width: 220px;
+        max-width: 320px;
+        max-height: calc(100vh - 16px);
+        overflow: auto;
         padding: 0.35rem;
         display: none;
       }
@@ -451,6 +454,20 @@
 
       .panel-context-menu button:hover {
         background: rgba(77, 163, 255, 0.12);
+      }
+
+      .panel-context-section + .panel-context-section {
+        margin-top: 0.3rem;
+        padding-top: 0.3rem;
+        border-top: 1px solid rgba(125, 170, 214, 0.18);
+      }
+
+      .panel-context-section-title {
+        padding: 0.25rem 0.45rem 0.2rem;
+        color: rgba(157, 196, 235, 0.95);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
       }
 
       textarea,
@@ -657,6 +674,15 @@
         text-decoration: underline;
       }
 
+      .status-bar select {
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: rgba(9, 17, 29, 0.9);
+        color: var(--ink);
+        padding: 0.2rem 0.35rem;
+        font-size: 0.8rem;
+      }
+
       .status-dot {
         display: inline-block;
         width: 0.55rem;
@@ -687,6 +713,7 @@
 
       .tree-item {
         width: 100%;
+        max-width: 100%;
         text-align: left;
         border: 1px solid var(--line);
         border-radius: 10px;
@@ -702,15 +729,23 @@
       }
 
       .tree-item.attr {
-        margin-left: 1rem;
+        margin-left: 0;
+        padding-left: 1.4rem;
       }
 
       .tree-item.enum-value {
-        margin-left: 2rem;
+        margin-left: 0;
+        padding-left: 2.2rem;
       }
 
       .tree-item.subtopic {
-        margin-left: 1rem;
+        margin-left: 0;
+        padding-left: 1.4rem;
+      }
+
+      #structurePanel .content,
+      #structureTree {
+        overflow-x: hidden;
       }
 
       .tree-item.dragging {
@@ -1140,19 +1175,24 @@
                 <option>UUID</option>
               </select>
             </div>
-            <div class="form-row" id="propMandatoryRow">
-              <label><input id="propMandatoryInput" type="checkbox" /> Mandatory</label>
+            <div class="form-row" id="propAttrCardRow">
+              <label for="propAttrCardInput">Cardinality</label>
+              <input id="propAttrCardInput" type="text" placeholder="0..1" />
             </div>
             <div class="form-row" id="propAssocFromRow">
               <label for="propAssocFromSelect">From class</label>
               <select id="propAssocFromSelect"></select>
+            </div>
+            <div class="form-row" id="propAssocFromCardRow">
+              <label for="propAssocFromCardInput">From cardinality</label>
+              <input id="propAssocFromCardInput" type="text" placeholder="0..*" />
             </div>
             <div class="form-row" id="propAssocToRow">
               <label for="propAssocToSelect">To class</label>
               <select id="propAssocToSelect"></select>
             </div>
             <div class="form-row" id="propAssocCardRow">
-              <label for="propAssocCardInput">Cardinality</label>
+              <label for="propAssocCardInput">To cardinality</label>
               <input id="propAssocCardInput" type="text" placeholder="1..*" />
             </div>
             <div class="actions">
@@ -1293,6 +1333,13 @@
         <div class="status-bar-group">
           <a href="#" id="statusBarAbout">About</a>
           <a href="https://github.com/intelligeo/interlis-composer-rs" target="_blank" rel="noreferrer">GitHub Repo</a>
+          <label for="uiLocaleSelect" id="uiLocaleLabel">Language</label>
+          <select id="uiLocaleSelect" aria-label="UI language">
+            <option value="de_CH">Deutsch (CH)</option>
+            <option value="fr_FR">Francais (FR)</option>
+            <option value="it_IT">Italiano (IT)</option>
+            <option value="en_US">English (US)</option>
+          </select>
           <span>Last sync: <strong id="statusBarSync">idle</strong></span>
         </div>
       </div>
@@ -1423,6 +1470,7 @@
 
       function closePanelContextMenu() {
         panelContextMenu.classList.remove('visible');
+        panelContextMenu.style.visibility = '';
         panelContextMenu.innerHTML = '';
       }
 
@@ -1441,45 +1489,109 @@
       function showPanelContextMenu(panel, x, y) {
         const buttons = Array.from(panel.querySelectorAll('button')).filter((button) => !button.closest('.ribbon-button') && !button.classList.contains('panel-toggle'));
 
-        const options = [];
-        if (buttons.length > 0) {
-          buttons.forEach((button) => {
-            const label = (button.textContent || '').trim();
-            if (label) {
-              options.push({ label, action: () => button.click() });
+        const panelActionsSection = {
+          title: t('ctx.section.panel'),
+          items: [
+            {
+              label: panel.classList.contains('is-collapsed') ? t('ctx.expandPanel') : t('ctx.collapsePanel'),
+              action: () => {
+                panel.classList.toggle('is-collapsed');
+              }
+            },
+            {
+              label: t('ctx.resetPanelSize'),
+              action: () => {
+                panel.style.height = '';
+              }
             }
+          ]
+        };
+
+        const mkButtonAction = (id) => {
+          const btn = document.getElementById(id);
+          if (!btn) return null;
+          const label = (btn.textContent || '').trim() || id;
+          return { label, action: () => btn.click() };
+        };
+
+        const buildSection = (title, ids) => {
+          const items = ids
+            .map((id) => mkButtonAction(id))
+            .filter(Boolean);
+          return items.length > 0 ? { title, items } : null;
+        };
+
+        const sections = [];
+        if (panel.id === 'diagramPanel') {
+          const diagramSections = [
+            buildSection(t('ctx.section.insert'), ['diagramAddClassBtn', 'diagramAddRelationBtn']),
+            buildSection(t('ctx.section.view'), ['diagramAutoLayoutBtn', 'diagramFitBtn', 'diagramToggleAttrsBtn', 'diagramResetBtn']),
+            buildSection(t('ctx.section.layout'), ['diagramSnapAnchorsBtn', 'diagramLockLayoutBtn', 'diagramLockNodesBtn', 'diagramLockRelationsBtn']),
+            buildSection(t('ctx.section.preset'), ['diagramSavePresetBtn', 'diagramDeletePresetBtn', 'diagramSetPresetOwnerBtn', 'diagramReviewPresetBtn', 'diagramExportPresetsBtn', 'diagramImportPresetsBtn'])
+          ].filter(Boolean);
+          sections.push(...diagramSections);
+        } else if (panel.id === 'structurePanel') {
+          const structureSections = [
+            buildSection(t('ctx.section.model'), ['addTopicBtn', 'addSubtopicBtn']),
+            buildSection(t('ctx.section.schema'), ['addClassBtn', 'addAttrBtn', 'addDomainBtn']),
+            buildSection(t('ctx.section.relations'), ['addAssocBtn']),
+            buildSection(t('ctx.section.manage'), ['deleteSelectedBtn'])
+          ].filter(Boolean);
+          sections.push(...structureSections);
+        } else if (buttons.length > 0) {
+          sections.push({
+            title: t('ctx.section.actions'),
+            items: buttons
+              .map((button) => {
+                const label = (button.textContent || '').trim();
+                if (!label) return null;
+                return { label, action: () => button.click() };
+              })
+              .filter(Boolean)
           });
         }
 
-        options.unshift({
-          label: panel.classList.contains('is-collapsed') ? 'Expand panel' : 'Collapse panel',
-          action: () => {
-            panel.classList.toggle('is-collapsed');
-          }
-        });
-
-        options.push({
-          label: 'Reset panel size',
-          action: () => {
-            panel.style.height = '';
-          }
-        });
+        sections.push(panelActionsSection);
 
         panelContextMenu.innerHTML = '';
-        options.forEach(({ label, action }) => {
-          const item = document.createElement('button');
-          item.type = 'button';
-          item.textContent = label;
-          item.addEventListener('click', () => {
-            action();
-            closePanelContextMenu();
+        sections.forEach((section) => {
+          const wrap = document.createElement('div');
+          wrap.className = 'panel-context-section';
+
+          if (section.title) {
+            const title = document.createElement('div');
+            title.className = 'panel-context-section-title';
+            title.textContent = section.title;
+            wrap.appendChild(title);
+          }
+
+          section.items.forEach(({ label, action }) => {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.textContent = label;
+            item.addEventListener('click', () => {
+              action();
+              closePanelContextMenu();
+            });
+            wrap.appendChild(item);
           });
-          panelContextMenu.appendChild(item);
+
+          panelContextMenu.appendChild(wrap);
         });
 
-        panelContextMenu.style.left = `${Math.min(x, window.innerWidth - 220)}px`;
-        panelContextMenu.style.top = `${Math.min(y, window.innerHeight - 200)}px`;
+        panelContextMenu.style.left = '0px';
+        panelContextMenu.style.top = '0px';
+        panelContextMenu.style.visibility = 'hidden';
         panelContextMenu.classList.add('visible');
+
+        const menuRect = panelContextMenu.getBoundingClientRect();
+        const margin = 8;
+        const left = Math.max(margin, Math.min(x, window.innerWidth - menuRect.width - margin));
+        const top = Math.max(margin, Math.min(y, window.innerHeight - menuRect.height - margin));
+
+        panelContextMenu.style.left = `${left}px`;
+        panelContextMenu.style.top = `${top}px`;
+        panelContextMenu.style.visibility = 'visible';
       }
 
       document.querySelectorAll('article.card[data-panel-name]').forEach((panel) => {
@@ -1577,19 +1689,32 @@
         });
       });
 
-      function triggerDomAction(actionName) {
+      function triggerDomAction(actionName, sourceButton = null) {
         if (!actionName) return;
 
-        const candidates = [
-          ...document.querySelectorAll(`#${CSS.escape(actionName)}`),
+        const byId = document.getElementById(actionName);
+        if (byId && byId !== sourceButton) {
+          byId.click();
+          return;
+        }
+
+        const safeCandidates = [
           ...document.querySelectorAll(`[data-action="${CSS.escape(actionName)}"]`),
           ...document.querySelectorAll(`[data-panel-name="${CSS.escape(actionName)}"]`)
-        ];
+        ].filter((element) => element !== sourceButton);
 
-        if (candidates.length === 0) return;
+        if (safeCandidates.length === 0) {
+          console.warn(`Ribbon action '${actionName}' has no clickable target`);
+          return;
+        }
 
-        const preferred = candidates.find((element) => !element.closest('.is-hidden')) || candidates[0];
-        preferred.click();
+        const preferred = safeCandidates.find((element) => !element.classList.contains('ribbon-button') && !element.closest('.is-hidden'))
+          || safeCandidates.find((element) => !element.closest('.is-hidden'))
+          || safeCandidates[0];
+
+        if (preferred) {
+          preferred.click();
+        }
       }
 
       ribbonButtons.forEach((button) => {
@@ -1606,7 +1731,7 @@
             return;
           }
 
-          triggerDomAction(button.dataset.action);
+          triggerDomAction(button.dataset.action, button);
         });
       });
 
@@ -1740,13 +1865,15 @@
       const selectedPathInput = document.getElementById("selectedPathInput");
       const propNameInput = document.getElementById("propNameInput");
       const propTypeSelect = document.getElementById("propTypeSelect");
-      const propMandatoryInput = document.getElementById("propMandatoryInput");
+      const propAttrCardInput = document.getElementById("propAttrCardInput");
       const propTypeRow = document.getElementById("propTypeRow");
-      const propMandatoryRow = document.getElementById("propMandatoryRow");
+      const propAttrCardRow = document.getElementById("propAttrCardRow");
       const propAssocFromRow = document.getElementById("propAssocFromRow");
+      const propAssocFromCardRow = document.getElementById("propAssocFromCardRow");
       const propAssocToRow = document.getElementById("propAssocToRow");
       const propAssocCardRow = document.getElementById("propAssocCardRow");
       const propAssocFromSelect = document.getElementById("propAssocFromSelect");
+      const propAssocFromCardInput = document.getElementById("propAssocFromCardInput");
       const propAssocToSelect = document.getElementById("propAssocToSelect");
       const propAssocCardInput = document.getElementById("propAssocCardInput");
       const treeSearch = document.getElementById("treeSearch");
@@ -1793,15 +1920,338 @@
       const collabRefsOutput = document.getElementById("collabRefsOutput");
       const collabDiffOutput = document.getElementById("collabDiffOutput");
       const commitDraftOutput = document.getElementById("commitDraftOutput");
+      const uiLocaleSelect = document.getElementById("uiLocaleSelect");
+
+      const I18N_DEFAULT_LOCALE = "en_US";
+      const I18N_SUPPORTED_LOCALES = ["de_CH", "fr_FR", "it_IT", "en_US"];
+      const I18N_UI_LOCALE_KEY = "imc_ui_locale_v1";
+
+      const I18N_MESSAGES = {
+        en_US: {
+          "status.project": "Project",
+          "status.mode": "Mode",
+          "status.version": "Version",
+          "status.lastSync": "Last sync",
+          "status.idle": "idle",
+          "status.syncPrefix": "Sync",
+          "status.about": "About",
+          "status.language": "Language",
+          "project.meta": "Project: {name} | Status: {status}",
+          "project.saved": "saved",
+          "project.unsaved": "unsaved changes",
+          "autosave.active": "Autosave: active ({ms} ms)",
+          "panel.structure": "Structure Tree",
+          "panel.properties": "Properties Editor",
+          "panel.diagram": "Diagram Editor",
+          "tree.searchPlaceholder": "Search node...",
+          "tree.filter.all": "All types",
+          "tree.filter.topic": "Topics",
+          "tree.filter.subtopic": "Subtopics",
+          "tree.filter.class": "Classes",
+          "tree.filter.attribute": "Attributes",
+          "tree.filter.domain": "Domains",
+          "tree.filter.association": "Associations",
+          "tree.action.addTopic": "New topic",
+          "tree.action.addSubtopic": "New subtopic",
+          "tree.action.addClass": "New class",
+          "tree.action.addAttribute": "New attribute",
+          "tree.action.addDomain": "New domain",
+          "tree.action.addAssociation": "New relation",
+          "tree.action.deleteSelected": "Delete selected",
+          "ctx.section.panel": "Panel",
+          "ctx.section.actions": "Actions",
+          "ctx.section.insert": "Insert",
+          "ctx.section.view": "View",
+          "ctx.section.layout": "Layout",
+          "ctx.section.preset": "Preset",
+          "ctx.section.model": "Model",
+          "ctx.section.schema": "Schema",
+          "ctx.section.relations": "Relations",
+          "ctx.section.manage": "Manage",
+          "ctx.collapsePanel": "Collapse panel",
+          "ctx.expandPanel": "Expand panel",
+          "ctx.resetPanelSize": "Reset panel size",
+          "diagram.focus": "Diagram: focus on class {className}{lockLabel}",
+          "diagram.select": "Diagram: select a class from tree or diagram{lockLabel}",
+          "diagram.lock": "lock",
+          "diagram.lock.layout": "layout",
+          "diagram.lock.nodes": "nodes",
+          "diagram.lock.relations": "relations"
+        },
+        it_IT: {
+          "status.project": "Progetto",
+          "status.mode": "Modalita",
+          "status.version": "Versione",
+          "status.lastSync": "Ultima sync",
+          "status.idle": "idle",
+          "status.syncPrefix": "Sync",
+          "status.about": "About",
+          "status.language": "Lingua",
+          "project.meta": "Progetto: {name} | Stato: {status}",
+          "project.saved": "salvato",
+          "project.unsaved": "modifiche non salvate",
+          "autosave.active": "Autosave: attivo ({ms} ms)",
+          "panel.structure": "Structure Tree",
+          "panel.properties": "Properties Editor",
+          "panel.diagram": "Diagram Editor",
+          "tree.searchPlaceholder": "Cerca nodo...",
+          "tree.filter.all": "Tutti i tipi",
+          "tree.filter.topic": "Topic",
+          "tree.filter.subtopic": "Subtopic",
+          "tree.filter.class": "Classi",
+          "tree.filter.attribute": "Attributi",
+          "tree.filter.domain": "Domain",
+          "tree.filter.association": "Relazioni",
+          "tree.action.addTopic": "Nuovo topic",
+          "tree.action.addSubtopic": "Nuovo subtopic",
+          "tree.action.addClass": "Nuova classe",
+          "tree.action.addAttribute": "Nuovo attributo",
+          "tree.action.addDomain": "Nuovo domain",
+          "tree.action.addAssociation": "Nuova relazione",
+          "tree.action.deleteSelected": "Elimina selezionato",
+          "ctx.section.panel": "Pannello",
+          "ctx.section.actions": "Azioni",
+          "ctx.section.insert": "Inserimento",
+          "ctx.section.view": "Vista",
+          "ctx.section.layout": "Layout",
+          "ctx.section.preset": "Preset",
+          "ctx.section.model": "Modello",
+          "ctx.section.schema": "Schema",
+          "ctx.section.relations": "Relazioni",
+          "ctx.section.manage": "Gestione",
+          "ctx.collapsePanel": "Comprimi pannello",
+          "ctx.expandPanel": "Espandi pannello",
+          "ctx.resetPanelSize": "Reset dimensione pannello",
+          "diagram.focus": "Diagram: focus su classe {className}{lockLabel}",
+          "diagram.select": "Diagram: seleziona una classe dal tree o dal diagramma{lockLabel}",
+          "diagram.lock": "lock",
+          "diagram.lock.layout": "layout",
+          "diagram.lock.nodes": "nodi",
+          "diagram.lock.relations": "connessioni"
+        },
+        de_CH: {
+          "status.project": "Projekt",
+          "status.mode": "Modus",
+          "status.version": "Version",
+          "status.lastSync": "Letzte Sync",
+          "status.idle": "idle",
+          "status.syncPrefix": "Sync",
+          "status.about": "Info",
+          "status.language": "Sprache",
+          "project.meta": "Projekt: {name} | Status: {status}",
+          "project.saved": "gespeichert",
+          "project.unsaved": "ungespeicherte Anderungen",
+          "autosave.active": "Autosave: aktiv ({ms} ms)",
+          "panel.structure": "Strukturbaum",
+          "panel.properties": "Eigenschafteneditor",
+          "panel.diagram": "Diagramm Editor",
+          "tree.searchPlaceholder": "Knoten suchen...",
+          "tree.filter.all": "Alle Typen",
+          "tree.filter.topic": "Themen",
+          "tree.filter.subtopic": "Unterthemen",
+          "tree.filter.class": "Klassen",
+          "tree.filter.attribute": "Attribute",
+          "tree.filter.domain": "Domainen",
+          "tree.filter.association": "Beziehungen",
+          "tree.action.addTopic": "Neues Thema",
+          "tree.action.addSubtopic": "Neues Unterthema",
+          "tree.action.addClass": "Neue Klasse",
+          "tree.action.addAttribute": "Neues Attribut",
+          "tree.action.addDomain": "Neue Doman",
+          "tree.action.addAssociation": "Neue Beziehung",
+          "tree.action.deleteSelected": "Auswahl loschen",
+          "ctx.section.panel": "Panel",
+          "ctx.section.actions": "Aktionen",
+          "ctx.section.insert": "Einfugen",
+          "ctx.section.view": "Ansicht",
+          "ctx.section.layout": "Layout",
+          "ctx.section.preset": "Preset",
+          "ctx.section.model": "Modell",
+          "ctx.section.schema": "Schema",
+          "ctx.section.relations": "Beziehungen",
+          "ctx.section.manage": "Verwaltung",
+          "ctx.collapsePanel": "Panel einklappen",
+          "ctx.expandPanel": "Panel ausklappen",
+          "ctx.resetPanelSize": "Panelgrosse zurucksetzen",
+          "diagram.focus": "Diagramm: Fokus auf Klasse {className}{lockLabel}",
+          "diagram.select": "Diagramm: Klasse aus Baum oder Diagramm auswahlen{lockLabel}",
+          "diagram.lock": "sperre",
+          "diagram.lock.layout": "layout",
+          "diagram.lock.nodes": "knoten",
+          "diagram.lock.relations": "beziehungen"
+        },
+        fr_FR: {
+          "status.project": "Projet",
+          "status.mode": "Mode",
+          "status.version": "Version",
+          "status.lastSync": "Derniere sync",
+          "status.idle": "idle",
+          "status.syncPrefix": "Sync",
+          "status.about": "A propos",
+          "status.language": "Langue",
+          "project.meta": "Projet: {name} | Statut: {status}",
+          "project.saved": "sauvegarde",
+          "project.unsaved": "modifications non sauvegardees",
+          "autosave.active": "Autosave: actif ({ms} ms)",
+          "panel.structure": "Arbre de structure",
+          "panel.properties": "Editeur de proprietes",
+          "panel.diagram": "Editeur de diagramme",
+          "tree.searchPlaceholder": "Rechercher un noeud...",
+          "tree.filter.all": "Tous les types",
+          "tree.filter.topic": "Topics",
+          "tree.filter.subtopic": "Sous-topics",
+          "tree.filter.class": "Classes",
+          "tree.filter.attribute": "Attributs",
+          "tree.filter.domain": "Domaines",
+          "tree.filter.association": "Relations",
+          "tree.action.addTopic": "Nouveau topic",
+          "tree.action.addSubtopic": "Nouveau sous-topic",
+          "tree.action.addClass": "Nouvelle classe",
+          "tree.action.addAttribute": "Nouvel attribut",
+          "tree.action.addDomain": "Nouveau domaine",
+          "tree.action.addAssociation": "Nouvelle relation",
+          "tree.action.deleteSelected": "Supprimer la selection",
+          "ctx.section.panel": "Panneau",
+          "ctx.section.actions": "Actions",
+          "ctx.section.insert": "Insertion",
+          "ctx.section.view": "Vue",
+          "ctx.section.layout": "Disposition",
+          "ctx.section.preset": "Preset",
+          "ctx.section.model": "Modele",
+          "ctx.section.schema": "Schema",
+          "ctx.section.relations": "Relations",
+          "ctx.section.manage": "Gestion",
+          "ctx.collapsePanel": "Reduire le panneau",
+          "ctx.expandPanel": "Etendre le panneau",
+          "ctx.resetPanelSize": "Reinitialiser la taille du panneau",
+          "diagram.focus": "Diagramme: focus sur la classe {className}{lockLabel}",
+          "diagram.select": "Diagramme: selectionnez une classe dans l'arbre ou le diagramme{lockLabel}",
+          "diagram.lock": "verrou",
+          "diagram.lock.layout": "layout",
+          "diagram.lock.nodes": "noeuds",
+          "diagram.lock.relations": "relations"
+        }
+      };
 
       let lastFileName = "model.ili";
       let currentProjectName = "NewProject";
       let isDirty = false;
+      let uiLocale = I18N_DEFAULT_LOCALE;
+
+      function normalizeUiLocale(rawLocale) {
+        const value = String(rawLocale || "").trim().replace("-", "_");
+        if (I18N_SUPPORTED_LOCALES.includes(value)) return value;
+        const lower = value.toLowerCase();
+        if (lower.startsWith("de")) return "de_CH";
+        if (lower.startsWith("fr")) return "fr_FR";
+        if (lower.startsWith("it")) return "it_IT";
+        if (lower.startsWith("en")) return "en_US";
+        return I18N_DEFAULT_LOCALE;
+      }
+
+      function resolveInitialUiLocale() {
+        const stored = localStorage.getItem(I18N_UI_LOCALE_KEY);
+        if (stored) return normalizeUiLocale(stored);
+        return normalizeUiLocale(navigator.language || I18N_DEFAULT_LOCALE);
+      }
+
+      function t(key, vars) {
+        const localeDict = I18N_MESSAGES[uiLocale] || I18N_MESSAGES[I18N_DEFAULT_LOCALE];
+        const fallbackDict = I18N_MESSAGES[I18N_DEFAULT_LOCALE];
+        let template = localeDict[key] || fallbackDict[key] || key;
+        if (vars && typeof vars === "object") {
+          template = template.replace(/\{([a-zA-Z0-9_]+)\}/g, (_, varName) => {
+            const value = vars[varName];
+            return value == null ? "" : String(value);
+          });
+        }
+        return template;
+      }
+
+      function setTextBySelector(selector, key) {
+        document.querySelectorAll(selector).forEach((el) => {
+          el.textContent = t(key);
+        });
+      }
+
+      function setPlaceholderBySelector(selector, key) {
+        document.querySelectorAll(selector).forEach((el) => {
+          el.setAttribute("placeholder", t(key));
+        });
+      }
+
+      function setOptionTextByValue(selectId, value, key) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        const option = select.querySelector(`option[value="${CSS.escape(value)}"]`);
+        if (option) option.textContent = t(key);
+      }
+
+      function refreshProjectMeta() {
+        projectMeta.textContent = t("project.meta", {
+          name: currentProjectName,
+          status: isDirty ? t("project.unsaved") : t("project.saved")
+        });
+      }
+
+      function applyI18nToUi() {
+        document.documentElement.lang = uiLocale.replace("_", "-").toLowerCase();
+        setTextBySelector("#structurePanel > h2", "panel.structure");
+        setTextBySelector("#propertiesPanel > h2", "panel.properties");
+        setTextBySelector("#diagramPanel > h2", "panel.diagram");
+        setTextBySelector("#statusBarAbout", "status.about");
+        setTextBySelector("#uiLocaleLabel", "status.language");
+
+        const leftGroupSpans = document.querySelectorAll(".status-bar .status-bar-group:first-child span");
+        if (leftGroupSpans[0]) leftGroupSpans[0].childNodes[1].textContent = ` ${t("status.project")}: `;
+        if (leftGroupSpans[1]) leftGroupSpans[1].childNodes[0].textContent = `${t("status.mode")}: `;
+        if (leftGroupSpans[2]) leftGroupSpans[2].childNodes[0].textContent = `${t("status.version")}: `;
+        const lastSyncSpan = document.querySelector(".status-bar .status-bar-group:last-child span");
+        if (lastSyncSpan) lastSyncSpan.childNodes[0].textContent = `${t("status.lastSync")}: `;
+
+        setPlaceholderBySelector("#treeSearch", "tree.searchPlaceholder");
+        setOptionTextByValue("treeTypeFilter", "all", "tree.filter.all");
+        setOptionTextByValue("treeTypeFilter", "topic", "tree.filter.topic");
+        setOptionTextByValue("treeTypeFilter", "subtopic", "tree.filter.subtopic");
+        setOptionTextByValue("treeTypeFilter", "class", "tree.filter.class");
+        setOptionTextByValue("treeTypeFilter", "attribute", "tree.filter.attribute");
+        setOptionTextByValue("treeTypeFilter", "domain", "tree.filter.domain");
+        setOptionTextByValue("treeTypeFilter", "association", "tree.filter.association");
+
+        setTextBySelector("#addTopicBtn", "tree.action.addTopic");
+        setTextBySelector("#addSubtopicBtn", "tree.action.addSubtopic");
+        setTextBySelector("#addClassBtn", "tree.action.addClass");
+        setTextBySelector("#addAttrBtn", "tree.action.addAttribute");
+        setTextBySelector("#addDomainBtn", "tree.action.addDomain");
+        setTextBySelector("#addAssocBtn", "tree.action.addAssociation");
+        setTextBySelector("#deleteSelectedBtn", "tree.action.deleteSelected");
+
+        refreshProjectMeta();
+        setSyncMeta(syncMeta?.dataset?.syncMessage || t("status.idle"));
+        if (autosaveStatus) {
+          autosaveStatus.textContent = t("autosave.active", { ms: coreState.autosaveMs });
+        }
+      }
+
+      function setUiLocale(nextLocale) {
+        uiLocale = normalizeUiLocale(nextLocale);
+        localStorage.setItem(I18N_UI_LOCALE_KEY, uiLocale);
+        if (uiLocaleSelect) uiLocaleSelect.value = uiLocale;
+        applyI18nToUi();
+        renderDiagramEditor();
+        updateStatusBar();
+      }
+
+      if (uiLocaleSelect) {
+        uiLocaleSelect.addEventListener("change", () => {
+          setUiLocale(uiLocaleSelect.value);
+        });
+      }
 
       function updateStatusBar() {
         if (statusBarProject) statusBarProject.textContent = currentProjectName;
         if (statusBarVersion) statusBarVersion.textContent = modelInput && modelInput.value ? "draft" : "empty";
-        if (statusBarSync) statusBarSync.textContent = syncMeta ? syncMeta.textContent.replace(/^Sync:\s*/i, "") : "idle";
+        if (statusBarSync) statusBarSync.textContent = syncMeta?.dataset?.syncMessage || t("status.idle");
       }
       let currentIssues = [];
       let debounceTimer = null;
@@ -1898,6 +2348,42 @@
       function formatMs(value) {
         if (!Number.isFinite(value)) return "n/a";
         return `${Math.round(value)} ms`;
+      }
+
+      function isInterlisCardinality(value) {
+        if (typeof value !== "string") return false;
+        const trimmed = value.trim();
+        const match = /^(\*|\d+)\.\.(\*|\d+)$/.exec(trimmed);
+        if (!match) return false;
+        const minRaw = match[1];
+        const maxRaw = match[2];
+        if (minRaw === "*" && maxRaw !== "*") return false;
+        if (minRaw !== "*" && maxRaw !== "*") {
+          const min = Number.parseInt(minRaw, 10);
+          const max = Number.parseInt(maxRaw, 10);
+          if (!Number.isFinite(min) || !Number.isFinite(max)) return false;
+          if (min > max) return false;
+        }
+        return true;
+      }
+
+      function isInterlisIdentifier(value) {
+        return /^[A-Za-z][A-Za-z0-9_]*$/.test(String(value || "").trim());
+      }
+
+      function normalizeAttributeCardinality(attr) {
+        const cardinality = String(attr?.cardinality || "").trim();
+        if (isInterlisCardinality(cardinality)) return cardinality;
+        return attr?.mandatory ? "1..1" : "0..1";
+      }
+
+      function cardinalityIsMandatory(value) {
+        const trimmed = String(value || "").trim();
+        if (!isInterlisCardinality(trimmed)) return false;
+        const minRaw = trimmed.split("..")[0];
+        if (minRaw === "*") return true;
+        const min = Number.parseInt(minRaw, 10);
+        return Number.isFinite(min) && min >= 1;
       }
 
       function pushBounded(arr, value, max = 100) {
@@ -2074,11 +2560,12 @@
       }
 
       function stamp() {
-        return new Date().toLocaleTimeString("it-CH");
+        return new Date().toLocaleTimeString(uiLocale.replace("_", "-"));
       }
 
       function setSyncMeta(message) {
-        syncMeta.textContent = `Sync: ${message}`;
+        syncMeta.dataset.syncMessage = message;
+        syncMeta.textContent = `${t("status.syncPrefix")}: ${message}`;
       }
 
       function parseMetadataText(rawText) {
@@ -2261,8 +2748,23 @@
         if (!normalized.language) normalized.language = "de";
         if (!normalized.model_version) normalized.model_version = "INTERLIS 2.4";
         if (!normalized.model_md5) normalized.model_md5 = "";
+        normalized.associations = normalized.associations.map((assoc) => ({
+          ...assoc,
+          from_cardinality: isInterlisCardinality(String(assoc?.from_cardinality || "").trim())
+            ? String(assoc.from_cardinality).trim()
+            : "0..*",
+          cardinality: isInterlisCardinality(String(assoc?.cardinality || "").trim())
+            ? String(assoc.cardinality).trim()
+            : "1..*"
+        }));
         for (const cls of normalized.classes) {
           if (!Array.isArray(cls.attributes)) cls.attributes = [];
+          cls.attributes = cls.attributes.map((attr) => {
+            const next = { ...attr };
+            next.cardinality = normalizeAttributeCardinality(next);
+            next.mandatory = cardinalityIsMandatory(next.cardinality);
+            return next;
+          });
         }
         for (const topic of normalized.topics) {
           if (!Array.isArray(topic.subtopics)) topic.subtopics = [];
@@ -2855,7 +3357,7 @@
 
       function setDirty(nextDirty) {
         isDirty = nextDirty;
-        projectMeta.textContent = `Progetto: ${currentProjectName} | Stato: ${isDirty ? "modifiche non salvate" : "salvato"}`;
+        refreshProjectMeta();
         bus.emit(EVENTS.PROJECT_STATE_CHANGED, { isDirty, projectName: currentProjectName });
       }
 
@@ -3789,13 +4291,13 @@
         }
 
         const lockBits = [];
-        if (diagramLayoutLocked) lockBits.push("layout");
-        if (diagramLockNodes) lockBits.push("nodi");
-        if (diagramLockRelations) lockBits.push("connessioni");
-        const lockLabel = lockBits.length > 0 ? ` | lock: ${lockBits.join("+")}` : "";
+        if (diagramLayoutLocked) lockBits.push(t("diagram.lock.layout"));
+        if (diagramLockNodes) lockBits.push(t("diagram.lock.nodes"));
+        if (diagramLockRelations) lockBits.push(t("diagram.lock.relations"));
+        const lockLabel = lockBits.length > 0 ? ` | ${t("diagram.lock")}: ${lockBits.join("+")}` : "";
         diagramStatus.textContent = selectedClass
-          ? `Diagram: focus su classe ${selectedClass}${lockLabel}`
-          : `Diagram: seleziona una classe dal tree o dal diagramma${lockLabel}`;
+          ? t("diagram.focus", { className: selectedClass, lockLabel })
+          : t("diagram.select", { lockLabel });
         renderDiagramMinimap();
       }
 
@@ -3934,10 +4436,14 @@
         if (action.type === "ADD_ATTRIBUTE") {
           const classIndex = next.model.classes.findIndex((c) => c.name === action.className);
           if (classIndex >= 0) {
+            const attrCardinality = isInterlisCardinality(String(action.attrCardinality || "").trim())
+              ? String(action.attrCardinality).trim()
+              : (action.mandatory ? "1..1" : "0..1");
             next.model.classes[classIndex].attributes.push({
               name: action.attrName,
               type: action.attrType || "TEXT",
-              mandatory: !!action.mandatory
+              cardinality: attrCardinality,
+              mandatory: cardinalityIsMandatory(attrCardinality)
             });
             next.selection = {
               source: action.source || "tree",
@@ -3963,6 +4469,7 @@
             name: action.associationName,
             from_class: action.fromClass || "",
             to_class: action.toClass || "",
+            from_cardinality: action.fromCardinality || "0..*",
             cardinality: action.cardinality || "1..*"
           });
           next.selection = {
@@ -4029,7 +4536,11 @@
             const target = next.model.classes[sel.classIndex].attributes[sel.attrIndex];
             target.name = action.name;
             target.type = action.attrType;
-            target.mandatory = !!action.mandatory;
+            const attrCardinality = isInterlisCardinality(String(action.attrCardinality || "").trim())
+              ? String(action.attrCardinality).trim()
+              : normalizeAttributeCardinality(target);
+            target.cardinality = attrCardinality;
+            target.mandatory = cardinalityIsMandatory(attrCardinality);
             next.selection = {
               source: action.source || "properties",
               elementId: selectionPathOf("attr", next.model.classes[sel.classIndex].name, action.name)
@@ -4058,6 +4569,9 @@
             }
             if (action.toClass) {
               next.model.associations[sel.associationIndex].to_class = action.toClass;
+            }
+            if (action.fromCardinality) {
+              next.model.associations[sel.associationIndex].from_cardinality = action.fromCardinality;
             }
             if (action.cardinality) {
               next.model.associations[sel.associationIndex].cardinality = action.cardinality;
@@ -4467,34 +4981,35 @@
         const sel = resolveSelection(coreState.selection.elementId, coreState.model);
         selectedPathInput.value = coreState.selection.elementId || "";
         propAssocFromRow.style.display = "none";
+        propAssocFromCardRow.style.display = "none";
         propAssocToRow.style.display = "none";
         propAssocCardRow.style.display = "none";
 
         if (sel.kind === "model") {
           propNameInput.value = coreState.model.model_name;
           propTypeRow.style.display = "none";
-          propMandatoryRow.style.display = "none";
+          propAttrCardRow.style.display = "none";
           return;
         }
 
         if (sel.kind === "topic") {
           propNameInput.value = coreState.model.topics[sel.topicIndex].name;
           propTypeRow.style.display = "none";
-          propMandatoryRow.style.display = "none";
+          propAttrCardRow.style.display = "none";
           return;
         }
 
         if (sel.kind === "subtopic") {
           propNameInput.value = coreState.model.topics[sel.topicIndex].subtopics[sel.subtopicIndex].name;
           propTypeRow.style.display = "none";
-          propMandatoryRow.style.display = "none";
+          propAttrCardRow.style.display = "none";
           return;
         }
 
         if (sel.kind === "class") {
           propNameInput.value = coreState.model.classes[sel.classIndex].name;
           propTypeRow.style.display = "none";
-          propMandatoryRow.style.display = "none";
+          propAttrCardRow.style.display = "none";
           return;
         }
 
@@ -4502,9 +5017,9 @@
           const attr = coreState.model.classes[sel.classIndex].attributes[sel.attrIndex];
           propNameInput.value = attr.name;
           propTypeSelect.value = attr.type;
-          propMandatoryInput.checked = !!attr.mandatory;
+          propAttrCardInput.value = normalizeAttributeCardinality(attr);
           propTypeRow.style.display = "grid";
-          propMandatoryRow.style.display = "grid";
+          propAttrCardRow.style.display = "grid";
           return;
         }
 
@@ -4512,7 +5027,7 @@
           const domain = coreState.model.domains[sel.domainIndex];
           propNameInput.value = domain.name;
           propTypeSelect.value = domain.type || "TEXT";
-          propMandatoryRow.style.display = "none";
+          propAttrCardRow.style.display = "none";
           propTypeRow.style.display = "grid";
           return;
         }
@@ -4521,11 +5036,13 @@
           const assoc = coreState.model.associations[sel.associationIndex];
           propNameInput.value = assoc.name;
           propTypeRow.style.display = "none";
-          propMandatoryRow.style.display = "none";
+          propAttrCardRow.style.display = "none";
           propAssocFromRow.style.display = "grid";
+          propAssocFromCardRow.style.display = "grid";
           propAssocToRow.style.display = "grid";
           propAssocCardRow.style.display = "grid";
           populateAssociationClassSelects(assoc.from_class, assoc.to_class);
+          propAssocFromCardInput.value = assoc.from_cardinality || "0..*";
           propAssocCardInput.value = assoc.cardinality || "1..*";
           return;
         }
@@ -4533,20 +5050,20 @@
         if (sel.kind === "enum") {
           propNameInput.value = coreState.model.enums[sel.enumIndex].name;
           propTypeRow.style.display = "none";
-          propMandatoryRow.style.display = "none";
+          propAttrCardRow.style.display = "none";
           return;
         }
 
         if (sel.kind === "enumval") {
           propNameInput.value = coreState.model.enums[sel.enumIndex].values[sel.valueIndex];
           propTypeRow.style.display = "none";
-          propMandatoryRow.style.display = "none";
+          propAttrCardRow.style.display = "none";
           return;
         }
 
         propNameInput.value = "";
         propTypeRow.style.display = "none";
-        propMandatoryRow.style.display = "none";
+        propAttrCardRow.style.display = "none";
       }
 
       function renderProseEditor() {
@@ -5515,6 +6032,10 @@
         if (!topicName) return;
         const candidate = topicName.trim();
         if (!candidate) return;
+        if (!isInterlisIdentifier(candidate)) {
+          renderIssues([{ level: "warning", code: "TOPIC_NAME_INVALID", message: "Nome topic non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          return;
+        }
         if (isNameTakenInGroup(coreState.model.topics, candidate)) {
           renderIssues([{ level: "warning", code: "TREE_DUPLICATE_TOPIC", message: `Topic '${candidate}' gia esistente` }]);
           return;
@@ -5533,6 +6054,10 @@
         if (!subtopicName) return;
         const candidate = subtopicName.trim();
         if (!candidate) return;
+        if (!isInterlisIdentifier(candidate)) {
+          renderIssues([{ level: "warning", code: "SUBTOPIC_NAME_INVALID", message: "Nome subtopic non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          return;
+        }
         const topic = coreState.model.topics.find((item) => item.name === topicName);
         if (isNameTakenInGroup(topic?.subtopics || [], candidate)) {
           renderIssues([{ level: "warning", code: "TREE_DUPLICATE_SUBTOPIC", message: `Subtopic '${candidate}' gia presente in ${topicName}` }]);
@@ -5546,6 +6071,10 @@
         if (!className) return;
         const candidate = className.trim();
         if (!candidate) return;
+        if (!isInterlisIdentifier(candidate)) {
+          renderIssues([{ level: "warning", code: "CLASS_NAME_INVALID", message: "Nome classe non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          return;
+        }
         if (isNameTakenInGroup(coreState.model.classes, candidate)) {
           renderIssues([{ level: "warning", code: "TREE_DUPLICATE_CLASS", message: `Classe '${candidate}' gia esistente` }]);
           return;
@@ -5565,6 +6094,10 @@
         const targetClass = coreState.model.classes.find((c) => c.name === className);
         const candidate = attrName.trim();
         if (!candidate) return;
+        if (!isInterlisIdentifier(candidate)) {
+          renderIssues([{ level: "warning", code: "ATTRIBUTE_NAME_INVALID", message: "Nome attributo non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          return;
+        }
         if (isNameTakenInGroup(targetClass?.attributes || [], candidate)) {
           renderIssues([{ level: "warning", code: "TREE_DUPLICATE_ATTRIBUTE", message: `Attributo '${candidate}' gia presente in ${className}` }]);
           return;
@@ -5574,7 +6107,7 @@
           className,
           attrName: candidate,
           attrType: "TEXT",
-          mandatory: false,
+          attrCardinality: "0..1",
           source: "tree-add-attr"
         });
       });
@@ -5584,6 +6117,10 @@
         if (!domainName) return;
         const candidate = domainName.trim();
         if (!candidate) return;
+        if (!isInterlisIdentifier(candidate)) {
+          renderIssues([{ level: "warning", code: "DOMAIN_NAME_INVALID", message: "Nome domain non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          return;
+        }
         if (isNameTakenInGroup(coreState.model.domains, candidate)) {
           renderIssues([{ level: "warning", code: "TREE_DUPLICATE_DOMAIN", message: `Domain '${candidate}' gia esistente` }]);
           return;
@@ -5596,6 +6133,10 @@
         if (!associationName) return;
         const candidate = associationName.trim();
         if (!candidate) return;
+        if (!isInterlisIdentifier(candidate)) {
+          renderIssues([{ level: "warning", code: "ASSOCIATION_NAME_INVALID", message: "Nome relazione non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          return;
+        }
         if (isNameTakenInGroup(coreState.model.associations, candidate)) {
           renderIssues([{ level: "warning", code: "TREE_DUPLICATE_ASSOC", message: `Relazione '${candidate}' gia esistente` }]);
           return;
@@ -5625,6 +6166,12 @@
         const name = propNameInput.value.trim();
         if (!name) {
           renderIssues([{ level: "warning", code: "PROPERTIES_NAME_REQUIRED", message: "Il nome non puo essere vuoto" }]);
+          return;
+        }
+
+        const needsInterlisIdentifier = ["model", "topic", "subtopic", "class", "attr", "domain", "association"].includes(sel.kind);
+        if (needsInterlisIdentifier && !isInterlisIdentifier(name)) {
+          renderIssues([{ level: "warning", code: "NAME_INVALID", message: "Nome non valido: secondo INTERLIS 2 non sono ammessi spazi; usa identificatore (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
           return;
         }
 
@@ -5662,6 +6209,21 @@
             renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_ATTRIBUTE", message: `Attributo '${name}' gia presente nella classe ${sel.className}` }]);
             return;
           }
+
+          const attrCardinality = propAttrCardInput.value.trim();
+          if (!isInterlisCardinality(attrCardinality)) {
+            renderIssues([{ level: "warning", code: "ATTRIBUTE_CARDINALITY_INVALID", message: "Cardinality attributo non valida. Usa formato min..max (es. 0..1, 1..1, 0..*, 1..*)" }]);
+            return;
+          }
+
+          dispatch({
+            type: "UPDATE_SELECTED",
+            name,
+            attrType: propTypeSelect.value,
+            attrCardinality,
+            source: "properties"
+          });
+          return;
         }
 
         if (sel.kind === "domain") {
@@ -5679,6 +6241,7 @@
 
           const fromClass = propAssocFromSelect.value;
           const toClass = propAssocToSelect.value;
+          const fromCardinality = propAssocFromCardInput.value.trim();
           const cardinality = propAssocCardInput.value.trim();
           if (!fromClass || !toClass) {
             renderIssues([{ level: "warning", code: "ASSOC_CLASS_REQUIRED", message: "From/To class sono obbligatori" }]);
@@ -5688,7 +6251,11 @@
             renderIssues([{ level: "warning", code: "ASSOC_CLASS_INVALID", message: "From/To class devono riferire classi esistenti" }]);
             return;
           }
-          if (!/^(\*|\d+)\.\.(\*|\d+)$/.test(cardinality)) {
+          if (!isInterlisCardinality(fromCardinality)) {
+            renderIssues([{ level: "warning", code: "ASSOC_FROM_CARDINALITY_INVALID", message: "From cardinality non valida. Usa formato min..max (es. 0..1, 1..*, 0..*)" }]);
+            return;
+          }
+          if (!isInterlisCardinality(cardinality)) {
             renderIssues([{ level: "warning", code: "ASSOC_CARDINALITY_INVALID", message: "Cardinality non valida. Usa formato min..max (es. 0..1, 1..*, 0..*)" }]);
             return;
           }
@@ -5698,6 +6265,7 @@
             name,
             fromClass,
             toClass,
+            fromCardinality,
             cardinality,
             source: "properties"
           });
@@ -5723,7 +6291,6 @@
           type: "UPDATE_SELECTED",
           name,
           attrType: propTypeSelect.value,
-          mandatory: propMandatoryInput.checked,
           source: "properties"
         });
       });
@@ -5983,6 +6550,10 @@
         if (!className) return;
         const candidate = className.trim();
         if (!candidate) return;
+        if (!isInterlisIdentifier(candidate)) {
+          renderIssues([{ level: "warning", code: "CLASS_NAME_INVALID", message: "Nome classe non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          return;
+        }
         if (isNameTakenInGroup(coreState.model.classes, candidate)) {
           renderIssues([{ level: "warning", code: "DIAGRAM_DUPLICATE_CLASS", message: `Classe '${candidate}' gia esistente` }]);
           return;
@@ -6004,6 +6575,10 @@
         if (!relationName) return;
         const candidate = relationName.trim();
         if (!candidate) return;
+        if (!isInterlisIdentifier(candidate)) {
+          renderIssues([{ level: "warning", code: "ASSOCIATION_NAME_INVALID", message: "Nome relazione non valido: usa identificatore INTERLIS (lettera iniziale, poi A-Z/a-z/0-9/_)" }]);
+          return;
+        }
         if (isNameTakenInGroup(coreState.model.associations, candidate)) {
           renderIssues([{ level: "warning", code: "DIAGRAM_DUPLICATE_ASSOC", message: `Relazione '${candidate}' gia esistente` }]);
           return;
@@ -6209,6 +6784,9 @@
 
       setModelInputValue(JSON.stringify(coreState.model, null, 2));
       output.textContent = "";
+      uiLocale = resolveInitialUiLocale();
+      if (uiLocaleSelect) uiLocaleSelect.value = uiLocale;
+      applyI18nToUi();
       setDirty(false);
       renderRecentProjects();
       renderStructureTree();
