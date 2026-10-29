@@ -873,13 +873,6 @@ fn semantic_model_diff(
         &mut details,
     );
     diff_named_collection(
-        "enums",
-        current_model.enums.iter().map(|v| v.name.as_str()),
-        bundle_model.enums.iter().map(|v| v.name.as_str()),
-        &mut summary,
-        &mut details,
-    );
-    diff_named_collection(
         "prose_sections",
         current_model.prose_sections.iter().map(|v| v.title.as_str()),
         bundle_model.prose_sections.iter().map(|v| v.title.as_str()),
