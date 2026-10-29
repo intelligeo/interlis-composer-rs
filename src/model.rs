@@ -58,6 +58,10 @@ pub struct SubTopic {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Class {
     pub name: String,
+    #[serde(default, rename = "abstract")]
+    pub is_abstract: bool,
+    #[serde(default)]
+    pub extends: String,
     #[serde(default)]
     pub attributes: Vec<Attribute>,
 }
@@ -412,7 +416,7 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
             continue;
         }
 
-        if line.starts_with("CLASS ") && line.ends_with('=') {
+        if line.ends_with('=') && (line.starts_with("ABSTRACT CLASS ") || line.starts_with("CLASS ")) {
             if current_class.is_some() {
                 return Err(ParseFailure::new(
                     "Nested CLASS definitions are not supported",
@@ -420,15 +424,35 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
                     1,
                 ));
             }
-            let class_name = line
+
+            let decl = line.trim_end_matches('=').trim();
+            let (is_abstract, class_decl) = if let Some(rest) = decl.strip_prefix("ABSTRACT ") {
+                (true, rest.trim_start())
+            } else {
+                (false, decl)
+            };
+
+            let class_body = class_decl
                 .strip_prefix("CLASS ")
-                .and_then(|v| v.strip_suffix('='))
-                .map(|v| v.trim().to_string())
-                .filter(|v| !v.is_empty())
                 .ok_or_else(|| ParseFailure::new("Invalid CLASS declaration", line_no, 1))?;
 
+            let (name_raw, extends_raw) = if let Some((lhs, rhs)) = class_body.split_once(" EXTENDS ") {
+                (lhs.trim(), rhs.trim())
+            } else {
+                (class_body.trim(), "")
+            };
+
+            if name_raw.is_empty() {
+                return Err(ParseFailure::new("CLASS name cannot be empty", line_no, 1));
+            }
+            if !extends_raw.is_empty() && extends_raw.split_whitespace().count() != 1 {
+                return Err(ParseFailure::new("Invalid EXTENDS clause in CLASS declaration", line_no, 1));
+            }
+
             current_class = Some(Class {
-                name: class_name,
+                name: name_raw.to_string(),
+                is_abstract,
+                extends: extends_raw.to_string(),
                 attributes: Vec::new(),
             });
             continue;
@@ -521,7 +545,20 @@ impl InterlisModel {
         }
 
         for class in &self.classes {
-            out.push_str(&format!("    CLASS {} =\n", class.name));
+            let mut class_decl = String::new();
+            if class.is_abstract {
+                class_decl.push_str("ABSTRACT ");
+            }
+            class_decl.push_str("CLASS ");
+            class_decl.push_str(&class.name);
+            if !class.extends.trim().is_empty() {
+                class_decl.push_str(" EXTENDS ");
+                class_decl.push_str(class.extends.trim());
+            }
+            class_decl.push_str(" =");
+            out.push_str("    ");
+            out.push_str(&class_decl);
+            out.push('\n');
             if class.attributes.is_empty() {
                 out.push_str("      !! no attributes defined\n");
             } else {

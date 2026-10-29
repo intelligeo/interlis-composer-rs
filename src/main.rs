@@ -1093,6 +1093,7 @@ fn validate(model: &InterlisModel) -> Vec<ValidationIssue> {
     validate_topics(&model.topics, &mut issues);
     validate_domains(&model.domains, &mut issues);
     validate_associations(&model.associations, &model.classes, &mut issues);
+    validate_inheritance(&model.classes, &mut issues);
     validate_prose_sections(&model.prose_sections, &mut issues);
     validate_catalog_validation_presets(
         &model.catalog_validation_presets,
@@ -1968,6 +1969,70 @@ fn validate_associations(associations: &[Association], classes: &[Class], issues
                 &format!("Association '{}' has invalid cardinality '{}'; use min..max (e.g. 0..1, 1..*, 0..*)", assoc.name, assoc.cardinality),
                 Some(path),
             ));
+        }
+    }
+}
+
+fn validate_inheritance(classes: &[Class], issues: &mut Vec<ValidationIssue>) {
+    let class_names: HashSet<&str> = classes.iter().map(|c| c.name.as_str()).collect();
+    let extends_by_class: HashMap<&str, &str> = classes
+        .iter()
+        .map(|c| (c.name.as_str(), c.extends.trim()))
+        .collect();
+
+    for class in classes {
+        let extends = class.extends.trim();
+        if extends.is_empty() {
+            continue;
+        }
+
+        let path = format!("class:{}", class.name);
+        if !is_identifier(extends) {
+            issues.push(error_issue_at(
+                "CLASS_EXTENDS_INVALID",
+                &format!(
+                    "Class '{}' has invalid EXTENDS '{}': INTERLIS identifiers must start with a letter and then contain only A-Z, a-z, 0-9 or '_' (no spaces)",
+                    class.name, extends
+                ),
+                Some(path.clone()),
+            ));
+            continue;
+        }
+
+        if extends == class.name {
+            issues.push(error_issue_at(
+                "CLASS_EXTENDS_SELF",
+                &format!("Class '{}' cannot EXTEND itself", class.name),
+                Some(path.clone()),
+            ));
+            continue;
+        }
+
+        if !class_names.contains(extends) {
+            issues.push(error_issue_at(
+                "CLASS_EXTENDS_UNKNOWN",
+                &format!("Class '{}' EXTENDS unknown class '{}'", class.name, extends),
+                Some(path.clone()),
+            ));
+            continue;
+        }
+
+        let mut seen = HashSet::new();
+        let mut current = class.name.as_str();
+        while let Some(parent) = extends_by_class.get(current) {
+            let parent = parent.trim();
+            if parent.is_empty() {
+                break;
+            }
+            if !seen.insert(parent.to_string()) {
+                issues.push(error_issue_at(
+                    "CLASS_EXTENDS_CYCLE",
+                    &format!("Inheritance cycle detected involving class '{}'", class.name),
+                    Some(path.clone()),
+                ));
+                break;
+            }
+            current = parent;
         }
     }
 }

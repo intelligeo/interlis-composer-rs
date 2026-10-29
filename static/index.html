@@ -762,12 +762,14 @@
 
       .tree-item.error-mark {
         border-color: var(--err);
-        background: #fde7e5;
+        background: rgba(10, 20, 32, 0.9);
+        color: #ff7d7d;
       }
 
       .tree-item.warn-mark {
         border-color: var(--warn);
-        background: #fff3df;
+        background: rgba(10, 20, 32, 0.9);
+        color: #ffd37a;
       }
 
       .tree-group {
@@ -843,6 +845,16 @@
         fill: #eaf4ff;
       }
 
+      .diagram-node text.stereotype {
+        font-size: 9.5px;
+        fill: #9fc0e7;
+        letter-spacing: 0.05em;
+      }
+
+      .diagram-node.abstract text.title {
+        font-style: italic;
+      }
+
       .diagram-node text.attr {
         font-size: 11px;
         fill: #bdd2ec;
@@ -852,6 +864,19 @@
         stroke: rgba(125, 211, 252, 0.9);
         stroke-width: 1.5;
         fill: none;
+      }
+
+      .diagram-inheritance {
+        stroke: rgba(214, 229, 245, 0.92);
+        stroke-width: 1.6;
+        fill: none;
+        marker-end: url(#inheritance-arrow);
+      }
+
+      .diagram-inheritance-label {
+        font-size: 9.5px;
+        fill: #d6e5f5;
+        letter-spacing: 0.05em;
       }
 
       .diagram-link-label {
@@ -988,11 +1013,12 @@
         <div class="ribbon-panel active" data-panel="home">
           <div class="ribbon-groups">
             <div class="ribbon-group">
-              <div class="ribbon-group-header">File</div>
+              <div class="ribbon-group-header">Project</div>
               <div class="ribbon-actions">
                 <button class="ribbon-button" data-action="newProjectBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Nuovo</button>
                 <button class="ribbon-button" data-action="loadProjectBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H9l2 3h7.5A2.5 2.5 0 0 1 21 10.5v6A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-9Z"/><path d="M8 12h8"/></svg></span>Apri</button>
                 <button class="ribbon-button" data-action="saveProjectBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M8 4v6h8V4"/><path d="M9 18h6"/></svg></span>Salva</button>
+                <button class="ribbon-button" data-action="renameProjectBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M14.5 4.5 18 8l-9 9H6v-3l8.5-8.5Z"/></svg></span>Rinomina</button>
               </div>
             </div>
             <div class="ribbon-group">
@@ -1178,6 +1204,14 @@
                 <option>UUID</option>
               </select>
             </div>
+            <div class="form-row" id="propClassAbstractRow">
+              <label for="propClassAbstractInput">ABSTRACT</label>
+              <input id="propClassAbstractInput" type="checkbox" />
+            </div>
+            <div class="form-row" id="propClassExtendsRow">
+              <label for="propClassExtendsSelect">EXTEND</label>
+              <select id="propClassExtendsSelect"></select>
+            </div>
             <div class="form-row" id="propAttrCardRow">
               <label for="propAttrCardInput">Cardinality</label>
               <input id="propAttrCardInput" type="text" placeholder="0..1" />
@@ -1264,6 +1298,7 @@
               <button class="ghost" id="newProjectBtn">Nuovo .imcp</button>
               <button class="ghost" id="saveProjectBtn">Salva .imcp</button>
               <button class="ghost" id="saveAsProjectBtn">Salva con nome</button>
+              <button class="ghost" id="renameProjectBtn">Rinomina progetto</button>
               <button class="ghost" id="loadProjectBtn">Carica .imcp</button>
               <button class="ghost" id="importIliBtn">Importa .ili</button>
                <button class="ghost" id="importXtfBtn">Importa .xtf/.xml</button>
@@ -1870,6 +1905,10 @@
       const propTypeSelect = document.getElementById("propTypeSelect");
       const propAttrCardInput = document.getElementById("propAttrCardInput");
       const propTypeRow = document.getElementById("propTypeRow");
+      const propClassAbstractRow = document.getElementById("propClassAbstractRow");
+      const propClassExtendsRow = document.getElementById("propClassExtendsRow");
+      const propClassAbstractInput = document.getElementById("propClassAbstractInput");
+      const propClassExtendsSelect = document.getElementById("propClassExtendsSelect");
       const propAttrCardRow = document.getElementById("propAttrCardRow");
       const propAssocFromRow = document.getElementById("propAssocFromRow");
       const propAssocFromCardRow = document.getElementById("propAssocFromCardRow");
@@ -1985,7 +2024,7 @@
           "ribbon.tab.diagram": "Diagram",
           "ribbon.tab.tools": "Tools",
           "ribbon.tab.collab": "Collab",
-          "ribbon.group.home.0": "File",
+          "ribbon.group.home.0": "Project",
           "ribbon.group.home.1": "Import",
           "ribbon.group.home.2": "Export",
           "ribbon.group.model.0": "Validation",
@@ -2026,6 +2065,7 @@
           "ribbon.btn.addCatalogInstanceBtn": "Instance",
           "ribbon.btn.saveCatalogPresetBtn": "Preset",
           "ribbon.btn.saveAsProjectBtn": "Save as",
+          "ribbon.btn.renameProjectBtn": "Rename",
           "ribbon.btn.exportCollabBundleBtn": "Bundle",
           "ribbon.btn.refreshCollabStatusBtn": "Status",
           "ribbon.btn.listGitRefsBtn": "Branches",
@@ -2096,7 +2136,7 @@
           "ribbon.tab.diagram": "Diagramma",
           "ribbon.tab.tools": "Strumenti",
           "ribbon.tab.collab": "Collab",
-          "ribbon.group.home.0": "File",
+          "ribbon.group.home.0": "Progetto",
           "ribbon.group.home.1": "Import",
           "ribbon.group.home.2": "Esporta",
           "ribbon.group.model.0": "Validazione",
@@ -2137,6 +2177,7 @@
           "ribbon.btn.addCatalogInstanceBtn": "Istanza",
           "ribbon.btn.saveCatalogPresetBtn": "Preset",
           "ribbon.btn.saveAsProjectBtn": "Salva come",
+          "ribbon.btn.renameProjectBtn": "Rinomina",
           "ribbon.btn.exportCollabBundleBtn": "Bundle",
           "ribbon.btn.refreshCollabStatusBtn": "Stato",
           "ribbon.btn.listGitRefsBtn": "Branch",
@@ -2207,7 +2248,7 @@
           "ribbon.tab.diagram": "Diagramm",
           "ribbon.tab.tools": "Werkzeuge",
           "ribbon.tab.collab": "Collab",
-          "ribbon.group.home.0": "Datei",
+          "ribbon.group.home.0": "Projekt",
           "ribbon.group.home.1": "Import",
           "ribbon.group.home.2": "Export",
           "ribbon.group.model.0": "Validierung",
@@ -2248,6 +2289,7 @@
           "ribbon.btn.addCatalogInstanceBtn": "Instanz",
           "ribbon.btn.saveCatalogPresetBtn": "Preset",
           "ribbon.btn.saveAsProjectBtn": "Speichern als",
+          "ribbon.btn.renameProjectBtn": "Umbenennen",
           "ribbon.btn.exportCollabBundleBtn": "Bundle",
           "ribbon.btn.refreshCollabStatusBtn": "Status",
           "ribbon.btn.listGitRefsBtn": "Branches",
@@ -2318,7 +2360,7 @@
           "ribbon.tab.diagram": "Diagramme",
           "ribbon.tab.tools": "Outils",
           "ribbon.tab.collab": "Collab",
-          "ribbon.group.home.0": "Fichier",
+          "ribbon.group.home.0": "Projet",
           "ribbon.group.home.1": "Import",
           "ribbon.group.home.2": "Export",
           "ribbon.group.model.0": "Validation",
@@ -2359,6 +2401,7 @@
           "ribbon.btn.addCatalogInstanceBtn": "Instance",
           "ribbon.btn.saveCatalogPresetBtn": "Preset",
           "ribbon.btn.saveAsProjectBtn": "Enregistrer sous",
+          "ribbon.btn.renameProjectBtn": "Renommer",
           "ribbon.btn.exportCollabBundleBtn": "Bundle",
           "ribbon.btn.refreshCollabStatusBtn": "Statut",
           "ribbon.btn.listGitRefsBtn": "Branches",
@@ -3048,6 +3091,8 @@
             : "1..*"
         }));
         for (const cls of normalized.classes) {
+          cls.abstract = !!cls.abstract;
+          cls.extends = String(cls.extends || "").trim();
           if (!Array.isArray(cls.attributes)) cls.attributes = [];
           cls.attributes = cls.attributes.map((attr) => {
             const next = { ...attr };
@@ -3637,6 +3682,30 @@
 
         if (fromValue) propAssocFromSelect.value = fromValue;
         if (toValue) propAssocToSelect.value = toValue;
+      }
+
+      function populateClassExtendsSelect(currentClassName, extendsValue) {
+        if (!propClassExtendsSelect) return;
+        propClassExtendsSelect.innerHTML = "";
+
+        const blank = document.createElement("option");
+        blank.value = "";
+        blank.textContent = "-";
+        propClassExtendsSelect.appendChild(blank);
+
+        for (const cls of coreState.model.classes) {
+          if (cls.name === currentClassName) continue;
+          const option = document.createElement("option");
+          option.value = cls.name;
+          option.textContent = cls.name;
+          propClassExtendsSelect.appendChild(option);
+        }
+
+        if (extendsValue && Array.from(propClassExtendsSelect.options).some((opt) => opt.value === extendsValue)) {
+          propClassExtendsSelect.value = extendsValue;
+        } else {
+          propClassExtendsSelect.value = "";
+        }
       }
 
       function setModelInputValue(value) {
@@ -4378,7 +4447,10 @@
 
         for (const cls of coreState.model.classes) {
           const pos = diagramLayout.positions[cls.name] || { x: 0, y: 0 };
-          const nodeHeight = diagramHideAttributes ? 56 : Math.max(80, 36 + cls.attributes.length * 16);
+          const abstractExtra = cls.abstract ? 14 : 0;
+          const nodeHeight = diagramHideAttributes
+            ? 56 + abstractExtra
+            : Math.max(80 + abstractExtra, 36 + abstractExtra + cls.attributes.length * 16);
           minX = Math.min(minX, pos.x);
           minY = Math.min(minY, pos.y);
           maxX = Math.max(maxX, pos.x + 220);
@@ -4475,8 +4547,58 @@
         diagramCanvas.classList.add(`preset-${diagramPreset}`);
         diagramCanvas.innerHTML = "";
 
+        const defs = document.createElementNS(ns, "defs");
+        const marker = document.createElementNS(ns, "marker");
+        marker.setAttribute("id", "inheritance-arrow");
+        marker.setAttribute("viewBox", "0 0 10 10");
+        marker.setAttribute("refX", "9");
+        marker.setAttribute("refY", "5");
+        marker.setAttribute("markerWidth", "8");
+        marker.setAttribute("markerHeight", "8");
+        marker.setAttribute("orient", "auto-start-reverse");
+        const triangle = document.createElementNS(ns, "path");
+        triangle.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
+        triangle.setAttribute("fill", "#0f1e30");
+        triangle.setAttribute("stroke", "#d6e5f5");
+        triangle.setAttribute("stroke-width", "1.1");
+        marker.appendChild(triangle);
+        defs.appendChild(marker);
+        diagramCanvas.appendChild(defs);
+
         const classNames = new Set(coreState.model.classes.map((c) => c.name));
         const selectedClass = getClassSelectionName();
+
+        for (const cls of coreState.model.classes) {
+          const parentName = String(cls.extends || "").trim();
+          if (!parentName || !classNames.has(parentName)) continue;
+
+          const childPos = diagramLayout.positions[cls.name];
+          const parentPos = diagramLayout.positions[parentName];
+          if (!childPos || !parentPos) continue;
+
+          const parentClass = coreState.model.classes.find((c) => c.name === parentName);
+          const parentAbstractExtra = parentClass?.abstract ? 14 : 0;
+          const parentHeight = diagramHideAttributes
+            ? 56 + parentAbstractExtra
+            : Math.max(80 + parentAbstractExtra, 36 + parentAbstractExtra + ((parentClass?.attributes.length) || 0) * 16);
+
+          const childX = childPos.x + 110;
+          const childY = childPos.y;
+          const parentX = parentPos.x + 110;
+          const parentY = parentPos.y + parentHeight;
+
+          const inheritancePath = document.createElementNS(ns, "path");
+          inheritancePath.setAttribute("class", "diagram-inheritance");
+          inheritancePath.setAttribute("d", `M ${childX} ${childY} L ${parentX} ${parentY}`);
+          diagramCanvas.appendChild(inheritancePath);
+
+          const label = document.createElementNS(ns, "text");
+          label.setAttribute("class", "diagram-inheritance-label");
+          label.setAttribute("x", String((childX + parentX) / 2 + 4));
+          label.setAttribute("y", String((childY + parentY) / 2 - 5));
+          label.textContent = "EXTEND";
+          diagramCanvas.appendChild(label);
+        }
 
         const pairCount = new Map();
         for (const assoc of coreState.model.associations) {
@@ -4531,10 +4653,13 @@
           const pos = diagramLayout.positions[cls.name] || { x: 40, y: 40 };
           const group = document.createElementNS(ns, "g");
           const selected = selectedClass === cls.name;
-          group.setAttribute("class", `diagram-node ${selected ? "selected" : ""}`.trim());
+          group.setAttribute("class", `diagram-node ${selected ? "selected" : ""} ${cls.abstract ? "abstract" : ""}`.trim());
           group.style.cursor = "pointer";
 
-          const height = diagramHideAttributes ? 56 : Math.max(80, 36 + cls.attributes.length * 16);
+          const abstractExtra = cls.abstract ? 14 : 0;
+          const height = diagramHideAttributes
+            ? 56 + abstractExtra
+            : Math.max(80 + abstractExtra, 36 + abstractExtra + cls.attributes.length * 16);
           const rect = document.createElementNS(ns, "rect");
           rect.setAttribute("x", String(pos.x));
           rect.setAttribute("y", String(pos.y));
@@ -4545,16 +4670,26 @@
           const title = document.createElementNS(ns, "text");
           title.setAttribute("class", "title");
           title.setAttribute("x", String(pos.x + 10));
-          title.setAttribute("y", String(pos.y + 20));
+          title.setAttribute("y", String(pos.y + (cls.abstract ? 30 : 20)));
           title.textContent = cls.name;
           group.appendChild(title);
 
+          if (cls.abstract) {
+            const stereotype = document.createElementNS(ns, "text");
+            stereotype.setAttribute("class", "stereotype");
+            stereotype.setAttribute("x", String(pos.x + 10));
+            stereotype.setAttribute("y", String(pos.y + 16));
+            stereotype.textContent = "<<ABSTRACT>>";
+            group.appendChild(stereotype);
+          }
+
           if (!diagramHideAttributes) {
+            const attrStartY = cls.abstract ? 50 : 40;
             cls.attributes.slice(0, 8).forEach((attr, idx) => {
               const t = document.createElementNS(ns, "text");
               t.setAttribute("class", "attr");
               t.setAttribute("x", String(pos.x + 10));
-              t.setAttribute("y", String(pos.y + 40 + idx * 14));
+              t.setAttribute("y", String(pos.y + attrStartY + idx * 14));
               t.textContent = `${attr.name}: ${attr.type}`;
               group.appendChild(t);
             });
@@ -4697,7 +4832,7 @@
         }
 
         if (action.type === "ADD_CLASS") {
-          next.model.classes.push({ name: action.className, attributes: [] });
+          next.model.classes.push({ name: action.className, abstract: false, extends: "", attributes: [] });
           next.selection = { source: action.source || "tree", elementId: selectionPathOf("class", action.className) };
           modelChanged = true;
           selectionChanged = true;
@@ -4796,7 +4931,25 @@
         if (action.type === "UPDATE_SELECTED") {
           const sel = resolveSelection(state.selection.elementId, next.model);
           if (sel.kind === "class") {
+            const oldName = next.model.classes[sel.classIndex].name;
             next.model.classes[sel.classIndex].name = action.name;
+            if (Object.prototype.hasOwnProperty.call(action, "classAbstract")) {
+              next.model.classes[sel.classIndex].abstract = !!action.classAbstract;
+            }
+            if (Object.prototype.hasOwnProperty.call(action, "classExtends")) {
+              next.model.classes[sel.classIndex].extends = String(action.classExtends || "").trim();
+            }
+
+            next.model.associations.forEach((assoc) => {
+              if (assoc.from_class === oldName) assoc.from_class = action.name;
+              if (assoc.to_class === oldName) assoc.to_class = action.name;
+            });
+            next.model.classes.forEach((cls, idx) => {
+              if (idx !== sel.classIndex && cls.extends === oldName) {
+                cls.extends = action.name;
+              }
+            });
+
             next.selection = {
               source: action.source || "properties",
               elementId: selectionPathOf("class", action.name)
@@ -5241,7 +5394,9 @@
         appendGroup("Classes");
         for (const cls of coreState.model.classes) {
           const classPath = selectionPathOf("class", cls.name);
-          appendItem({ path: classPath, label: `CLASS ${cls.name}`, kind: "class" });
+          const classPrefix = cls.abstract ? "ABSTRACT CLASS" : "CLASS";
+          const extendsSuffix = cls.extends ? ` EXTENDS ${cls.extends}` : "";
+          appendItem({ path: classPath, label: `${classPrefix} ${cls.name}${extendsSuffix}`, kind: "class" });
           for (const attr of cls.attributes) {
             appendItem({
               path: selectionPathOf("attr", cls.name, attr.name),
@@ -5270,6 +5425,8 @@
       function renderPropertiesEditor() {
         const sel = resolveSelection(coreState.selection.elementId, coreState.model);
         selectedPathInput.value = coreState.selection.elementId || "";
+        propClassAbstractRow.style.display = "none";
+        propClassExtendsRow.style.display = "none";
         propAssocFromRow.style.display = "none";
         propAssocFromCardRow.style.display = "none";
         propAssocToRow.style.display = "none";
@@ -5297,9 +5454,14 @@
         }
 
         if (sel.kind === "class") {
-          propNameInput.value = coreState.model.classes[sel.classIndex].name;
+          const cls = coreState.model.classes[sel.classIndex];
+          propNameInput.value = cls.name;
           propTypeRow.style.display = "none";
           propAttrCardRow.style.display = "none";
+          propClassAbstractRow.style.display = "grid";
+          propClassExtendsRow.style.display = "grid";
+          propClassAbstractInput.checked = !!cls.abstract;
+          populateClassExtendsSelect(cls.name, cls.extends || "");
           return;
         }
 
@@ -6165,6 +6327,17 @@
         await saveProject();
       }
 
+      function renameProject() {
+        const proposed = currentProjectName || "Project";
+        const nextName = window.prompt("Nuovo nome progetto", proposed);
+        if (!nextName) return;
+        const trimmed = nextName.trim();
+        if (!trimmed || trimmed === currentProjectName) return;
+        currentProjectName = trimmed;
+        updateStatusBar();
+        setDirty(true);
+      }
+
       async function importProjectObject(projectObj) {
         const payload = await postJson("/api/project/import/imcp", projectObj);
         syncFromProject(payload.project);
@@ -6284,6 +6457,7 @@
       document.getElementById("newProjectBtn").addEventListener("click", newProject);
       document.getElementById("saveProjectBtn").addEventListener("click", saveProject);
       document.getElementById("saveAsProjectBtn").addEventListener("click", saveAsProject);
+      document.getElementById("renameProjectBtn").addEventListener("click", renameProject);
       document.getElementById("loadProjectBtn").addEventListener("click", loadProject);
       document.getElementById("importIliBtn").addEventListener("click", loadIli);
       document.getElementById("importXtfBtn").addEventListener("click", importXtfBaseline);
@@ -6477,6 +6651,28 @@
             renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_CLASS", message: `Classe '${name}' gia esistente` }]);
             return;
           }
+
+          const classExtends = String(propClassExtendsSelect.value || "").trim();
+          const classAbstract = !!propClassAbstractInput.checked;
+          if (classExtends) {
+            if (classExtends === name) {
+              renderIssues([{ level: "warning", code: "CLASS_EXTENDS_SELF", message: "Una classe non puo estendere se stessa" }]);
+              return;
+            }
+            if (!coreState.model.classes.some((c, idx) => idx !== sel.classIndex && c.name === classExtends)) {
+              renderIssues([{ level: "warning", code: "CLASS_EXTENDS_UNKNOWN", message: `Classe base '${classExtends}' non trovata` }]);
+              return;
+            }
+          }
+
+          dispatch({
+            type: "UPDATE_SELECTED",
+            name,
+            classAbstract,
+            classExtends,
+            source: "properties"
+          });
+          return;
         }
 
         if (sel.kind === "topic") {
