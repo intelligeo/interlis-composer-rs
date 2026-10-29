@@ -648,7 +648,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 0.7rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         padding: 0.55rem 0.85rem;
         border-radius: 12px;
         background: rgba(10, 20, 32, 0.88);
@@ -656,13 +656,16 @@
         color: var(--ink-soft);
         font-size: 0.82rem;
         box-shadow: 0 8px 22px rgba(2, 6, 17, 0.28);
+        overflow-x: auto;
+        overflow-y: hidden;
       }
 
       .status-bar-group {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        white-space: nowrap;
       }
 
       .status-bar a {
@@ -1976,7 +1979,67 @@
           "diagram.lock": "lock",
           "diagram.lock.layout": "layout",
           "diagram.lock.nodes": "nodes",
-          "diagram.lock.relations": "relations"
+          "diagram.lock.relations": "relations",
+          "ribbon.tab.home": "Home",
+          "ribbon.tab.model": "Model",
+          "ribbon.tab.diagram": "Diagram",
+          "ribbon.tab.tools": "Tools",
+          "ribbon.tab.collab": "Collab",
+          "ribbon.group.home.0": "File",
+          "ribbon.group.home.1": "Import",
+          "ribbon.group.home.2": "Export",
+          "ribbon.group.model.0": "Validation",
+          "ribbon.group.model.1": "Elements",
+          "ribbon.group.model.2": "Prose",
+          "ribbon.group.diagram.0": "View",
+          "ribbon.group.diagram.1": "Nodes",
+          "ribbon.group.diagram.2": "Preset",
+          "ribbon.group.tools.0": "Diagnostics",
+          "ribbon.group.tools.1": "Catalog",
+          "ribbon.group.tools.2": "Panel visibility",
+          "ribbon.group.tools.3": "Project",
+          "ribbon.group.collab.0": "Repository",
+          "ribbon.group.collab.1": "Commit",
+          "ribbon.btn.newProjectBtn": "New",
+          "ribbon.btn.loadProjectBtn": "Open",
+          "ribbon.btn.saveProjectBtn": "Save",
+          "ribbon.btn.importIliBtn": "Import .ili",
+          "ribbon.btn.importCollabBundleBtn": "Bundle",
+          "ribbon.btn.exportBtn": "Export .ili",
+          "ribbon.btn.exportDocsBtn": "Docs",
+          "ribbon.btn.validateBtn": "Validate",
+          "ribbon.btn.copyDiagBtn": "Report",
+          "ribbon.btn.addClassBtn": "Class",
+          "ribbon.btn.addAssocBtn": "Relation",
+          "ribbon.btn.addDomainBtn": "Domain",
+          "ribbon.btn.addProseSectionBtn": "Section",
+          "ribbon.btn.saveProseBtn": "Save",
+          "ribbon.btn.diagramAutoLayoutBtn": "Auto",
+          "ribbon.btn.diagramFitBtn": "Fit",
+          "ribbon.btn.diagramResetBtn": "Reset",
+          "ribbon.btn.diagramAddClassBtn": "Class",
+          "ribbon.btn.diagramAddRelationBtn": "Relation",
+          "ribbon.btn.diagramSavePresetBtn": "Preset",
+          "ribbon.btn.diagramReviewPresetBtn": "Approve",
+          "ribbon.btn.exportDiagBtn": "JSON",
+          "ribbon.btn.refreshOpsBtn": "Metrics",
+          "ribbon.btn.addCatalogInstanceBtn": "Instance",
+          "ribbon.btn.saveCatalogPresetBtn": "Preset",
+          "ribbon.btn.saveAsProjectBtn": "Save as",
+          "ribbon.btn.exportCollabBundleBtn": "Bundle",
+          "ribbon.btn.refreshCollabStatusBtn": "Status",
+          "ribbon.btn.listGitRefsBtn": "Branches",
+          "ribbon.btn.generateCommitDraftBtn": "Draft",
+          "ribbon.btn.diffBundleBtn": "Diff",
+          "ribbon.toggle.inputPanel": "Input",
+          "ribbon.toggle.outputPanel": "Output",
+          "ribbon.toggle.docsPanel": "Docs",
+          "ribbon.toggle.recentPanel": "Recent",
+          "ribbon.toggle.syncPanel": "Sync",
+          "ribbon.toggle.collabPanel": "Collab",
+          "ribbon.toggle.flowPanel": "Flow",
+          "ribbon.toggle.prosePanel": "Prose",
+          "ribbon.toggle.catalogPanel": "Catalog"
         },
         it_IT: {
           "status.project": "Progetto",
@@ -2027,7 +2090,67 @@
           "diagram.lock": "lock",
           "diagram.lock.layout": "layout",
           "diagram.lock.nodes": "nodi",
-          "diagram.lock.relations": "connessioni"
+          "diagram.lock.relations": "connessioni",
+          "ribbon.tab.home": "Home",
+          "ribbon.tab.model": "Modello",
+          "ribbon.tab.diagram": "Diagramma",
+          "ribbon.tab.tools": "Strumenti",
+          "ribbon.tab.collab": "Collab",
+          "ribbon.group.home.0": "File",
+          "ribbon.group.home.1": "Import",
+          "ribbon.group.home.2": "Esporta",
+          "ribbon.group.model.0": "Validazione",
+          "ribbon.group.model.1": "Elementi",
+          "ribbon.group.model.2": "Prosa",
+          "ribbon.group.diagram.0": "Vista",
+          "ribbon.group.diagram.1": "Nodi",
+          "ribbon.group.diagram.2": "Preset",
+          "ribbon.group.tools.0": "Diagnostica",
+          "ribbon.group.tools.1": "Catalogo",
+          "ribbon.group.tools.2": "Visibilita panel",
+          "ribbon.group.tools.3": "Project",
+          "ribbon.group.collab.0": "Repository",
+          "ribbon.group.collab.1": "Commit",
+          "ribbon.btn.newProjectBtn": "Nuovo",
+          "ribbon.btn.loadProjectBtn": "Apri",
+          "ribbon.btn.saveProjectBtn": "Salva",
+          "ribbon.btn.importIliBtn": "Importa .ili",
+          "ribbon.btn.importCollabBundleBtn": "Bundle",
+          "ribbon.btn.exportBtn": "Esporta .ili",
+          "ribbon.btn.exportDocsBtn": "Docs",
+          "ribbon.btn.validateBtn": "Valida",
+          "ribbon.btn.copyDiagBtn": "Report",
+          "ribbon.btn.addClassBtn": "Classe",
+          "ribbon.btn.addAssocBtn": "Relazione",
+          "ribbon.btn.addDomainBtn": "Domain",
+          "ribbon.btn.addProseSectionBtn": "Sezione",
+          "ribbon.btn.saveProseBtn": "Salva",
+          "ribbon.btn.diagramAutoLayoutBtn": "Auto",
+          "ribbon.btn.diagramFitBtn": "Fit",
+          "ribbon.btn.diagramResetBtn": "Reset",
+          "ribbon.btn.diagramAddClassBtn": "Classe",
+          "ribbon.btn.diagramAddRelationBtn": "Relazione",
+          "ribbon.btn.diagramSavePresetBtn": "Preset",
+          "ribbon.btn.diagramReviewPresetBtn": "Approva",
+          "ribbon.btn.exportDiagBtn": "JSON",
+          "ribbon.btn.refreshOpsBtn": "Metrics",
+          "ribbon.btn.addCatalogInstanceBtn": "Istanza",
+          "ribbon.btn.saveCatalogPresetBtn": "Preset",
+          "ribbon.btn.saveAsProjectBtn": "Salva come",
+          "ribbon.btn.exportCollabBundleBtn": "Bundle",
+          "ribbon.btn.refreshCollabStatusBtn": "Stato",
+          "ribbon.btn.listGitRefsBtn": "Branch",
+          "ribbon.btn.generateCommitDraftBtn": "Draft",
+          "ribbon.btn.diffBundleBtn": "Diff",
+          "ribbon.toggle.inputPanel": "Input",
+          "ribbon.toggle.outputPanel": "Output",
+          "ribbon.toggle.docsPanel": "Docs",
+          "ribbon.toggle.recentPanel": "Recent",
+          "ribbon.toggle.syncPanel": "Sync",
+          "ribbon.toggle.collabPanel": "Collab",
+          "ribbon.toggle.flowPanel": "Flow",
+          "ribbon.toggle.prosePanel": "Prose",
+          "ribbon.toggle.catalogPanel": "Catalog"
         },
         de_CH: {
           "status.project": "Projekt",
@@ -2078,7 +2201,67 @@
           "diagram.lock": "sperre",
           "diagram.lock.layout": "layout",
           "diagram.lock.nodes": "knoten",
-          "diagram.lock.relations": "beziehungen"
+          "diagram.lock.relations": "beziehungen",
+          "ribbon.tab.home": "Start",
+          "ribbon.tab.model": "Modell",
+          "ribbon.tab.diagram": "Diagramm",
+          "ribbon.tab.tools": "Werkzeuge",
+          "ribbon.tab.collab": "Collab",
+          "ribbon.group.home.0": "Datei",
+          "ribbon.group.home.1": "Import",
+          "ribbon.group.home.2": "Export",
+          "ribbon.group.model.0": "Validierung",
+          "ribbon.group.model.1": "Elemente",
+          "ribbon.group.model.2": "Prosa",
+          "ribbon.group.diagram.0": "Ansicht",
+          "ribbon.group.diagram.1": "Knoten",
+          "ribbon.group.diagram.2": "Preset",
+          "ribbon.group.tools.0": "Diagnostik",
+          "ribbon.group.tools.1": "Katalog",
+          "ribbon.group.tools.2": "Panel Sichtbarkeit",
+          "ribbon.group.tools.3": "Projekt",
+          "ribbon.group.collab.0": "Repository",
+          "ribbon.group.collab.1": "Commit",
+          "ribbon.btn.newProjectBtn": "Neu",
+          "ribbon.btn.loadProjectBtn": "Offnen",
+          "ribbon.btn.saveProjectBtn": "Speichern",
+          "ribbon.btn.importIliBtn": "Import .ili",
+          "ribbon.btn.importCollabBundleBtn": "Bundle",
+          "ribbon.btn.exportBtn": "Export .ili",
+          "ribbon.btn.exportDocsBtn": "Docs",
+          "ribbon.btn.validateBtn": "Prufen",
+          "ribbon.btn.copyDiagBtn": "Bericht",
+          "ribbon.btn.addClassBtn": "Klasse",
+          "ribbon.btn.addAssocBtn": "Beziehung",
+          "ribbon.btn.addDomainBtn": "Domain",
+          "ribbon.btn.addProseSectionBtn": "Abschnitt",
+          "ribbon.btn.saveProseBtn": "Speichern",
+          "ribbon.btn.diagramAutoLayoutBtn": "Auto",
+          "ribbon.btn.diagramFitBtn": "Fit",
+          "ribbon.btn.diagramResetBtn": "Reset",
+          "ribbon.btn.diagramAddClassBtn": "Klasse",
+          "ribbon.btn.diagramAddRelationBtn": "Beziehung",
+          "ribbon.btn.diagramSavePresetBtn": "Preset",
+          "ribbon.btn.diagramReviewPresetBtn": "Freigabe",
+          "ribbon.btn.exportDiagBtn": "JSON",
+          "ribbon.btn.refreshOpsBtn": "Metriken",
+          "ribbon.btn.addCatalogInstanceBtn": "Instanz",
+          "ribbon.btn.saveCatalogPresetBtn": "Preset",
+          "ribbon.btn.saveAsProjectBtn": "Speichern als",
+          "ribbon.btn.exportCollabBundleBtn": "Bundle",
+          "ribbon.btn.refreshCollabStatusBtn": "Status",
+          "ribbon.btn.listGitRefsBtn": "Branches",
+          "ribbon.btn.generateCommitDraftBtn": "Entwurf",
+          "ribbon.btn.diffBundleBtn": "Diff",
+          "ribbon.toggle.inputPanel": "Input",
+          "ribbon.toggle.outputPanel": "Output",
+          "ribbon.toggle.docsPanel": "Docs",
+          "ribbon.toggle.recentPanel": "Recent",
+          "ribbon.toggle.syncPanel": "Sync",
+          "ribbon.toggle.collabPanel": "Collab",
+          "ribbon.toggle.flowPanel": "Flow",
+          "ribbon.toggle.prosePanel": "Prose",
+          "ribbon.toggle.catalogPanel": "Catalog"
         },
         fr_FR: {
           "status.project": "Projet",
@@ -2129,7 +2312,67 @@
           "diagram.lock": "verrou",
           "diagram.lock.layout": "layout",
           "diagram.lock.nodes": "noeuds",
-          "diagram.lock.relations": "relations"
+          "diagram.lock.relations": "relations",
+          "ribbon.tab.home": "Accueil",
+          "ribbon.tab.model": "Modele",
+          "ribbon.tab.diagram": "Diagramme",
+          "ribbon.tab.tools": "Outils",
+          "ribbon.tab.collab": "Collab",
+          "ribbon.group.home.0": "Fichier",
+          "ribbon.group.home.1": "Import",
+          "ribbon.group.home.2": "Export",
+          "ribbon.group.model.0": "Validation",
+          "ribbon.group.model.1": "Elements",
+          "ribbon.group.model.2": "Prose",
+          "ribbon.group.diagram.0": "Vue",
+          "ribbon.group.diagram.1": "Noeuds",
+          "ribbon.group.diagram.2": "Preset",
+          "ribbon.group.tools.0": "Diagnostic",
+          "ribbon.group.tools.1": "Catalogue",
+          "ribbon.group.tools.2": "Visibilite panel",
+          "ribbon.group.tools.3": "Projet",
+          "ribbon.group.collab.0": "Repository",
+          "ribbon.group.collab.1": "Commit",
+          "ribbon.btn.newProjectBtn": "Nouveau",
+          "ribbon.btn.loadProjectBtn": "Ouvrir",
+          "ribbon.btn.saveProjectBtn": "Sauver",
+          "ribbon.btn.importIliBtn": "Import .ili",
+          "ribbon.btn.importCollabBundleBtn": "Bundle",
+          "ribbon.btn.exportBtn": "Export .ili",
+          "ribbon.btn.exportDocsBtn": "Docs",
+          "ribbon.btn.validateBtn": "Valider",
+          "ribbon.btn.copyDiagBtn": "Rapport",
+          "ribbon.btn.addClassBtn": "Classe",
+          "ribbon.btn.addAssocBtn": "Relation",
+          "ribbon.btn.addDomainBtn": "Domaine",
+          "ribbon.btn.addProseSectionBtn": "Section",
+          "ribbon.btn.saveProseBtn": "Sauver",
+          "ribbon.btn.diagramAutoLayoutBtn": "Auto",
+          "ribbon.btn.diagramFitBtn": "Fit",
+          "ribbon.btn.diagramResetBtn": "Reset",
+          "ribbon.btn.diagramAddClassBtn": "Classe",
+          "ribbon.btn.diagramAddRelationBtn": "Relation",
+          "ribbon.btn.diagramSavePresetBtn": "Preset",
+          "ribbon.btn.diagramReviewPresetBtn": "Approuver",
+          "ribbon.btn.exportDiagBtn": "JSON",
+          "ribbon.btn.refreshOpsBtn": "Metrics",
+          "ribbon.btn.addCatalogInstanceBtn": "Instance",
+          "ribbon.btn.saveCatalogPresetBtn": "Preset",
+          "ribbon.btn.saveAsProjectBtn": "Enregistrer sous",
+          "ribbon.btn.exportCollabBundleBtn": "Bundle",
+          "ribbon.btn.refreshCollabStatusBtn": "Statut",
+          "ribbon.btn.listGitRefsBtn": "Branches",
+          "ribbon.btn.generateCommitDraftBtn": "Brouillon",
+          "ribbon.btn.diffBundleBtn": "Diff",
+          "ribbon.toggle.inputPanel": "Input",
+          "ribbon.toggle.outputPanel": "Output",
+          "ribbon.toggle.docsPanel": "Docs",
+          "ribbon.toggle.recentPanel": "Recent",
+          "ribbon.toggle.syncPanel": "Sync",
+          "ribbon.toggle.collabPanel": "Collab",
+          "ribbon.toggle.flowPanel": "Flow",
+          "ribbon.toggle.prosePanel": "Prose",
+          "ribbon.toggle.catalogPanel": "Catalog"
         }
       };
 
@@ -2187,6 +2430,52 @@
         if (option) option.textContent = t(key);
       }
 
+      function setRibbonButtonLabel(button, label) {
+        if (!button || !label) return;
+        const textNode = Array.from(button.childNodes).find((n) => n.nodeType === Node.TEXT_NODE);
+        if (textNode) {
+          textNode.textContent = label;
+        } else {
+          button.appendChild(document.createTextNode(label));
+        }
+      }
+
+      function applyRibbonI18n() {
+        const tabKeys = {
+          home: "ribbon.tab.home",
+          model: "ribbon.tab.model",
+          diagram: "ribbon.tab.diagram",
+          tools: "ribbon.tab.tools",
+          collab: "ribbon.tab.collab"
+        };
+        document.querySelectorAll(".app-ribbon .ribbon-tab").forEach((tab) => {
+          const key = tabKeys[tab.dataset.tab || ""];
+          if (key) tab.textContent = t(key);
+        });
+
+        ["home", "model", "diagram", "tools", "collab"].forEach((panelName) => {
+          const headers = document.querySelectorAll(`.app-ribbon .ribbon-panel[data-panel="${panelName}"] .ribbon-group-header`);
+          headers.forEach((header, idx) => {
+            const key = `ribbon.group.${panelName}.${idx}`;
+            header.textContent = t(key);
+          });
+        });
+
+        document.querySelectorAll(".app-ribbon .ribbon-button[data-action]").forEach((button) => {
+          const action = button.dataset.action || "";
+          const key = `ribbon.btn.${action}`;
+          const label = t(key);
+          if (label !== key) setRibbonButtonLabel(button, label);
+        });
+
+        document.querySelectorAll(".app-ribbon .ribbon-button[data-toggle-panel]").forEach((button) => {
+          const panelName = button.dataset.togglePanel || "";
+          const key = `ribbon.toggle.${panelName}`;
+          const label = t(key);
+          if (label !== key) setRibbonButtonLabel(button, label);
+        });
+      }
+
       function refreshProjectMeta() {
         projectMeta.textContent = t("project.meta", {
           name: currentProjectName,
@@ -2196,6 +2485,7 @@
 
       function applyI18nToUi() {
         document.documentElement.lang = uiLocale.replace("_", "-").toLowerCase();
+        applyRibbonI18n();
         setTextBySelector("#structurePanel > h2", "panel.structure");
         setTextBySelector("#propertiesPanel > h2", "panel.properties");
         setTextBySelector("#diagramPanel > h2", "panel.diagram");
