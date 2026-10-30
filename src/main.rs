@@ -589,19 +589,6 @@ async fn import_ili(
     );
     external_issues.append(&mut regenerated_external_issues);
 
-    if external_issues.iter().any(|i| i.level == "error") {
-        let mut merged = issues;
-        merged.append(&mut external_issues);
-        track_api_request(&state, "/api/model/import/ili", false);
-        return Err((
-            StatusCode::UNPROCESSABLE_ENTITY,
-            Json(ValidationResponse {
-                valid: false,
-                issues: merged,
-            }),
-        ));
-    }
-
     let mut merged_issues = issues;
     merged_issues.append(&mut external_issues);
 
@@ -612,7 +599,7 @@ async fn import_ili(
         issues: merged_issues,
     };
 
-    track_api_request(&state, "/api/model/import/ili", true);
+    track_api_request(&state, "/api/model/import/ili", valid);
 
     Ok((
         [(header::CONTENT_TYPE, "application/json; charset=utf-8")],
