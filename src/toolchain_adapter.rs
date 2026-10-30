@@ -155,10 +155,6 @@ fn execute_validate_model(
         .map_err(|e| ToolExecError::Io(format!("unable to write model.ili: {}", e)))?;
 
     let mut args = config.ili2c.args.clone();
-    if !req.model_name.trim().is_empty() {
-        args.push("--model".to_string());
-        args.push(req.model_name.trim().to_string());
-    }
     args.push(model_path.to_string_lossy().to_string());
 
     match run_command_with_timeout(&config.ili2c, &args, Some(&workdir), timeout_ms) {

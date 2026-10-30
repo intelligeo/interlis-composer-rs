@@ -792,7 +792,10 @@ impl InterlisModel {
             self.model_version.trim().to_string()
         };
         out.push_str(&format!("{};\n\n", version));
-        out.push_str(&format!("MODEL {} ({}) =\n", self.model_name, self.language));
+        out.push_str(&format!(
+            "MODEL {} ({}) AT \"https://intelligeo.ch/imc\" =\n",
+            self.model_name, self.language
+        ));
         out.push_str("  TOPIC Main =\n");
 
         for topic in &self.topics {
