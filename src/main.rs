@@ -1,4 +1,5 @@
 mod model;
+mod toolchain_adapter;
 
 use axum::{
     extract::State,
@@ -8,12 +9,13 @@ use axum::{
     Json, Router,
 };
 use model::{Association, CatalogInstance, CatalogValidationPreset, Class, Domain, InterlisModel, InterlisProject, ProseSection, Topic, from_interlis};
+use toolchain_adapter::{ToolCommand, ToolExecError, ToolIssue, ToolRequest, ToolchainConfig};
 use std::collections::{HashMap, HashSet};
 use std::{
     env,
     fs,
     net::SocketAddr,
-    path::Path,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex},
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -23,10 +25,13 @@ use tower_http::{
     trace::TraceLayer,
 };
 use tracing::info;
+use tracing_appender::non_blocking::WorkerGuard;
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Clone)]
 struct AppState {
     defaults: Arc<Defaults>,
+    tooling: Arc<ToolingConfig>,
     metrics: Arc<Mutex<OpsMetrics>>,
 }
 
@@ -195,18 +200,39 @@ impl OpsMetrics {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            std::env::var("RUST_LOG")
-                .unwrap_or_else(|_| "interlis_composer_rs=info,tower_http=info".to_string()),
-        )
-        .init();
+    let env_filter = std::env::var("RUST_LOG")
+        .unwrap_or_else(|_| "interlis_composer_rs=info,tower_http=info".to_string());
+
+    let mut _file_log_guard: Option<WorkerGuard> = None;
+    let file_layer = match setup_file_logger() {
+        Ok((layer, guard, path)) => {
+            _file_log_guard = Some(guard);
+            Some((layer, path))
+        }
+        Err(err) => {
+            eprintln!("[logging] file logger disabled: {}", err);
+            None
+        }
+    };
+
+    let stdout_layer = fmt::layer().with_target(true);
+    let registry = tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::new(env_filter))
+        .with(stdout_layer);
+
+    if let Some((file_layer, log_path)) = file_layer {
+        registry.with(file_layer).init();
+        info!(log_file = %log_path, "file logging enabled");
+    } else {
+        registry.init();
+    }
 
     let state = AppState {
         defaults: Arc::new(Defaults {
             model_name: env::var("DEFAULT_MODEL_NAME").unwrap_or_else(|_| "ModelName".to_string()),
             language: env::var("DEFAULT_MODEL_LANG").unwrap_or_else(|_| "de".to_string()),
         }),
+        tooling: Arc::new(toolchain_adapter::load_config()),
         metrics: Arc::new(Mutex::new(OpsMetrics::new())),
     };
 
@@ -477,6 +503,7 @@ async fn import_ili(
     Json(req): Json<ImportIliRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ValidationResponse>)> {
     let trimmed = req.interlis.trim();
+    let original_interlis = trimmed.to_string();
     if trimmed.is_empty() {
         track_api_request(&state, "/api/model/import/ili", false);
         return Err((
@@ -488,7 +515,7 @@ async fn import_ili(
         ));
     }
 
-    let mut model = match from_interlis(trimmed) {
+    let mut model = match from_interlis(&original_interlis) {
         Ok(m) => m,
         Err(parse_error) => {
             track_api_request(&state, "/api/model/import/ili", false);
@@ -538,12 +565,42 @@ async fn import_ili(
     }
 
     let issues = validate(&model);
+    let generated_interlis = model.to_interlis();
+    let mut external_issues = run_toolchain_model_validation(
+        &state.tooling,
+        &model,
+        &original_interlis,
+        "import-ili-original",
+    );
+    let mut regenerated_external_issues = run_toolchain_model_validation(
+        &state.tooling,
+        &model,
+        &generated_interlis,
+        "import-ili-regenerated",
+    );
+    external_issues.append(&mut regenerated_external_issues);
 
-    let valid = !issues.iter().any(|i| i.level == "error");
+    if external_issues.iter().any(|i| i.level == "error") {
+        let mut merged = issues;
+        merged.append(&mut external_issues);
+        track_api_request(&state, "/api/model/import/ili", false);
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(ValidationResponse {
+                valid: false,
+                issues: merged,
+            }),
+        ));
+    }
+
+    let mut merged_issues = issues;
+    merged_issues.append(&mut external_issues);
+
+    let valid = !merged_issues.iter().any(|i| i.level == "error");
     let response = ImportIliResponse {
         valid,
         model,
-        issues,
+        issues: merged_issues,
     };
 
     track_api_request(&state, "/api/model/import/ili", true);
@@ -555,25 +612,11 @@ async fn import_ili(
 }
 
 async fn import_xtf(State(state): State<AppState>, Json(_req): Json<TransferRequest>) -> Json<TransferResponse> {
-    track_api_request(&state, "/api/instance/import/xtf", true);
-    Json(TransferResponse {
-        valid: false,
-        issues: vec![warn_issue(
-            "XTF_BASELINE_NOT_IMPLEMENTED",
-            "XTF/XML import pipeline is planned but not implemented in this MVP yet",
-        )],
-    })
+    import_xtf_with_toolchain(state, _req)
 }
 
-async fn export_xtf(State(state): State<AppState>, Json(_req): Json<TransferRequest>) -> Json<TransferResponse> {
-    track_api_request(&state, "/api/instance/export/xtf", true);
-    Json(TransferResponse {
-        valid: false,
-        issues: vec![warn_issue(
-            "XTF_BASELINE_NOT_IMPLEMENTED",
-            "XTF/XML export pipeline is planned but not implemented in this MVP yet",
-        )],
-    })
+async fn export_xtf(State(state): State<AppState>, Json(req): Json<TransferRequest>) -> Json<TransferResponse> {
+    export_xtf_with_toolchain(state, req)
 }
 
 async fn validate_model(
@@ -582,7 +625,15 @@ async fn validate_model(
 ) -> Json<ValidationResponse> {
     apply_defaults(&mut model, &state.defaults);
     ensure_model_metadata(&mut model);
-    let issues = validate(&model);
+    let mut issues = validate(&model);
+    let generated_interlis = model.to_interlis();
+    let mut external_issues = run_toolchain_model_validation(
+        &state.tooling,
+        &model,
+        &generated_interlis,
+        "validate-model",
+    );
+    issues.append(&mut external_issues);
     let valid = !issues.iter().any(|i| i.level == "error");
     track_api_request(&state, "/api/model/validate", true);
     Json(ValidationResponse { valid, issues })
@@ -608,12 +659,34 @@ async fn export_ili(
     }
 
     let interlis = model.to_interlis();
+    let mut external_issues = run_toolchain_model_validation(
+        &state.tooling,
+        &model,
+        &interlis,
+        "export-ili",
+    );
+
+    if external_issues.iter().any(|i| i.level == "error") {
+        let mut merged = issues;
+        merged.append(&mut external_issues);
+        track_api_request(&state, "/api/model/export/ili", false);
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(ValidationResponse {
+                valid: false,
+                issues: merged,
+            }),
+        ));
+    }
+
+    let mut merged_issues = issues;
+    merged_issues.append(&mut external_issues);
     let file_name = format!("{}.ili", sanitize_file_stem(&model.model_name));
 
     let response = ExportResponse {
         file_name,
         interlis,
-        issues,
+        issues: merged_issues,
     };
 
     track_api_request(&state, "/api/model/export/ili", true);
@@ -1055,6 +1128,213 @@ fn ensure_model_metadata(model: &mut InterlisModel) {
     if model.model_md5.trim().is_empty() {
         model.model_md5 = format!("{:x}", md5::compute(model.to_interlis().as_bytes()));
     }
+}
+
+fn run_toolchain_model_validation(
+    tooling: &ToolchainConfig,
+    model: &InterlisModel,
+    interlis: &str,
+    node_path: &str,
+) -> Vec<ValidationIssue> {
+    let req = ToolRequest {
+        request_id: format!("{}-{}", node_path, now_unix_s()),
+        model_name: model.model_name.clone(),
+        interlis_text: interlis.to_string(),
+        transfer_text: None,
+        transfer_format: None,
+        instances_json: None,
+        timeout_ms: None,
+        strict: false,
+    };
+
+    match toolchain_adapter::execute(tooling, ToolCommand::ValidateModel, &req) {
+        Ok(resp) => map_tool_issues(resp.issues),
+        Err(err) => vec![tool_exec_error_issue(err, node_path, tooling.ili2c.strict)],
+    }
+}
+
+fn import_xtf_with_toolchain(state: AppState, req: TransferRequest) -> Json<TransferResponse> {
+    if req.content.trim().is_empty() {
+        track_api_request(&state, "/api/instance/import/xtf", false);
+        return Json(TransferResponse {
+            valid: false,
+            issues: vec![error_issue("XTF_INPUT_EMPTY", "XTF/XML input is empty")],
+        });
+    }
+
+    let mut model = req.model.unwrap_or_else(|| InterlisModel {
+        model_name: state.defaults.model_name.clone(),
+        language: state.defaults.language.clone(),
+        model_version: "INTERLIS 2.4".to_string(),
+        model_md5: String::new(),
+        domains: Vec::new(),
+        associations: Vec::new(),
+        topics: Vec::new(),
+        classes: Vec::new(),
+        prose_sections: Vec::new(),
+        catalog_instances: Vec::new(),
+        catalog_validation_presets: Vec::new(),
+    });
+    apply_defaults(&mut model, &state.defaults);
+    ensure_model_metadata(&mut model);
+
+    let interlis = model.to_interlis();
+    let tool_req = ToolRequest {
+        request_id: format!("import-xtf-{}", now_unix_s()),
+        model_name: model.model_name.clone(),
+        interlis_text: interlis,
+        transfer_text: Some(req.content),
+        transfer_format: Some("xtf".to_string()),
+        instances_json: None,
+        timeout_ms: None,
+        strict: false,
+    };
+
+    let mut issues = match toolchain_adapter::execute(&state.tooling, ToolCommand::ValidateTransfer, &tool_req) {
+        Ok(resp) => map_tool_issues(resp.issues),
+        Err(err) => vec![tool_exec_error_issue(err, "xtf", state.tooling.ilivalidator.strict)],
+    };
+
+    let valid = !issues.iter().any(|i| i.level == "error");
+    track_api_request(&state, "/api/instance/import/xtf", valid);
+    Json(TransferResponse {
+        valid,
+        issues: std::mem::take(&mut issues),
+    })
+}
+
+fn export_xtf_with_toolchain(state: AppState, req: TransferRequest) -> Json<TransferResponse> {
+    let mut model = req.model.unwrap_or_else(|| InterlisModel {
+        model_name: state.defaults.model_name.clone(),
+        language: state.defaults.language.clone(),
+        model_version: "INTERLIS 2.4".to_string(),
+        model_md5: String::new(),
+        domains: Vec::new(),
+        associations: Vec::new(),
+        topics: Vec::new(),
+        classes: Vec::new(),
+        prose_sections: Vec::new(),
+        catalog_instances: Vec::new(),
+        catalog_validation_presets: Vec::new(),
+    });
+    apply_defaults(&mut model, &state.defaults);
+    ensure_model_metadata(&mut model);
+
+    let tool_req = ToolRequest {
+        request_id: format!("export-xtf-{}", now_unix_s()),
+        model_name: model.model_name.clone(),
+        interlis_text: model.to_interlis(),
+        transfer_text: None,
+        transfer_format: Some("xtf".to_string()),
+        instances_json: Some(req.content),
+        timeout_ms: None,
+        strict: false,
+    };
+
+    let mut issues = match toolchain_adapter::execute(&state.tooling, ToolCommand::ExportTransfer, &tool_req) {
+        Ok(resp) => map_tool_issues(resp.issues),
+        Err(err) => vec![tool_exec_error_issue(err, "xtf", state.tooling.iox_ili.strict)],
+    };
+
+    let valid = !issues.iter().any(|i| i.level == "error");
+    track_api_request(&state, "/api/instance/export/xtf", valid);
+    Json(TransferResponse {
+        valid,
+        issues: std::mem::take(&mut issues),
+    })
+}
+
+fn map_tool_issues(tool_issues: Vec<ToolIssue>) -> Vec<ValidationIssue> {
+    tool_issues
+        .into_iter()
+        .map(|item| ValidationIssue {
+            level: match item.severity {
+                "error" | "fatal" => "error",
+                "warning" | "warn" => "warning",
+                _ => "info",
+            },
+            code: item.code,
+            message: item.message,
+            node_path: item.path,
+            line: item.line,
+            column: item.column,
+        })
+        .collect()
+}
+
+fn tool_exec_error_issue(err: ToolExecError, node_path: &str, strict: bool) -> ValidationIssue {
+    match err {
+        ToolExecError::Timeout => ValidationIssue {
+            level: if strict { "error" } else { "warning" },
+            code: "TOOL_TIMEOUT",
+            message: "tool execution timed out".to_string(),
+            node_path: Some(node_path.to_string()),
+            line: None,
+            column: None,
+        },
+        ToolExecError::Io(message) => ValidationIssue {
+            level: if strict { "error" } else { "warning" },
+            code: "TOOL_IO_ERROR",
+            message,
+            node_path: Some(node_path.to_string()),
+            line: None,
+            column: None,
+        },
+        ToolExecError::Process(message) => ValidationIssue {
+            level: if strict { "error" } else { "warning" },
+            code: "TOOL_UNAVAILABLE",
+            message,
+            node_path: Some(node_path.to_string()),
+            line: None,
+            column: None,
+        },
+    }
+}
+
+fn setup_file_logger() -> Result<(impl tracing_subscriber::Layer<tracing_subscriber::Registry> + Send + Sync + 'static, WorkerGuard, String), String> {
+    let log_dir = resolve_user_log_dir()?;
+    fs::create_dir_all(&log_dir).map_err(|e| format!("unable to create log dir {}: {}", log_dir.display(), e))?;
+
+    let file_appender = tracing_appender::rolling::daily(&log_dir, "interlis-composer-rs.log");
+    let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+    let layer = fmt::layer()
+        .with_ansi(false)
+        .with_writer(non_blocking)
+        .with_target(true)
+        .with_thread_ids(true)
+        .with_thread_names(true);
+
+    let full_path = log_dir
+        .join("interlis-composer-rs.log")
+        .to_string_lossy()
+        .to_string();
+    Ok((layer, guard, full_path))
+}
+
+fn resolve_user_log_dir() -> Result<PathBuf, String> {
+    if cfg!(target_os = "windows") {
+        if let Some(home) = env::var_os("USERPROFILE") {
+            return Ok(PathBuf::from(home).join(".versatili"));
+        }
+        let drive = env::var_os("HOMEDRIVE");
+        let path = env::var_os("HOMEPATH");
+        if let (Some(drive), Some(path)) = (drive, path) {
+            return Ok(PathBuf::from(format!(
+                "{}{}",
+                drive.to_string_lossy(),
+                path.to_string_lossy()
+            ))
+            .join(".versatili"));
+        }
+    }
+
+    if let Some(home) = env::var_os("HOME") {
+        return Ok(PathBuf::from(home).join(".versatili"));
+    }
+
+    env::current_dir()
+        .map(|dir| dir.join(".versatili"))
+        .map_err(|e| format!("unable to resolve user directory: {}", e))
 }
 
 fn validate(model: &InterlisModel) -> Vec<ValidationIssue> {
@@ -2117,6 +2397,28 @@ fn is_cardinality(value: &str) -> bool {
 
 fn error_issue(code: &'static str, message: &str) -> ValidationIssue {
     error_issue_at(code, message, None)
+}
+
+fn info_issue(code: &'static str, message: &str) -> ValidationIssue {
+    ValidationIssue {
+        level: "info",
+        code,
+        message: message.to_string(),
+        node_path: None,
+        line: None,
+        column: None,
+    }
+}
+
+fn info_issue_at(code: &'static str, message: &str, node_path: Option<String>) -> ValidationIssue {
+    ValidationIssue {
+        level: "info",
+        code,
+        message: message.to_string(),
+        node_path,
+        line: None,
+        column: None,
+    }
 }
 
 fn error_issue_at(code: &'static str, message: &str, node_path: Option<String>) -> ValidationIssue {

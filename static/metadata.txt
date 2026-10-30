@@ -1,4 +1,4 @@
-app_name: versatili.app
+app_name: VERSATILI.APP
 app_version: 0.1.0
 product_line: INTERLIS Model Composer
 organization: INTELLIGEO.ch by Dr. Sara Lanini-Maggi
