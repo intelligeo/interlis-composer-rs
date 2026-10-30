@@ -3298,7 +3298,11 @@
           support_email: "-",
           build_date: "-",
           copyright: "-",
-          license: "-"
+          license: "-",
+          tools_core: "-",
+          tools_interlis: "-",
+          tools_ai: "-",
+          credits: "-"
         };
 
         let metadata = { ...fallback };
@@ -3322,6 +3326,10 @@
           `Homepage: ${metadata.homepage}`,
           `Support: ${metadata.support_email}`,
           `License: ${metadata.license}`,
+          `Core tools: ${metadata.tools_core}`,
+          `INTERLIS tools: ${metadata.tools_interlis}`,
+          `AI support: ${metadata.tools_ai}`,
+          `Credits: ${metadata.credits}`,
           `${metadata.copyright}`
         ].join("\n");
 
