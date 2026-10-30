@@ -35,6 +35,8 @@ pub struct InterlisModel {
 pub struct Domain {
     pub name: String,
     #[serde(default)]
+    pub topic: String,
+    #[serde(default)]
     pub values: Vec<String>,
     #[serde(default)]
     #[serde(rename = "type")]
@@ -416,7 +418,7 @@ fn parse_domain_values(value: &str) -> Option<Vec<String>> {
     Some(values)
 }
 
-fn parse_domain_declaration_line(line: &str) -> Option<Domain> {
+fn parse_domain_declaration_line(line: &str, topic_name: Option<&str>) -> Option<Domain> {
     let body = line.trim().trim_end_matches(';').trim();
     let (name_part, type_part) = body.split_once('=')?;
     let domain_name = name_part.trim();
@@ -433,6 +435,7 @@ fn parse_domain_declaration_line(line: &str) -> Option<Domain> {
 
     Some(Domain {
         name: domain_name.to_string(),
+        topic: topic_name.unwrap_or("").trim().to_string(),
         values,
         r#type: normalized_type,
     })
@@ -534,6 +537,7 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
     let mut model_version: Option<String> = None;
     let mut imports: Vec<String> = Vec::new();
     let mut topics: Vec<Topic> = Vec::new();
+    let mut current_topic_name: Option<String> = None;
     let mut domains: Vec<Domain> = Vec::new();
     let mut associations: Vec<Association> = Vec::new();
     let mut classes: Vec<Class> = Vec::new();
@@ -588,6 +592,7 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
                     if !domain_name.is_empty() {
                         domains.push(Domain {
                             name: domain_name.to_string(),
+                            topic: current_topic_name.clone().unwrap_or_default(),
                             values: Vec::new(),
                             r#type: from_interlis_type(type_part.trim()),
                         });
@@ -685,6 +690,7 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
                     subtopics: Vec::new(),
                 });
             }
+            current_topic_name = Some(topic_name);
             continue;
         }
 
@@ -698,7 +704,7 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
                 in_domain_block = false;
             } else {
                 if line.ends_with(';') {
-                    if let Some(domain) = parse_domain_declaration_line(line) {
+                    if let Some(domain) = parse_domain_declaration_line(line, current_topic_name.as_deref()) {
                         domains.push(domain);
                     }
                 }
@@ -713,7 +719,7 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
 
         if line.starts_with("DOMAIN ") && line.ends_with(';') {
             let domain_line = line.strip_prefix("DOMAIN ").unwrap_or("").trim();
-            if let Some(domain) = parse_domain_declaration_line(domain_line) {
+            if let Some(domain) = parse_domain_declaration_line(domain_line, current_topic_name.as_deref()) {
                 domains.push(domain);
             }
             continue;
@@ -838,6 +844,22 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
                 }
                 current_association_ends.clear();
             }
+
+            let end_name = line
+                .strip_prefix("END ")
+                .unwrap_or("")
+                .trim()
+                .trim_end_matches(';')
+                .trim_end_matches('.')
+                .trim();
+            if !end_name.is_empty()
+                && current_topic_name
+                    .as_deref()
+                    .map(|name| name.eq(end_name))
+                    .unwrap_or(false)
+            {
+                current_topic_name = None;
+            }
             continue;
         }
 
@@ -960,9 +982,17 @@ impl InterlisModel {
             }
         }
 
-        if !self.domains.is_empty() {
+        let topic_scoped_domains: Vec<&Domain> = self
+            .domains
+            .iter()
+            .filter(|domain| {
+                domain.topic.trim().is_empty() || domain.topic.trim() == topic_name
+            })
+            .collect();
+
+        if !topic_scoped_domains.is_empty() {
             out.push_str("    DOMAIN\n");
-            for domain in &self.domains {
+            for domain in topic_scoped_domains {
                 if !domain.values.is_empty() {
                     out.push_str(&format!(
                         "      {} = ({});\n",

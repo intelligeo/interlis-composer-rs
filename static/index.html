@@ -1184,6 +1184,8 @@
               <div class="ribbon-actions">
                 <button class="ribbon-button" data-action="addProseSectionBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h9"/></svg></span>Sezione</button>
                 <button class="ribbon-button" data-action="saveProseBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 2"/></svg></span>Salva</button>
+                <button class="ribbon-button" data-toggle-panel="prosePanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h10"/></svg></span>Prose</button>
+                <button class="ribbon-button" data-toggle-panel="catalogPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M15 4v5h5"/><path d="M8 12h8M8 16h8"/></svg></span>Catalog</button>
               </div>
             </div>
           </div>
@@ -1197,6 +1199,7 @@
                 <button class="ribbon-button" data-action="diagramAutoLayoutBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h7v7H4zm9 0h7v4h-7zm-9 9h7v3H4zm9 0h7v3h-7z"/></svg></span>Auto</button>
                 <button class="ribbon-button" data-action="diagramFitBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="3.5"/></svg></span>Fit</button>
                 <button class="ribbon-button" data-action="diagramResetBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3.5-7.2"/><path d="M3 4v6h6"/></svg></span>Reset</button>
+                <button class="ribbon-button" data-toggle-panel="flowPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 8h9v8H5zm9-4h5v5h-5zm0 11h5v5h-5z"/></svg></span>Flow</button>
               </div>
             </div>
             <div class="ribbon-group">
@@ -1233,17 +1236,13 @@
               </div>
             </div>
             <div class="ribbon-group">
-              <div class="ribbon-group-header">Visibilità panel</div>
+              <div class="ribbon-group-header">Pannelli tecnici</div>
               <div class="ribbon-actions">
                 <button class="ribbon-button" data-toggle-panel="inputPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z"/><path d="M4 10h16"/></svg></span>Input</button>
                 <button class="ribbon-button" data-toggle-panel="outputPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z"/><path d="M8 12h8M8 15h5"/></svg></span>Output</button>
                 <button class="ribbon-button" data-toggle-panel="docsPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h9l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M14 4v5h5"/><path d="M8 12h8M8 16h8"/></svg></span>Docs</button>
                 <button class="ribbon-button" data-toggle-panel="recentPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 7v6l4 2"/><circle cx="12" cy="12" r="8"/></svg></span>Recent</button>
                 <button class="ribbon-button" data-toggle-panel="syncPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.5-5.5"/><path d="M20 12a8 8 0 0 1-13.5 5.5"/><path d="M20 4v6h-6M4 20v-6h6"/></svg></span>Sync</button>
-                <button class="ribbon-button" data-toggle-panel="collabPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M4 18c1.2-2.5 3.5-4 6-4s4.8 1.5 6 4"/><path d="M14 17c.8-1.4 2-2.4 3.5-2.4"/></svg></span>Collab</button>
-                <button class="ribbon-button" data-toggle-panel="flowPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 8h9v8H5zm9-4h5v5h-5zm0 11h5v5h-5z"/></svg></span>Flow</button>
-                <button class="ribbon-button" data-toggle-panel="prosePanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h10"/></svg></span>Prose</button>
-                <button class="ribbon-button" data-toggle-panel="catalogPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M15 4v5h5"/><path d="M8 12h8M8 16h8"/></svg></span>Catalog</button>
               </div>
             </div>
             <div class="ribbon-group">
@@ -1263,6 +1262,7 @@
               <div class="ribbon-actions">
                 <button class="ribbon-button" data-action="refreshCollabStatusBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 12-4.5"/><path d="M19 12a7 7 0 0 1-12 4.5"/><path d="M19 4v6h-6M5 20v-6h6"/></svg></span>Stato</button>
                 <button class="ribbon-button" data-action="listGitRefsBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 18a2 2 0 1 1 0-4 2 2 0 0 1 0 4ZM18 10a2 2 0 1 1 0-4 2 2 0 0 1 0 4ZM8 16l8-6"/><path d="M8 8l8 6"/></svg></span>Branch</button>
+                <button class="ribbon-button" data-toggle-panel="collabPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M4 18c1.2-2.5 3.5-4 6-4s4.8 1.5 6 4"/><path d="M14 17c.8-1.4 2-2.4 3.5-2.4"/></svg></span>Collab</button>
               </div>
             </div>
             <div class="ribbon-group">
@@ -1371,6 +1371,10 @@
                 <button class="ghost" id="deleteDomainValueBtn" type="button">- Valore selezionato</button>
               </div>
             </div>
+            <div class="form-row" id="propDomainTopicRow" style="display:none;">
+              <label for="propDomainTopicSelect">Topic</label>
+              <select id="propDomainTopicSelect"></select>
+            </div>
             <div class="form-row" id="propImportsRow" style="display:none;">
               <label>Imports</label>
               <div class="actions" style="justify-content:flex-start;">
@@ -1388,12 +1392,15 @@
           <h2>
             <span id="diagramPanelTitle">Diagram Editor</span>
             <span class="panel-header-actions">
-              <label for="diagramZoomInput">Zoom</label>
-              <input id="diagramZoomInput" type="range" min="60" max="180" step="10" value="100" />
+              <button class="ghost" id="diagramModeToggleBtn" type="button">Switch to Textual</button>
+              <span id="diagramZoomControls">
+                <label for="diagramZoomInput">Zoom</label>
+                <input id="diagramZoomInput" type="range" min="60" max="180" step="10" value="100" />
+              </span>
             </span>
           </h2>
           <div class="content">
-            <div class="diag-tools">
+            <div id="diagramVisualTools" class="diag-tools">
               <button class="ghost" id="diagramAutoLayoutBtn">Auto-layout</button>
               <button class="ghost" id="diagramFitBtn">Fit content</button>
               <button class="ghost" id="diagramToggleAttrsBtn">Nascondi attributi</button>
@@ -1424,17 +1431,25 @@
               <button class="ghost" id="diagramResetBtn">Reset vista</button>
             </div>
             <div class="status" id="diagramPresetMeta">Preset: standard</div>
-            <div class="diagram-toolbar">
+            <div id="diagramToolbar" class="diagram-toolbar">
               <button class="ghost" id="diagramAddClassBtn">+ Classe dal diagramma</button>
               <button class="ghost" id="diagramAddRelationBtn">+ Relazione dal diagramma</button>
             </div>
             <div class="diagram-stage" id="diagramStage">
               <svg id="diagramCanvas" class="diagram-canvas" viewBox="0 0 1200 800" role="img" aria-label="Diagramma classi"></svg>
             </div>
-            <div class="minimap-wrap">
+            <div id="diagramMinimapWrap" class="minimap-wrap">
               <svg id="diagramMinimap" class="minimap" viewBox="0 0 240 120" role="img" aria-label="Minimap diagramma"></svg>
             </div>
             <div class="status" id="diagramStatus">Diagram: seleziona una classe dal tree o dal diagramma</div>
+            <div id="diagramTextEditorWrap" style="display:none;">
+              <textarea id="diagramTextEditorInput" style="width:100%; min-height:360px; resize:vertical; font-family:Consolas, 'Courier New', monospace;"></textarea>
+              <div class="actions" style="margin-top:0.6rem;">
+                <button class="primary" id="diagramTextApplyBtn" type="button">Apply Text Changes</button>
+                <button class="ghost" id="diagramTextResetBtn" type="button">Reset from Model</button>
+              </div>
+              <div class="status" id="diagramTextStatus">Textual editor: JSON model representation</div>
+            </div>
           </div>
         </article>
       </section>
@@ -2113,6 +2128,8 @@
       const propAssocToSelect = document.getElementById("propAssocToSelect");
       const propAssocCardInput = document.getElementById("propAssocCardInput");
       const propDomainValuesRow = document.getElementById("propDomainValuesRow");
+      const propDomainTopicRow = document.getElementById("propDomainTopicRow");
+      const propDomainTopicSelect = document.getElementById("propDomainTopicSelect");
       const propImportsRow = document.getElementById("propImportsRow");
       const addDomainValueBtn = document.getElementById("addDomainValueBtn");
       const deleteDomainValueBtn = document.getElementById("deleteDomainValueBtn");
@@ -2120,10 +2137,21 @@
       const deleteImportBtn = document.getElementById("deleteImportBtn");
       const treeSearch = document.getElementById("treeSearch");
       const treeTypeFilter = document.getElementById("treeTypeFilter");
+      const diagramPanelTitle = document.getElementById("diagramPanelTitle");
       const diagramStage = document.getElementById("diagramStage");
       const diagramCanvas = document.getElementById("diagramCanvas");
       const diagramMinimap = document.getElementById("diagramMinimap");
+      const diagramMinimapWrap = document.getElementById("diagramMinimapWrap");
       const diagramZoomInput = document.getElementById("diagramZoomInput");
+      const diagramZoomControls = document.getElementById("diagramZoomControls");
+      const diagramModeToggleBtn = document.getElementById("diagramModeToggleBtn");
+      const diagramVisualTools = document.getElementById("diagramVisualTools");
+      const diagramToolbar = document.getElementById("diagramToolbar");
+      const diagramTextEditorWrap = document.getElementById("diagramTextEditorWrap");
+      const diagramTextEditorInput = document.getElementById("diagramTextEditorInput");
+      const diagramTextApplyBtn = document.getElementById("diagramTextApplyBtn");
+      const diagramTextResetBtn = document.getElementById("diagramTextResetBtn");
+      const diagramTextStatus = document.getElementById("diagramTextStatus");
       const diagramStatus = document.getElementById("diagramStatus");
       const diagramToggleAttrsBtn = document.getElementById("diagramToggleAttrsBtn");
       const diagramSnapAnchorsBtn = document.getElementById("diagramSnapAnchorsBtn");
@@ -2366,7 +2394,7 @@
           "ribbon.group.diagram.2": "Preset",
           "ribbon.group.tools.0": "Diagnostics",
           "ribbon.group.tools.1": "Catalog",
-          "ribbon.group.tools.2": "Panel visibility",
+          "ribbon.group.tools.2": "Technical panels",
           "ribbon.group.tools.3": "Project",
           "ribbon.group.collab.0": "Repository",
           "ribbon.group.collab.1": "Commit",
@@ -2406,7 +2434,7 @@
           "ribbon.toggle.inputPanel": "Input",
           "ribbon.toggle.outputPanel": "Output",
           "ribbon.toggle.docsPanel": "Docs",
-          "ribbon.toggle.recentPanel": "Recent",
+          "ribbon.toggle.recentPanel": "History",
           "ribbon.toggle.syncPanel": "Sync",
           "ribbon.toggle.collabPanel": "Collab",
           "ribbon.toggle.flowPanel": "Flow",
@@ -2488,7 +2516,7 @@
           "ribbon.group.diagram.2": "Preset",
           "ribbon.group.tools.0": "Diagnostica",
           "ribbon.group.tools.1": "Catalogo",
-          "ribbon.group.tools.2": "Visibilita panel",
+          "ribbon.group.tools.2": "Pannelli tecnici",
           "ribbon.group.tools.3": "Project",
           "ribbon.group.collab.0": "Repository",
           "ribbon.group.collab.1": "Commit",
@@ -2528,7 +2556,7 @@
           "ribbon.toggle.inputPanel": "Input",
           "ribbon.toggle.outputPanel": "Output",
           "ribbon.toggle.docsPanel": "Docs",
-          "ribbon.toggle.recentPanel": "Recent",
+          "ribbon.toggle.recentPanel": "Storico",
           "ribbon.toggle.syncPanel": "Sync",
           "ribbon.toggle.collabPanel": "Collab",
           "ribbon.toggle.flowPanel": "Flow",
@@ -2610,7 +2638,7 @@
           "ribbon.group.diagram.2": "Preset",
           "ribbon.group.tools.0": "Diagnostik",
           "ribbon.group.tools.1": "Katalog",
-          "ribbon.group.tools.2": "Panel Sichtbarkeit",
+          "ribbon.group.tools.2": "Technische Panels",
           "ribbon.group.tools.3": "Projekt",
           "ribbon.group.collab.0": "Repository",
           "ribbon.group.collab.1": "Commit",
@@ -2650,7 +2678,7 @@
           "ribbon.toggle.inputPanel": "Input",
           "ribbon.toggle.outputPanel": "Output",
           "ribbon.toggle.docsPanel": "Docs",
-          "ribbon.toggle.recentPanel": "Recent",
+          "ribbon.toggle.recentPanel": "Verlauf",
           "ribbon.toggle.syncPanel": "Sync",
           "ribbon.toggle.collabPanel": "Collab",
           "ribbon.toggle.flowPanel": "Flow",
@@ -2732,7 +2760,7 @@
           "ribbon.group.diagram.2": "Preset",
           "ribbon.group.tools.0": "Diagnostic",
           "ribbon.group.tools.1": "Catalogue",
-          "ribbon.group.tools.2": "Visibilite panel",
+          "ribbon.group.tools.2": "Panneaux techniques",
           "ribbon.group.tools.3": "Projet",
           "ribbon.group.collab.0": "Repository",
           "ribbon.group.collab.1": "Commit",
@@ -2772,7 +2800,7 @@
           "ribbon.toggle.inputPanel": "Input",
           "ribbon.toggle.outputPanel": "Output",
           "ribbon.toggle.docsPanel": "Docs",
-          "ribbon.toggle.recentPanel": "Recent",
+          "ribbon.toggle.recentPanel": "Historique",
           "ribbon.toggle.syncPanel": "Sync",
           "ribbon.toggle.collabPanel": "Collab",
           "ribbon.toggle.flowPanel": "Flow",
@@ -2951,6 +2979,47 @@
         if (statusBarVersion) statusBarVersion.textContent = modelInput && modelInput.value ? "draft" : "empty";
         if (statusBarSync) statusBarSync.textContent = syncMeta?.dataset?.syncMessage || t("status.idle");
       }
+
+      function setDiagramTextEditorSnapshot() {
+        if (!diagramTextEditorInput) return;
+        diagramTextEditorInput.value = JSON.stringify(coreState.model, null, 2);
+        if (diagramTextStatus) {
+          diagramTextStatus.textContent = "Textual editor: JSON model representation";
+        }
+      }
+
+      function applyDiagramEditorModeUi() {
+        const textual = diagramEditorMode === "textual";
+        if (diagramModeToggleBtn) {
+          diagramModeToggleBtn.textContent = textual ? "Switch to Diagram" : "Switch to Textual";
+        }
+        if (diagramPanelTitle) {
+          diagramPanelTitle.textContent = textual ? "Textual Model Editor" : "Diagram Editor";
+        }
+
+        if (diagramVisualTools) diagramVisualTools.style.display = textual ? "none" : "flex";
+        if (diagramPresetMeta) diagramPresetMeta.style.display = textual ? "none" : "block";
+        if (diagramToolbar) diagramToolbar.style.display = textual ? "none" : "flex";
+        if (diagramStage) diagramStage.style.display = textual ? "none" : "block";
+        if (diagramMinimapWrap) diagramMinimapWrap.style.display = textual ? "none" : "block";
+        if (diagramStatus) diagramStatus.style.display = textual ? "none" : "block";
+        if (diagramZoomControls) diagramZoomControls.style.display = textual ? "none" : "inline-flex";
+        if (diagramTextEditorWrap) diagramTextEditorWrap.style.display = textual ? "block" : "none";
+      }
+
+      function setDiagramEditorMode(mode) {
+        const nextMode = mode === "textual" ? "textual" : "diagram";
+        if (diagramEditorMode === nextMode) return;
+        diagramEditorMode = nextMode;
+        if (diagramEditorMode === "textual") {
+          setDiagramTextEditorSnapshot();
+        }
+        applyDiagramEditorModeUi();
+        if (diagramEditorMode === "diagram") {
+          renderDiagramEditor();
+        }
+      }
+
       let currentIssues = [];
       let debounceTimer = null;
       let autosaveTimer = null;
@@ -2970,6 +3039,7 @@
       let diagramLockRelations = false;
       let diagramPreset = "default";
       let diagramPresetContextFilter = "all";
+      let diagramEditorMode = "diagram";
       let activeProseSectionTitle = "";
       let activeCatalogPresetName = "";
       let lastDocsMarkdown = "";
@@ -3540,6 +3610,7 @@
         }));
         normalized.domains = normalized.domains.map((domain) => ({
           ...domain,
+          topic: String(domain?.topic || "").trim(),
           type: String(domain?.type || "TEXT"),
           values: Array.isArray(domain?.values)
             ? domain.values.map((value) => String(value || "").trim()).filter((value) => value.length > 0)
@@ -4170,6 +4241,30 @@
           propClassExtendsSelect.value = extendsValue;
         } else {
           propClassExtendsSelect.value = "";
+        }
+      }
+
+      function populateDomainTopicSelect(topicValue) {
+        if (!propDomainTopicSelect) return;
+        propDomainTopicSelect.innerHTML = "";
+
+        const blank = document.createElement("option");
+        blank.value = "";
+        blank.textContent = "(global)";
+        propDomainTopicSelect.appendChild(blank);
+
+        for (const topic of coreState.model.topics || []) {
+          const option = document.createElement("option");
+          option.value = topic.name;
+          option.textContent = topic.name;
+          propDomainTopicSelect.appendChild(option);
+        }
+
+        const targetValue = String(topicValue || "").trim();
+        if (targetValue && Array.from(propDomainTopicSelect.options).some((opt) => opt.value === targetValue)) {
+          propDomainTopicSelect.value = targetValue;
+        } else {
+          propDomainTopicSelect.value = "";
         }
       }
 
@@ -5022,6 +5117,7 @@
       }
 
       function renderDiagramMinimap() {
+        if (diagramEditorMode === "textual") return;
         if (!diagramMinimap || !diagramStage) return;
         const ns = "http://www.w3.org/2000/svg";
         diagramMinimap.innerHTML = "";
@@ -5068,6 +5164,10 @@
       }
 
       function renderDiagramEditor() {
+        if (diagramEditorMode === "textual") {
+          applyDiagramEditorModeUi();
+          return;
+        }
         if (!diagramCanvas) return;
         ensureDiagramLayout();
 
@@ -5425,7 +5525,12 @@
         }
 
         if (action.type === "ADD_DOMAIN") {
-          next.model.domains.push({ name: action.domainName, type: action.domainType || "TEXT", values: [] });
+          next.model.domains.push({
+            name: action.domainName,
+            topic: String(action.domainTopic || "").trim(),
+            type: action.domainType || "TEXT",
+            values: []
+          });
           next.selection = {
             source: action.source || "tree",
             elementId: selectionPathOf("domain", action.domainName)
@@ -5519,7 +5624,13 @@
             selectionChanged = true;
           }
           if (sel.kind === "topic") {
+            const oldTopicName = next.model.topics[sel.topicIndex].name;
             next.model.topics[sel.topicIndex].name = action.name;
+            next.model.domains.forEach((domain) => {
+              if (domain.topic === oldTopicName) {
+                domain.topic = action.name;
+              }
+            });
             next.selection = {
               source: action.source || "properties",
               elementId: selectionPathOf("topic", action.name)
@@ -5568,6 +5679,9 @@
             next.model.domains[sel.domainIndex].name = action.name;
             if (action.attrType) {
               next.model.domains[sel.domainIndex].type = action.attrType;
+            }
+            if (Object.prototype.hasOwnProperty.call(action, "domainTopic")) {
+              next.model.domains[sel.domainIndex].topic = String(action.domainTopic || "").trim();
             }
             next.selection = {
               source: action.source || "properties",
@@ -5633,7 +5747,9 @@
         if (action.type === "DELETE_SELECTED") {
           const sel = resolveSelection(state.selection.elementId, next.model);
           if (sel.kind === "topic") {
+            const removedTopicName = next.model.topics[sel.topicIndex].name;
             next.model.topics.splice(sel.topicIndex, 1);
+            next.model.domains = next.model.domains.filter((domain) => domain.topic !== removedTopicName);
             next.selection = { source: action.source || "tree", elementId: "model" };
             modelChanged = true;
             selectionChanged = true;
@@ -5998,24 +6114,29 @@
           }
         }
 
-        appendGroup("Domains");
-        for (const domain of coreState.model.domains) {
-          const values = Array.isArray(domain.values) ? domain.values : [];
-          const suffix = values.length ? ` (${values.length} values)` : ` : ${domain.type || "TEXT"}`;
-          appendItem({ path: selectionPathOf("domain", domain.name), label: `DOMAIN ${domain.name}${suffix}`, kind: "domain" });
-          for (const value of values) {
-            appendItem({
-              path: selectionPathOf("domainval", domain.name, value),
-              label: `VAL ${value}`,
-              kind: "domain",
-              extraClass: "attr"
-            });
-          }
-        }
-
         appendGroup("Topics");
+        const knownTopicNames = new Set(coreState.model.topics.map((topic) => topic.name));
         for (const topic of coreState.model.topics) {
           appendItem({ path: selectionPathOf("topic", topic.name), label: `TOPIC ${topic.name}`, kind: "topic" });
+          const topicDomains = coreState.model.domains.filter((domain) => String(domain.topic || "").trim() === topic.name);
+          for (const domain of topicDomains) {
+            const values = Array.isArray(domain.values) ? domain.values : [];
+            const suffix = values.length ? ` (${values.length} values)` : ` : ${domain.type || "TEXT"}`;
+            appendItem({
+              path: selectionPathOf("domain", domain.name),
+              label: `DOMAIN ${domain.name}${suffix}`,
+              kind: "domain",
+              extraClass: "subtopic"
+            });
+            for (const value of values) {
+              appendItem({
+                path: selectionPathOf("domainval", domain.name, value),
+                label: `VAL ${value}`,
+                kind: "domain",
+                extraClass: "attr"
+              });
+            }
+          }
           for (const subtopic of topic.subtopics) {
             appendItem({
               path: selectionPathOf("subtopic", topic.name, subtopic.name),
@@ -6023,6 +6144,27 @@
               kind: "subtopic",
               extraClass: "subtopic"
             });
+          }
+        }
+
+        const unscopedDomains = coreState.model.domains.filter((domain) => {
+          const domainTopic = String(domain.topic || "").trim();
+          return !domainTopic || !knownTopicNames.has(domainTopic);
+        });
+        if (unscopedDomains.length > 0) {
+          appendGroup("Domains");
+          for (const domain of unscopedDomains) {
+            const values = Array.isArray(domain.values) ? domain.values : [];
+            const suffix = values.length ? ` (${values.length} values)` : ` : ${domain.type || "TEXT"}`;
+            appendItem({ path: selectionPathOf("domain", domain.name), label: `DOMAIN ${domain.name}${suffix}`, kind: "domain" });
+            for (const value of values) {
+              appendItem({
+                path: selectionPathOf("domainval", domain.name, value),
+                label: `VAL ${value}`,
+                kind: "domain",
+                extraClass: "attr"
+              });
+            }
           }
         }
 
@@ -6062,6 +6204,7 @@
         propAssocToRow.style.display = "none";
         propAssocCardRow.style.display = "none";
         propDomainValuesRow.style.display = "none";
+        propDomainTopicRow.style.display = "none";
         propImportsRow.style.display = "none";
         propModelAtRow.style.display = "none";
         propModelVersionRow.style.display = "none";
@@ -6141,6 +6284,8 @@
           propAttrCardRow.style.display = "none";
           propTypeRow.style.display = (Array.isArray(domain.values) && domain.values.length > 0) ? "none" : "grid";
           propDomainValuesRow.style.display = "grid";
+          propDomainTopicRow.style.display = "grid";
+          populateDomainTopicSelect(domain.topic || "");
           deleteDomainValueBtn.disabled = true;
           deleteImportBtn.disabled = true;
           return;
@@ -7332,7 +7477,19 @@
           renderIssues([{ level: "warning", code: "TREE_DUPLICATE_DOMAIN", message: t("issue.TREE_DUPLICATE_DOMAIN", { name: candidate }) }]);
           return;
         }
-        dispatch({ type: "ADD_DOMAIN", domainName: candidate, domainType: "TEXT", source: "tree-add-domain" });
+        const sel = resolveSelection(coreState.selection.elementId, coreState.model);
+        const selectedTopicName = sel.kind === "topic"
+          ? sel.topicName
+          : sel.kind === "subtopic"
+            ? sel.topicName
+            : (coreState.model.topics.length === 1 ? coreState.model.topics[0].name : "");
+        dispatch({
+          type: "ADD_DOMAIN",
+          domainName: candidate,
+          domainType: "TEXT",
+          domainTopic: selectedTopicName,
+          source: "tree-add-domain"
+        });
       });
 
       addDomainValueBtn.addEventListener("click", () => {
@@ -7532,10 +7689,17 @@
             return;
           }
 
+          const domainTopic = String(propDomainTopicSelect?.value || "").trim();
+          if (domainTopic && !(coreState.model.topics || []).some((topic) => topic.name === domainTopic)) {
+            renderIssues([{ level: "warning", code: "DOMAIN_TOPIC_INVALID", message: `Topic '${domainTopic}' non valido` }]);
+            return;
+          }
+
           dispatch({
             type: "UPDATE_SELECTED",
             name,
             attrType: propTypeSelect.value,
+            domainTopic,
             source: "properties"
           });
           return;
@@ -7998,6 +8162,36 @@
         presetFileInput.value = "";
         presetFileInput.click();
       });
+      if (diagramModeToggleBtn) {
+        diagramModeToggleBtn.addEventListener("click", () => {
+          setDiagramEditorMode(diagramEditorMode === "diagram" ? "textual" : "diagram");
+        });
+      }
+      if (diagramTextApplyBtn) {
+        diagramTextApplyBtn.addEventListener("click", () => {
+          try {
+            const parsed = JSON.parse(diagramTextEditorInput.value);
+            dispatch(
+              { type: "SET_MODEL", model: parsed, resetSelection: false, source: "diagram-text-editor" },
+              { syncText: false, markDirty: true }
+            );
+            if (diagramTextStatus) {
+              diagramTextStatus.textContent = "Textual editor: changes applied";
+            }
+            scheduleValidation();
+          } catch (err) {
+            renderIssues([{ level: "error", code: "TEXT_MODEL_PARSE_ERROR", message: err.message || "Invalid JSON in textual model editor" }]);
+            if (diagramTextStatus) {
+              diagramTextStatus.textContent = "Textual editor: invalid JSON";
+            }
+          }
+        });
+      }
+      if (diagramTextResetBtn) {
+        diagramTextResetBtn.addEventListener("click", () => {
+          setDiagramTextEditorSnapshot();
+        });
+      }
       exportKpiBtn.addEventListener("click", exportUxKpi);
       resetKpiBtn.addEventListener("click", resetUxKpi);
 
