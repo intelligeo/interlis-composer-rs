@@ -1345,8 +1345,8 @@
               <select id="propClassExtendsSelect"></select>
             </div>
             <div class="form-row" id="propAttrCardRow">
-              <label for="propAttrCardInput">Cardinality</label>
-              <input id="propAttrCardInput" type="text" placeholder="0..1" />
+              <label for="propAttrMandatoryInput">Mandatory</label>
+              <input id="propAttrMandatoryInput" type="checkbox" />
             </div>
             <div class="form-row" id="propAssocFromRow">
               <label for="propAssocFromSelect">From class</label>
@@ -1369,6 +1369,13 @@
               <div class="actions" style="justify-content:flex-start;">
                 <button class="ghost" id="addDomainValueBtn" type="button">+ Valore</button>
                 <button class="ghost" id="deleteDomainValueBtn" type="button">- Valore selezionato</button>
+              </div>
+            </div>
+            <div class="form-row" id="propImportsRow" style="display:none;">
+              <label>Imports</label>
+              <div class="actions" style="justify-content:flex-start;">
+                <button class="ghost" id="addImportBtn" type="button">+ Import</button>
+                <button class="ghost" id="deleteImportBtn" type="button">- Import selezionato</button>
               </div>
             </div>
             <div class="actions">
@@ -2090,7 +2097,7 @@
       const propModelVersionRow = document.getElementById("propModelVersionRow");
       const propModelVersionInput = document.getElementById("propModelVersionInput");
       const propTypeSelect = document.getElementById("propTypeSelect");
-      const propAttrCardInput = document.getElementById("propAttrCardInput");
+      const propAttrMandatoryInput = document.getElementById("propAttrMandatoryInput");
       const propTypeRow = document.getElementById("propTypeRow");
       const propClassAbstractRow = document.getElementById("propClassAbstractRow");
       const propClassExtendsRow = document.getElementById("propClassExtendsRow");
@@ -2106,8 +2113,11 @@
       const propAssocToSelect = document.getElementById("propAssocToSelect");
       const propAssocCardInput = document.getElementById("propAssocCardInput");
       const propDomainValuesRow = document.getElementById("propDomainValuesRow");
+      const propImportsRow = document.getElementById("propImportsRow");
       const addDomainValueBtn = document.getElementById("addDomainValueBtn");
       const deleteDomainValueBtn = document.getElementById("deleteDomainValueBtn");
+      const addImportBtn = document.getElementById("addImportBtn");
+      const deleteImportBtn = document.getElementById("deleteImportBtn");
       const treeSearch = document.getElementById("treeSearch");
       const treeTypeFilter = document.getElementById("treeTypeFilter");
       const diagramStage = document.getElementById("diagramStage");
@@ -2230,7 +2240,7 @@
           "issue.PROPERTIES_DUPLICATE_TOPIC": "Topic '{name}' already exists",
           "issue.PROPERTIES_DUPLICATE_SUBTOPIC": "Subtopic '{name}' already present in topic {topicName}",
           "issue.PROPERTIES_DUPLICATE_ATTRIBUTE": "Attribute '{name}' already present in class {className}",
-          "issue.ATTRIBUTE_CARDINALITY_INVALID": "Invalid attribute cardinality. Use min..max format (e.g. 0..1, 1..1, 0..*, 1..*)",
+          "issue.ATTRIBUTE_CARDINALITY_INVALID": "Invalid attribute cardinality. Only 0..1 and 1..1 are supported for attributes.",
           "issue.PROPERTIES_DUPLICATE_DOMAIN": "Domain '{name}' already exists",
           "issue.PROPERTIES_DUPLICATE_ASSOC": "Relation '{name}' already exists",
           "issue.ASSOC_CLASS_REQUIRED": "From/To class are required",
@@ -3395,6 +3405,7 @@
 
       function selectionPathOf(type, className, attrName) {
         if (type === "model") return "model";
+        if (type === "import") return `import:${className}`;
         if (type === "topic") return `topic:${className}`;
         if (type === "subtopic") return `subtopic:${className}:${attrName}`;
         if (type === "class") return `class:${className}`;
@@ -3412,6 +3423,13 @@
         if (path === "model") return { kind: "model" };
 
         const parts = path.split(":");
+        if (parts[0] === "import") {
+          const importName = parts.slice(1).join(":") || "";
+          const importIndex = model.imports.findIndex((item) => item === importName);
+          if (importIndex < 0) return { kind: "none" };
+          return { kind: "import", importIndex, importName };
+        }
+
         if (parts[0] === "topic") {
           const topicName = parts[1] || "";
           const topicIndex = model.topics.findIndex((t) => t.name === topicName);
@@ -3493,6 +3511,7 @@
 
       function normalizeModel(model) {
         const normalized = deepClone(model || {});
+        if (!Array.isArray(normalized.imports)) normalized.imports = [];
         if (!Array.isArray(normalized.topics)) normalized.topics = [];
         if (!Array.isArray(normalized.classes)) normalized.classes = [];
         if (!Array.isArray(normalized.domains)) normalized.domains = [];
@@ -3507,6 +3526,9 @@
         if (!Object.prototype.hasOwnProperty.call(normalized, "model_model_version")) normalized.model_model_version = "";
         if (!normalized.model_version) normalized.model_version = "INTERLIS 2.4";
         if (!normalized.model_md5) normalized.model_md5 = "";
+        normalized.imports = normalized.imports
+          .map((value) => String(value || "").trim())
+          .filter((value) => value.length > 0);
         normalized.associations = normalized.associations.map((assoc) => ({
           ...assoc,
           from_cardinality: isInterlisCardinality(String(assoc?.from_cardinality || "").trim())
@@ -5360,6 +5382,14 @@
           selectionChanged = true;
         }
 
+        if (action.type === "ADD_IMPORT") {
+          if (!Array.isArray(next.model.imports)) next.model.imports = [];
+          next.model.imports.push(action.importName);
+          next.selection = { source: action.source || "properties", elementId: selectionPathOf("import", action.importName) };
+          modelChanged = true;
+          selectionChanged = true;
+        }
+
         if (action.type === "ADD_SUBTOPIC") {
           const topicIndex = next.model.topics.findIndex((t) => t.name === action.topicName);
           if (topicIndex >= 0) {
@@ -5497,6 +5527,15 @@
             modelChanged = true;
             selectionChanged = true;
           }
+          if (sel.kind === "import") {
+            next.model.imports[sel.importIndex] = action.name;
+            next.selection = {
+              source: action.source || "properties",
+              elementId: selectionPathOf("import", action.name)
+            };
+            modelChanged = true;
+            selectionChanged = true;
+          }
           if (sel.kind === "subtopic") {
             next.model.topics[sel.topicIndex].subtopics[sel.subtopicIndex].name = action.name;
             next.selection = {
@@ -5510,9 +5549,11 @@
             const target = next.model.classes[sel.classIndex].attributes[sel.attrIndex];
             target.name = action.name;
             target.type = action.attrType;
-            const attrCardinality = isInterlisCardinality(String(action.attrCardinality || "").trim())
-              ? String(action.attrCardinality).trim()
-              : normalizeAttributeCardinality(target);
+            const attrCardinality = typeof action.attrMandatory === "boolean"
+              ? (action.attrMandatory ? "1..1" : "0..1")
+              : (isInterlisCardinality(String(action.attrCardinality || "").trim())
+                ? String(action.attrCardinality).trim()
+                : normalizeAttributeCardinality(target));
             target.cardinality = attrCardinality;
             target.mandatory = cardinalityIsMandatory(attrCardinality);
             next.selection = {
@@ -5593,6 +5634,12 @@
           const sel = resolveSelection(state.selection.elementId, next.model);
           if (sel.kind === "topic") {
             next.model.topics.splice(sel.topicIndex, 1);
+            next.selection = { source: action.source || "tree", elementId: "model" };
+            modelChanged = true;
+            selectionChanged = true;
+          }
+          if (sel.kind === "import") {
+            next.model.imports.splice(sel.importIndex, 1);
             next.selection = { source: action.source || "tree", elementId: "model" };
             modelChanged = true;
             selectionChanged = true;
@@ -5683,6 +5730,9 @@
           }
           if (from.kind === "topic" && to.kind === "topic") {
             moved = moveArrayItem(next.model.topics, from.topicIndex, to.topicIndex);
+          }
+          if (from.kind === "import" && to.kind === "import") {
+            moved = moveArrayItem(next.model.imports, from.importIndex, to.importIndex);
           }
           if (from.kind === "attr" && to.kind === "attr" && from.className === to.className) {
             moved = moveArrayItem(next.model.classes[from.classIndex].attributes, from.attrIndex, to.attrIndex);
@@ -5871,6 +5921,7 @@
               (source.kind === "domain" && target.kind === "domain") ||
               (source.kind === "association" && target.kind === "association") ||
               (source.kind === "enum" && target.kind === "enum") ||
+              (source.kind === "import" && target.kind === "import") ||
               (source.kind === "topic" && target.kind === "topic") ||
               (source.kind === "attr" && target.kind === "attr" && source.className === target.className) ||
               (source.kind === "domainval" && target.kind === "domainval" && source.domainName === target.domainName) ||
@@ -5899,6 +5950,7 @@
               (source.kind === "domain" && target.kind === "domain") ||
               (source.kind === "association" && target.kind === "association") ||
               (source.kind === "enum" && target.kind === "enum") ||
+              (source.kind === "import" && target.kind === "import") ||
               (source.kind === "topic" && target.kind === "topic") ||
               (source.kind === "attr" && target.kind === "attr" && source.className === target.className) ||
               (source.kind === "domainval" && target.kind === "domainval" && source.domainName === target.domainName) ||
@@ -5934,6 +5986,33 @@
         appendGroup("Model");
         appendItem({ path: "model", label: `MODEL ${coreState.model.model_name}`, kind: "model" });
 
+        if (Array.isArray(coreState.model.imports) && coreState.model.imports.length > 0) {
+          appendGroup("Imports");
+          for (const importName of coreState.model.imports) {
+            appendItem({
+              path: selectionPathOf("import", importName),
+              label: `IMPORT ${importName}`,
+              kind: "import",
+              extraClass: "subtopic"
+            });
+          }
+        }
+
+        appendGroup("Domains");
+        for (const domain of coreState.model.domains) {
+          const values = Array.isArray(domain.values) ? domain.values : [];
+          const suffix = values.length ? ` (${values.length} values)` : ` : ${domain.type || "TEXT"}`;
+          appendItem({ path: selectionPathOf("domain", domain.name), label: `DOMAIN ${domain.name}${suffix}`, kind: "domain" });
+          for (const value of values) {
+            appendItem({
+              path: selectionPathOf("domainval", domain.name, value),
+              label: `VAL ${value}`,
+              kind: "domain",
+              extraClass: "attr"
+            });
+          }
+        }
+
         appendGroup("Topics");
         for (const topic of coreState.model.topics) {
           appendItem({ path: selectionPathOf("topic", topic.name), label: `TOPIC ${topic.name}`, kind: "topic" });
@@ -5963,21 +6042,6 @@
           }
         }
 
-        appendGroup("Domains");
-        for (const domain of coreState.model.domains) {
-          const values = Array.isArray(domain.values) ? domain.values : [];
-          const suffix = values.length ? ` (${values.length} values)` : ` : ${domain.type || "TEXT"}`;
-          appendItem({ path: selectionPathOf("domain", domain.name), label: `DOMAIN ${domain.name}${suffix}`, kind: "domain" });
-          for (const value of values) {
-            appendItem({
-              path: selectionPathOf("domainval", domain.name, value),
-              label: `VAL ${value}`,
-              kind: "domain",
-              extraClass: "attr"
-            });
-          }
-        }
-
         appendGroup("Associations");
         for (const assoc of coreState.model.associations) {
           appendItem({
@@ -5998,6 +6062,7 @@
         propAssocToRow.style.display = "none";
         propAssocCardRow.style.display = "none";
         propDomainValuesRow.style.display = "none";
+        propImportsRow.style.display = "none";
         propModelAtRow.style.display = "none";
         propModelVersionRow.style.display = "none";
 
@@ -6007,9 +6072,21 @@
           propModelVersionInput.value = coreState.model.model_model_version || "";
           propModelAtRow.style.display = "grid";
           propModelVersionRow.style.display = "grid";
+          propImportsRow.style.display = "grid";
           propTypeRow.style.display = "none";
           propAttrCardRow.style.display = "none";
           deleteDomainValueBtn.disabled = true;
+          deleteImportBtn.disabled = true;
+          return;
+        }
+
+        if (sel.kind === "import") {
+          propNameInput.value = sel.importName;
+          propImportsRow.style.display = "grid";
+          propTypeRow.style.display = "none";
+          propAttrCardRow.style.display = "none";
+          deleteDomainValueBtn.disabled = true;
+          deleteImportBtn.disabled = false;
           return;
         }
 
@@ -6018,6 +6095,7 @@
           propTypeRow.style.display = "none";
           propAttrCardRow.style.display = "none";
           deleteDomainValueBtn.disabled = true;
+          deleteImportBtn.disabled = true;
           return;
         }
 
@@ -6026,6 +6104,7 @@
           propTypeRow.style.display = "none";
           propAttrCardRow.style.display = "none";
           deleteDomainValueBtn.disabled = true;
+          deleteImportBtn.disabled = true;
           return;
         }
 
@@ -6039,6 +6118,7 @@
           propClassAbstractInput.checked = !!cls.abstract;
           populateClassExtendsSelect(cls.name, cls.extends || "");
           deleteDomainValueBtn.disabled = true;
+          deleteImportBtn.disabled = true;
           return;
         }
 
@@ -6046,10 +6126,11 @@
           const attr = coreState.model.classes[sel.classIndex].attributes[sel.attrIndex];
           propNameInput.value = attr.name;
           setPropertyTypeSelectValue(attr.type);
-          propAttrCardInput.value = normalizeAttributeCardinality(attr);
+          propAttrMandatoryInput.checked = cardinalityIsMandatory(normalizeAttributeCardinality(attr));
           propTypeRow.style.display = "grid";
           propAttrCardRow.style.display = "grid";
           deleteDomainValueBtn.disabled = true;
+          deleteImportBtn.disabled = true;
           return;
         }
 
@@ -6061,6 +6142,7 @@
           propTypeRow.style.display = (Array.isArray(domain.values) && domain.values.length > 0) ? "none" : "grid";
           propDomainValuesRow.style.display = "grid";
           deleteDomainValueBtn.disabled = true;
+          deleteImportBtn.disabled = true;
           return;
         }
 
@@ -6071,6 +6153,7 @@
           propTypeRow.style.display = "none";
           propDomainValuesRow.style.display = "grid";
           deleteDomainValueBtn.disabled = false;
+          deleteImportBtn.disabled = true;
           return;
         }
 
@@ -6087,6 +6170,7 @@
           propAssocFromCardInput.value = assoc.from_cardinality || "0..*";
           propAssocCardInput.value = assoc.cardinality || "1..*";
           deleteDomainValueBtn.disabled = true;
+          deleteImportBtn.disabled = true;
           return;
         }
 
@@ -6095,6 +6179,7 @@
           propTypeRow.style.display = "none";
           propAttrCardRow.style.display = "none";
           deleteDomainValueBtn.disabled = true;
+          deleteImportBtn.disabled = true;
           return;
         }
 
@@ -6103,6 +6188,7 @@
           propTypeRow.style.display = "none";
           propAttrCardRow.style.display = "none";
           deleteDomainValueBtn.disabled = true;
+          deleteImportBtn.disabled = true;
           return;
         }
 
@@ -6110,6 +6196,7 @@
         propTypeRow.style.display = "none";
         propAttrCardRow.style.display = "none";
         deleteDomainValueBtn.disabled = true;
+        deleteImportBtn.disabled = true;
       }
 
       function renderProseEditor() {
@@ -7284,6 +7371,32 @@
         dispatch({ type: "DELETE_SELECTED", source: "properties-domain-value-delete" });
       });
 
+      addImportBtn.addEventListener("click", () => {
+        const rawValue = window.prompt("Nuovo import", "Units");
+        if (!rawValue) return;
+        const importName = rawValue.trim();
+        if (!importName) return;
+        if (!isInterlisIdentifier(importName)) {
+          renderIssues([{ level: "warning", code: "IMPORT_NAME_INVALID", message: "Import non valido: usare identificatore INTERLIS" }]);
+          return;
+        }
+        if ((coreState.model.imports || []).includes(importName)) {
+          renderIssues([{ level: "warning", code: "IMPORT_DUPLICATE", message: `Import '${importName}' gia esistente` }]);
+          return;
+        }
+        dispatch({ type: "ADD_IMPORT", importName, source: "properties-import-add" });
+      });
+
+      deleteImportBtn.addEventListener("click", () => {
+        const sel = resolveSelection(coreState.selection.elementId, coreState.model);
+        if (sel.kind !== "import") {
+          renderIssues([{ level: "warning", code: "IMPORT_SELECT_REQUIRED", message: "Seleziona un import da eliminare" }]);
+          return;
+        }
+        if (!window.confirm(`Eliminare l'import '${sel.importName}'?`)) return;
+        dispatch({ type: "DELETE_SELECTED", source: "properties-import-delete" });
+      });
+
       document.getElementById("addAssocBtn").addEventListener("click", () => {
         const associationName = window.prompt(t("prompt.newAssociation"), "NewAssociation");
         if (!associationName) return;
@@ -7325,7 +7438,7 @@
           return;
         }
 
-        const needsInterlisIdentifier = ["model", "topic", "subtopic", "class", "attr", "domain", "domainval", "association"].includes(sel.kind);
+        const needsInterlisIdentifier = ["model", "import", "topic", "subtopic", "class", "attr", "domain", "domainval", "association"].includes(sel.kind);
         if (needsInterlisIdentifier && !isInterlisIdentifier(name)) {
           renderIssues([{ level: "warning", code: "NAME_INVALID", message: t("issue.NAME_INVALID") }]);
           return;
@@ -7337,6 +7450,16 @@
           modelCopy.model_at = String(propModelAtInput.value || "").trim();
           modelCopy.model_model_version = String(propModelVersionInput.value || "").trim();
           dispatch({ type: "SET_MODEL", model: modelCopy, resetSelection: false, source: "properties-model" }, { markDirty: true });
+          return;
+        }
+
+        if (sel.kind === "import") {
+          const imports = coreState.model.imports || [];
+          if (imports.some((item, index) => index !== sel.importIndex && item === name)) {
+            renderIssues([{ level: "warning", code: "IMPORT_DUPLICATE", message: `Import '${name}' gia esistente` }]);
+            return;
+          }
+          dispatch({ type: "UPDATE_SELECTED", name, source: "properties" });
           return;
         }
 
@@ -7390,17 +7513,14 @@
             return;
           }
 
-          const attrCardinality = propAttrCardInput.value.trim();
-          if (!isInterlisCardinality(attrCardinality)) {
-            renderIssues([{ level: "warning", code: "ATTRIBUTE_CARDINALITY_INVALID", message: t("issue.ATTRIBUTE_CARDINALITY_INVALID") }]);
-            return;
-          }
+          const attrCardinality = propAttrMandatoryInput.checked ? "1..1" : "0..1";
 
           dispatch({
             type: "UPDATE_SELECTED",
             name,
             attrType: propTypeSelect.value,
             attrCardinality,
+            attrMandatory: propAttrMandatoryInput.checked,
             source: "properties"
           });
           return;

@@ -79,6 +79,10 @@ Environment variables:
 - `IOX_ILI_ARGS` (optional, whitespace-separated)
 - `IOX_ILI_STRICT` (`true|false`, default: `false`)
 - `IMC_TOOLCHAIN_TIMEOUT_MS` (default: `30000`)
+- `IMC_MODEL_REPOSITORIES` (default: `https://models.interlis.ch/;https://models.geo.admin.ch/`)
+- `IMC_HTTP_PROXY` (optional, e.g. `http://proxy-bvcol.admin.ch:8080`)
+- `IMC_HTTPS_PROXY` (optional, falls back to `IMC_HTTP_PROXY` if not set)
+- `IMC_NO_PROXY` (optional, comma/semicolon separated list)
 
 Example (JAR-based setup):
 
@@ -87,6 +91,8 @@ ILI2C_BIN=java
 ILI2C_ARGS="-jar /tools/ili2c.jar"
 ILIVALIDATOR_BIN=java
 ILIVALIDATOR_ARGS="-jar /tools/ilivalidator.jar"
+IMC_HTTP_PROXY="http://proxy-bvcol.admin.ch:8080"
+IMC_HTTPS_PROXY="http://proxy-bvcol.admin.ch:8080"
 cargo run
 ```
 
@@ -95,6 +101,8 @@ Notes:
 - If a tool is unavailable and `*_STRICT=false`, the API returns warnings and continues.
 - If `*_STRICT=true`, unavailable tool execution is treated as an error.
 - `IOX_ILI_*` config is used by the Rust-native adapter for `/api/instance/export/xtf`.
+- `IMC_MODEL_REPOSITORIES` is appended to local temp model dir for `ili2c` and `ilivalidator` resolution.
+- Proxy settings are propagated to tool processes via `HTTP_PROXY`/`HTTPS_PROXY` and, for Java tools, via `JAVA_TOOL_OPTIONS` (`-Dhttp.proxyHost`, `-Dhttps.proxyHost`).
 
 ## Validation playbook and smoke test
 

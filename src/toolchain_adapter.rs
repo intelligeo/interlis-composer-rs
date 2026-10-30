@@ -18,7 +18,17 @@ pub struct ToolchainConfig {
     pub ili2c: CommandSpec,
     pub ilivalidator: CommandSpec,
     pub iox_ili: CommandSpec,
+    pub model_repositories: Vec<String>,
+    pub proxy: ProxyConfig,
     pub timeout_ms: u64,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct ProxyConfig {
+    pub http_proxy: Option<String>,
+    pub https_proxy: Option<String>,
+    pub no_proxy: Option<String>,
+    pub java_opts: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -80,6 +90,8 @@ pub fn load_config() -> ToolchainConfig {
     let ilivalidator_args = parse_env_args("ILIVALIDATOR_ARGS");
     let iox_ili_bin = env::var("IOX_ILI_BIN").unwrap_or_else(|_| "iox-ili".to_string());
     let iox_ili_args = parse_env_args("IOX_ILI_ARGS");
+    let model_repositories = parse_model_repositories();
+    let proxy = parse_proxy_config();
 
     ToolchainConfig {
         ili2c: CommandSpec {
@@ -100,6 +112,8 @@ pub fn load_config() -> ToolchainConfig {
             args: iox_ili_args,
             strict: parse_bool_env("IOX_ILI_STRICT", false),
         },
+        model_repositories,
+        proxy,
         timeout_ms: parse_u64_env("IMC_TOOLCHAIN_TIMEOUT_MS", 30_000),
     }
 }
@@ -155,9 +169,10 @@ fn execute_validate_model(
         .map_err(|e| ToolExecError::Io(format!("unable to write model.ili: {}", e)))?;
 
     let mut args = config.ili2c.args.clone();
+    append_modeldir_args_if_missing(&mut args, &workdir, &config.model_repositories);
     args.push(model_path.to_string_lossy().to_string());
 
-    match run_command_with_timeout(&config.ili2c, &args, Some(&workdir), timeout_ms) {
+    match run_command_with_timeout(config, &config.ili2c, &args, Some(&workdir), timeout_ms) {
         Ok(run) => {
             let mut issues = parse_output("ILI2C", &run.output, if run.success { "warning" } else { "error" });
             if issues.is_empty() {
@@ -261,13 +276,12 @@ fn execute_validate_transfer(
         .map_err(|e| ToolExecError::Io(format!("unable to prepare transfer validation input: {}", e)))?;
 
     let mut args = config.ilivalidator.args.clone();
-    args.push("--modeldir".to_string());
-    args.push(workdir.to_string_lossy().to_string());
+    append_modeldir_args_if_missing(&mut args, &workdir, &config.model_repositories);
     args.push("--models".to_string());
     args.push(req.model_name.clone());
     args.push(transfer_path.to_string_lossy().to_string());
 
-    match run_command_with_timeout(&config.ilivalidator, &args, Some(&workdir), timeout_ms) {
+    match run_command_with_timeout(config, &config.ilivalidator, &args, Some(&workdir), timeout_ms) {
         Ok(run) => {
             let mut issues = parse_output(
                 "ILIVALIDATOR",
@@ -373,7 +387,7 @@ fn execute_export_transfer(
     args.push("--model-name".to_string());
     args.push(req.model_name.clone());
 
-    match run_command_with_timeout(&config.iox_ili, &args, Some(&workdir), timeout_ms) {
+    match run_command_with_timeout(config, &config.iox_ili, &args, Some(&workdir), timeout_ms) {
         Ok(run) => {
             let mut issues = parse_output("IOX_ILI", &run.output, if run.success { "warning" } else { "error" });
             if !run.success {
@@ -436,6 +450,7 @@ fn execute_export_transfer(
 }
 
 fn run_command_with_timeout(
+    config: &ToolchainConfig,
     spec: &CommandSpec,
     args: &[String],
     cwd: Option<&Path>,
@@ -450,6 +465,8 @@ fn run_command_with_timeout(
     if let Some(base) = cwd {
         cmd.current_dir(base);
     }
+
+    apply_proxy_environment(&mut cmd, config, spec);
 
     let mut child = cmd
         .spawn()
@@ -491,6 +508,173 @@ fn run_command_with_timeout(
             Err(err) => return Err(ToolExecError::Io(format!("failed waiting process: {}", err))),
         }
     }
+}
+
+fn parse_proxy_config() -> ProxyConfig {
+    let explicit_http = first_non_empty_env(&["IMC_HTTP_PROXY", "HTTP_PROXY", "http_proxy"]);
+    let explicit_https = first_non_empty_env(&["IMC_HTTPS_PROXY", "HTTPS_PROXY", "https_proxy"]);
+    let fallback = first_non_empty_env(&["IMC_PROXY", "ALL_PROXY", "all_proxy"]);
+
+    let http_proxy = explicit_http.or_else(|| fallback.clone());
+    let https_proxy = explicit_https.or_else(|| http_proxy.clone()).or(fallback);
+    let no_proxy = first_non_empty_env(&["IMC_NO_PROXY", "NO_PROXY", "no_proxy"]);
+
+    let java_opts = build_java_proxy_opts(http_proxy.as_deref(), https_proxy.as_deref(), no_proxy.as_deref());
+
+    ProxyConfig {
+        http_proxy,
+        https_proxy,
+        no_proxy,
+        java_opts,
+    }
+}
+
+fn first_non_empty_env(keys: &[&str]) -> Option<String> {
+    keys.iter()
+        .find_map(|key| env::var(key).ok().map(|v| v.trim().to_string()))
+        .filter(|value| !value.is_empty())
+}
+
+fn apply_proxy_environment(cmd: &mut Command, config: &ToolchainConfig, spec: &CommandSpec) {
+    if let Some(value) = &config.proxy.http_proxy {
+        cmd.env("HTTP_PROXY", value);
+        cmd.env("http_proxy", value);
+    }
+    if let Some(value) = &config.proxy.https_proxy {
+        cmd.env("HTTPS_PROXY", value);
+        cmd.env("https_proxy", value);
+    }
+    if let Some(value) = &config.proxy.no_proxy {
+        cmd.env("NO_PROXY", value);
+        cmd.env("no_proxy", value);
+    }
+
+    if is_java_command(spec) {
+        let merged = merge_java_tool_options(
+            env::var("JAVA_TOOL_OPTIONS").ok().as_deref(),
+            config.proxy.java_opts.as_deref(),
+        );
+        if let Some(value) = merged {
+            cmd.env("JAVA_TOOL_OPTIONS", value);
+        }
+    }
+}
+
+fn is_java_command(spec: &CommandSpec) -> bool {
+    let bin_name = spec
+        .bin
+        .rsplit(['/', '\\'])
+        .next()
+        .unwrap_or(spec.bin.as_str())
+        .to_ascii_lowercase();
+    bin_name == "java" || bin_name == "java.exe"
+}
+
+fn merge_java_tool_options(current: Option<&str>, extra: Option<&str>) -> Option<String> {
+    match (current.map(str::trim).filter(|v| !v.is_empty()), extra.map(str::trim).filter(|v| !v.is_empty())) {
+        (Some(base), Some(add)) => Some(format!("{} {}", base, add)),
+        (Some(base), None) => Some(base.to_string()),
+        (None, Some(add)) => Some(add.to_string()),
+        (None, None) => None,
+    }
+}
+
+fn build_java_proxy_opts(http_proxy: Option<&str>, https_proxy: Option<&str>, no_proxy: Option<&str>) -> Option<String> {
+    let mut opts: Vec<String> = Vec::new();
+
+    if let Some(url) = http_proxy.and_then(parse_proxy_url) {
+        opts.push(format!("-Dhttp.proxyHost={}", url.host));
+        if let Some(port) = url.port {
+            opts.push(format!("-Dhttp.proxyPort={}", port));
+        }
+    }
+
+    if let Some(url) = https_proxy.and_then(parse_proxy_url) {
+        opts.push(format!("-Dhttps.proxyHost={}", url.host));
+        if let Some(port) = url.port {
+            opts.push(format!("-Dhttps.proxyPort={}", port));
+        }
+    }
+
+    if let Some(raw_no_proxy) = no_proxy {
+        let hosts = normalize_no_proxy_for_java(raw_no_proxy);
+        if !hosts.is_empty() {
+            opts.push(format!("-Dhttp.nonProxyHosts={}", hosts));
+            opts.push(format!("-Dhttps.nonProxyHosts={}", hosts));
+        }
+    }
+
+    if opts.is_empty() {
+        None
+    } else {
+        Some(opts.join(" "))
+    }
+}
+
+#[derive(Debug)]
+struct ParsedProxyUrl {
+    host: String,
+    port: Option<u16>,
+}
+
+fn parse_proxy_url(raw: &str) -> Option<ParsedProxyUrl> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    let no_scheme = trimmed
+        .strip_prefix("http://")
+        .or_else(|| trimmed.strip_prefix("https://"))
+        .unwrap_or(trimmed);
+    let no_auth = no_scheme.rsplit('@').next().unwrap_or(no_scheme);
+    let host_port = no_auth.split('/').next().unwrap_or(no_auth).trim();
+    if host_port.is_empty() {
+        return None;
+    }
+
+    if let Some((host, port)) = host_port.rsplit_once(':') {
+        if let Ok(port_num) = port.parse::<u16>() {
+            let normalized_host = host.trim().trim_matches('[').trim_matches(']').to_string();
+            if !normalized_host.is_empty() {
+                return Some(ParsedProxyUrl {
+                    host: normalized_host,
+                    port: Some(port_num),
+                });
+            }
+        }
+    }
+
+    Some(ParsedProxyUrl {
+        host: host_port.trim_matches('[').trim_matches(']').to_string(),
+        port: None,
+    })
+}
+
+fn normalize_no_proxy_for_java(raw: &str) -> String {
+    raw.split(|ch| ch == ',' || ch == ';' || ch == ' ')
+        .filter_map(|token| {
+            let value = token.trim();
+            if value.is_empty() {
+                return None;
+            }
+            let no_port = value.split(':').next().unwrap_or(value).trim();
+            if no_port.is_empty() {
+                return None;
+            }
+            let java_pattern = if no_port == "*" {
+                "*".to_string()
+            } else if let Some(host) = no_port.strip_prefix("*.") {
+                format!("*.{}", host)
+            } else if no_port.starts_with('.') {
+                format!("*{}", no_port)
+            } else {
+                no_port.to_string()
+            };
+            Some(java_pattern)
+        })
+        .collect::<Vec<String>>()
+        .join("|")
 }
 
 fn parse_output(tool_prefix: &str, output: &str, default_level: &'static str) -> Vec<ToolIssue> {
@@ -622,6 +806,47 @@ fn parse_env_args(key: &str) -> Vec<String> {
                 .collect::<Vec<String>>()
         })
         .unwrap_or_default()
+}
+
+fn parse_model_repositories() -> Vec<String> {
+    let raw = env::var("IMC_MODEL_REPOSITORIES")
+        .unwrap_or_else(|_| "https://models.interlis.ch/;https://models.geo.admin.ch/".to_string());
+
+    let mut repos = Vec::new();
+    for token in raw.split(|ch| ch == ';' || ch == ',' || ch == '\n' || ch == '\r') {
+        let value = token.trim();
+        if value.is_empty() {
+            continue;
+        }
+        if !repos.iter().any(|existing| existing == value) {
+            repos.push(value.to_string());
+        }
+    }
+    repos
+}
+
+fn append_modeldir_args_if_missing(args: &mut Vec<String>, workdir: &Path, repositories: &[String]) {
+    if has_modeldir_arg(args) {
+        return;
+    }
+
+    let mut entries: Vec<String> = vec![workdir.to_string_lossy().to_string()];
+    for repo in repositories {
+        let value = repo.trim();
+        if value.is_empty() {
+            continue;
+        }
+        if !entries.iter().any(|e| e == value) {
+            entries.push(value.to_string());
+        }
+    }
+
+    args.push("--modeldir".to_string());
+    args.push(entries.join(";"));
+}
+
+fn has_modeldir_arg(args: &[String]) -> bool {
+    args.iter().any(|arg| arg == "--modeldir" || arg.starts_with("--modeldir="))
 }
 
 fn sanitize_file_stem(stem: &str) -> String {

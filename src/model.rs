@@ -14,6 +14,8 @@ pub struct InterlisModel {
     #[serde(default)]
     pub model_md5: String,
     #[serde(default)]
+    pub imports: Vec<String>,
+    #[serde(default)]
     pub domains: Vec<Domain>,
     #[serde(default)]
     pub associations: Vec<Association>,
@@ -314,6 +316,7 @@ impl InterlisProject {
                 model_model_version: String::new(),
                 model_version: String::new(),
                 model_md5: String::new(),
+                imports: Vec::new(),
                 domains: Vec::new(),
                 associations: Vec::new(),
                 topics: Vec::new(),
@@ -448,6 +451,45 @@ fn parse_quoted_attribute(line: &str, keyword: &str) -> Option<String> {
     Some(value.to_string())
 }
 
+fn parse_imports_line(line: &str) -> Vec<String> {
+    let body = line
+        .strip_prefix("IMPORTS ")
+        .unwrap_or("")
+        .trim()
+        .trim_end_matches(';')
+        .trim();
+
+    if body.is_empty() {
+        return Vec::new();
+    }
+
+    body.split(',')
+        .map(|token| token.trim())
+        .filter(|token| !token.is_empty())
+        .map(|token| token.to_string())
+        .collect()
+}
+
+fn parse_topic_name(line: &str) -> Option<String> {
+    if !line.starts_with("TOPIC ") || !line.ends_with('=') {
+        return None;
+    }
+
+    let decl = line.trim_end_matches('=').trim();
+    let mut tokens = decl.split_whitespace();
+    let keyword = tokens.next()?;
+    if !keyword.eq_ignore_ascii_case("TOPIC") {
+        return None;
+    }
+
+    let name = tokens.next()?.trim();
+    if name.is_empty() {
+        return None;
+    }
+
+    Some(name.to_string())
+}
+
 fn parse_association_end_line(line: &str, class_names: &HashSet<String>) -> Option<(String, String)> {
     let body = line.trim().trim_end_matches(';').trim();
     let open_idx = body.find('{')?;
@@ -490,6 +532,8 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
     let mut model_at: Option<String> = None;
     let mut model_model_version: Option<String> = None;
     let mut model_version: Option<String> = None;
+    let mut imports: Vec<String> = Vec::new();
+    let mut topics: Vec<Topic> = Vec::new();
     let mut domains: Vec<Domain> = Vec::new();
     let mut associations: Vec<Association> = Vec::new();
     let mut classes: Vec<Class> = Vec::new();
@@ -621,6 +665,25 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
         if line.starts_with("VERSION ") {
             if let Some(parsed_model_version) = parse_quoted_attribute(line, "VERSION") {
                 model_model_version = Some(parsed_model_version);
+            }
+            continue;
+        }
+
+        if line.starts_with("IMPORTS ") {
+            for import_name in parse_imports_line(line) {
+                if !imports.iter().any(|existing| existing == &import_name) {
+                    imports.push(import_name);
+                }
+            }
+            continue;
+        }
+
+        if let Some(topic_name) = parse_topic_name(line) {
+            if !topics.iter().any(|topic| topic.name == topic_name) {
+                topics.push(Topic {
+                    name: topic_name,
+                    subtopics: Vec::new(),
+                });
             }
             continue;
         }
@@ -840,9 +903,10 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
         model_model_version: model_model_version.unwrap_or_default(),
         model_version: model_version.unwrap_or_else(|| "INTERLIS 2.4".to_string()),
         model_md5: md5,
+        imports,
         domains,
         associations,
-        topics: Vec::new(),
+        topics,
         classes,
         prose_sections: Vec::new(),
         catalog_instances: Vec::new(),
@@ -873,9 +937,23 @@ impl InterlisModel {
             "MODEL {} ({}) AT \"{}\"{} =\n",
             self.model_name, self.language, model_at, model_clause_version
         ));
-        out.push_str("  TOPIC Main =\n");
+        if !self.imports.is_empty() {
+            out.push_str("\n");
+            out.push_str("IMPORTS ");
+            out.push_str(&self.imports.join(", "));
+            out.push_str(";\n\n");
+        }
 
-        for topic in &self.topics {
+        let topic_name = self
+            .topics
+            .first()
+            .map(|topic| topic.name.trim())
+            .filter(|name| !name.is_empty())
+            .unwrap_or("Main");
+
+        out.push_str(&format!("  TOPIC {} =\n", topic_name));
+
+        for topic in self.topics.iter().skip(1) {
             out.push_str(&format!("    !! TOPIC {}\n", topic.name));
             for subtopic in &topic.subtopics {
                 out.push_str(&format!("    !! SUBTOPIC {}.{}\n", topic.name, subtopic.name));
@@ -958,7 +1036,7 @@ impl InterlisModel {
             out.push_str(&format!("    END {};\n\n", assoc.name));
         }
 
-        out.push_str("  END Main;\n");
+        out.push_str(&format!("  END {};\n", topic_name));
         out.push_str("END ");
         out.push_str(&self.model_name);
         out.push_str(".\n");
