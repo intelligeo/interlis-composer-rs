@@ -31,7 +31,7 @@ use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 #[derive(Clone)]
 struct AppState {
     defaults: Arc<Defaults>,
-    tooling: Arc<ToolingConfig>,
+    tooling: Arc<ToolchainConfig>,
     metrics: Arc<Mutex<OpsMetrics>>,
 }
 
