@@ -20,6 +20,8 @@ Rust + Axum backend with a static frontend for INTERLIS model authoring, validat
 
 ## Local run
 
+Rust toolchain: `>= 1.88` (repository pins `1.90.0` in `rust-toolchain.toml`).
+
 ```bash
 cargo run
 ```
