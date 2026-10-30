@@ -1133,6 +1133,12 @@ fn apply_defaults(model: &mut InterlisModel, defaults: &Defaults) {
     }
 }
 
+fn is_supported_interlis_version(value: &str) -> bool {
+    let normalized = value.trim().trim_end_matches(';').trim();
+    normalized.eq_ignore_ascii_case("INTERLIS 2.3")
+        || normalized.eq_ignore_ascii_case("INTERLIS 2.4")
+}
+
 fn ensure_model_metadata(model: &mut InterlisModel) {
     if model.model_md5.trim().is_empty() {
         model.model_md5 = format!("{:x}", md5::compute(model.to_interlis().as_bytes()));
@@ -1342,6 +1348,14 @@ fn resolve_user_log_dir() -> Result<PathBuf, String> {
 
 fn validate(model: &InterlisModel) -> Vec<ValidationIssue> {
     let mut issues = Vec::new();
+
+    if !is_supported_interlis_version(&model.model_version) {
+        issues.push(error_issue_at(
+            "MODEL_VERSION_UNSUPPORTED",
+            "Unsupported model version: supported versions are INTERLIS 2.3 and INTERLIS 2.4",
+            Some("model".to_string()),
+        ));
+    }
 
     if !is_identifier(&model.model_name) {
         issues.push(error_issue_at(

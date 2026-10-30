@@ -134,6 +134,17 @@ fn default_language() -> String {
     "de".to_string()
 }
 
+fn canonical_interlis_version(raw: &str) -> Option<&'static str> {
+    let value = raw.trim().trim_end_matches(';').trim();
+    if value.eq_ignore_ascii_case("INTERLIS 2.3") {
+        Some("INTERLIS 2.3")
+    } else if value.eq_ignore_ascii_case("INTERLIS 2.4") {
+        Some("INTERLIS 2.4")
+    } else {
+        None
+    }
+}
+
 fn default_project_version() -> String {
     "0.1".to_string()
 }
@@ -492,17 +503,18 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
             first_code_line_seen = true;
             if line.starts_with("INTERLIS ") {
                 let version = line.trim_end_matches(';').trim();
-                if !version.eq_ignore_ascii_case("INTERLIS 2.4") {
+                if let Some(canonical) = canonical_interlis_version(version) {
+                    model_version = Some(canonical.to_string());
+                } else {
                     return Err(ParseFailure::new(
-                        "Unsupported INTERLIS version: only INTERLIS 2.4 is supported",
+                        "Unsupported INTERLIS version: supported versions are INTERLIS 2.3 and INTERLIS 2.4",
                         line_no,
                         1,
                     ));
                 }
-                model_version = Some("INTERLIS 2.4".to_string());
             } else if line.eq_ignore_ascii_case("TRANSFER INTERLIS1;") {
                 return Err(ParseFailure::new(
-                    "Unsupported INTERLIS version: INTERLIS 1 is not supported (requires INTERLIS 2.4)",
+                    "Unsupported INTERLIS version: INTERLIS 1 is not supported (requires INTERLIS 2.3 or 2.4)",
                     line_no,
                     1,
                 ));
