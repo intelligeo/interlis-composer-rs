@@ -1118,6 +1118,9 @@ fn apply_defaults(model: &mut InterlisModel, defaults: &Defaults) {
     if model.model_version.trim().is_empty() {
         model.model_version = "INTERLIS 2.4".to_string();
     }
+    if model.model_at.trim().is_empty() {
+        model.model_at = "https://intelligeo.ch/imc".to_string();
+    }
 }
 
 fn is_supported_interlis_version(value: &str) -> bool {
@@ -1167,6 +1170,8 @@ fn import_xtf_with_toolchain(state: AppState, req: TransferRequest) -> Json<Tran
     let mut model = req.model.unwrap_or_else(|| InterlisModel {
         model_name: state.defaults.model_name.clone(),
         language: state.defaults.language.clone(),
+        model_at: "https://intelligeo.ch/imc".to_string(),
+        model_model_version: String::new(),
         model_version: "INTERLIS 2.4".to_string(),
         model_md5: String::new(),
         domains: Vec::new(),
@@ -1209,6 +1214,8 @@ fn export_xtf_with_toolchain(state: AppState, req: TransferRequest) -> Json<Tran
     let mut model = req.model.unwrap_or_else(|| InterlisModel {
         model_name: state.defaults.model_name.clone(),
         language: state.defaults.language.clone(),
+        model_at: "https://intelligeo.ch/imc".to_string(),
+        model_model_version: String::new(),
         model_version: "INTERLIS 2.4".to_string(),
         model_md5: String::new(),
         domains: Vec::new(),
@@ -2194,15 +2201,38 @@ fn validate_domains(domains: &[Domain], issues: &mut Vec<ValidationIssue>) {
                 Some(path.clone()),
             ));
         }
-        if domain.r#type.trim().is_empty() {
+        if domain.values.is_empty() && domain.r#type.trim().is_empty() {
             issues.push(error_issue_at(
                 "DOMAIN_TYPE_EMPTY",
                 &format!(
-                    "Domain '{}' has empty type; provide a valid INTERLIS type expression",
+                    "Domain '{}' has no value list and empty type; define values or provide a valid INTERLIS type expression",
                     domain.name
                 ),
                 Some(path.clone()),
             ));
+        }
+
+        if !domain.values.is_empty() {
+            let mut seen = HashSet::new();
+            for value in &domain.values {
+                let trimmed = value.trim();
+                if trimmed.is_empty() {
+                    issues.push(error_issue_at(
+                        "DOMAIN_VALUE_EMPTY",
+                        &format!("Domain '{}' contains an empty value", domain.name),
+                        Some(path.clone()),
+                    ));
+                    continue;
+                }
+                let key = trimmed.to_ascii_lowercase();
+                if !seen.insert(key) {
+                    issues.push(error_issue_at(
+                        "DOMAIN_VALUE_DUPLICATE",
+                        &format!("Domain '{}' contains duplicate value '{}'", domain.name, trimmed),
+                        Some(format!("domainval:{}:{}", domain.name, trimmed)),
+                    ));
+                }
+            }
         }
     }
 }

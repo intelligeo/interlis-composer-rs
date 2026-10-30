@@ -1316,6 +1316,14 @@
               <label for="propNameInput">Nome</label>
               <input id="propNameInput" type="text" />
             </div>
+            <div class="form-row" id="propModelAtRow" style="display:none;">
+              <label for="propModelAtInput">AT</label>
+              <input id="propModelAtInput" type="text" placeholder="https://example.org/model" />
+            </div>
+            <div class="form-row" id="propModelVersionRow" style="display:none;">
+              <label for="propModelVersionInput">VERSION</label>
+              <input id="propModelVersionInput" type="text" placeholder="1.0" />
+            </div>
             <div class="form-row" id="propTypeRow">
               <label for="propTypeSelect">Tipo attributo</label>
               <select id="propTypeSelect">
@@ -1355,6 +1363,13 @@
             <div class="form-row" id="propAssocCardRow">
               <label for="propAssocCardInput">To cardinality</label>
               <input id="propAssocCardInput" type="text" placeholder="1..*" />
+            </div>
+            <div class="form-row" id="propDomainValuesRow" style="display:none;">
+              <label>Domain values</label>
+              <div class="actions" style="justify-content:flex-start;">
+                <button class="ghost" id="addDomainValueBtn" type="button">+ Valore</button>
+                <button class="ghost" id="deleteDomainValueBtn" type="button">- Valore selezionato</button>
+              </div>
             </div>
             <div class="actions">
               <button class="primary" id="savePropertiesBtn">Applica</button>
@@ -1952,6 +1967,8 @@
       const sample = {
         model_name: "CadastreModel",
         language: "de",
+        model_at: "https://intelligeo.ch/imc",
+        model_model_version: "",
         model_version: "INTERLIS 2.4",
         model_md5: "",
         topics: [
@@ -2068,6 +2085,10 @@
       const structureTree = document.getElementById("structureTree");
       const selectedPathInput = document.getElementById("selectedPathInput");
       const propNameInput = document.getElementById("propNameInput");
+      const propModelAtRow = document.getElementById("propModelAtRow");
+      const propModelAtInput = document.getElementById("propModelAtInput");
+      const propModelVersionRow = document.getElementById("propModelVersionRow");
+      const propModelVersionInput = document.getElementById("propModelVersionInput");
       const propTypeSelect = document.getElementById("propTypeSelect");
       const propAttrCardInput = document.getElementById("propAttrCardInput");
       const propTypeRow = document.getElementById("propTypeRow");
@@ -2084,6 +2105,9 @@
       const propAssocFromCardInput = document.getElementById("propAssocFromCardInput");
       const propAssocToSelect = document.getElementById("propAssocToSelect");
       const propAssocCardInput = document.getElementById("propAssocCardInput");
+      const propDomainValuesRow = document.getElementById("propDomainValuesRow");
+      const addDomainValueBtn = document.getElementById("addDomainValueBtn");
+      const deleteDomainValueBtn = document.getElementById("deleteDomainValueBtn");
       const treeSearch = document.getElementById("treeSearch");
       const treeTypeFilter = document.getElementById("treeTypeFilter");
       const diagramStage = document.getElementById("diagramStage");
@@ -3376,6 +3400,7 @@
         if (type === "class") return `class:${className}`;
         if (type === "attr") return `attr:${className}:${attrName}`;
         if (type === "domain") return `domain:${className}`;
+        if (type === "domainval") return `domainval:${className}:${attrName}`;
         if (type === "association") return `association:${className}`;
         if (type === "enum") return `enum:${className}`;
         if (type === "enumval") return `enumval:${className}:${attrName}`;
@@ -3428,6 +3453,17 @@
           return { kind: "domain", domainIndex, domainName };
         }
 
+        if (parts[0] === "domainval") {
+          const domainName = parts[1] || "";
+          const domainValue = parts[2] || "";
+          const domainIndex = model.domains.findIndex((d) => d.name === domainName);
+          if (domainIndex < 0) return { kind: "none" };
+          const values = Array.isArray(model.domains[domainIndex].values) ? model.domains[domainIndex].values : [];
+          const valueIndex = values.findIndex((v) => v === domainValue);
+          if (valueIndex < 0) return { kind: "none" };
+          return { kind: "domainval", domainIndex, valueIndex, domainName, domainValue };
+        }
+
         if (parts[0] === "association") {
           const associationName = parts[1] || "";
           const associationIndex = model.associations.findIndex((a) => a.name === associationName);
@@ -3467,6 +3503,8 @@
         if (!Array.isArray(normalized.catalog_validation_presets)) normalized.catalog_validation_presets = [];
         if (!normalized.model_name) normalized.model_name = "ModelName";
         if (!normalized.language) normalized.language = "de";
+        if (!normalized.model_at) normalized.model_at = "https://intelligeo.ch/imc";
+        if (!Object.prototype.hasOwnProperty.call(normalized, "model_model_version")) normalized.model_model_version = "";
         if (!normalized.model_version) normalized.model_version = "INTERLIS 2.4";
         if (!normalized.model_md5) normalized.model_md5 = "";
         normalized.associations = normalized.associations.map((assoc) => ({
@@ -3477,6 +3515,13 @@
           cardinality: isInterlisCardinality(String(assoc?.cardinality || "").trim())
             ? String(assoc.cardinality).trim()
             : "1..*"
+        }));
+        normalized.domains = normalized.domains.map((domain) => ({
+          ...domain,
+          type: String(domain?.type || "TEXT"),
+          values: Array.isArray(domain?.values)
+            ? domain.values.map((value) => String(value || "").trim()).filter((value) => value.length > 0)
+            : []
         }));
         for (const cls of normalized.classes) {
           cls.abstract = !!cls.abstract;
@@ -3969,6 +4014,11 @@
             if (issue.message.includes(domain.name.toLowerCase())) {
               pushMark(selectionPathOf("domain", domain.name), issue.level);
             }
+            for (const value of (domain.values || [])) {
+              if (issue.message.includes(String(value).toLowerCase())) {
+                pushMark(selectionPathOf("domainval", domain.name, value), issue.level);
+              }
+            }
           }
 
           for (const assoc of model.associations) {
@@ -4028,6 +4078,11 @@
         }
 
         for (const domain of model.domains) {
+          for (const value of (domain.values || [])) {
+            if (text.includes(String(value).toLowerCase())) {
+              return selectionPathOf("domainval", domain.name, value);
+            }
+          }
           if (text.includes(domain.name.toLowerCase())) {
             return selectionPathOf("domain", domain.name);
           }
@@ -5340,7 +5395,7 @@
         }
 
         if (action.type === "ADD_DOMAIN") {
-          next.model.domains.push({ name: action.domainName, type: action.domainType || "TEXT" });
+          next.model.domains.push({ name: action.domainName, type: action.domainType || "TEXT", values: [] });
           next.selection = {
             source: action.source || "tree",
             elementId: selectionPathOf("domain", action.domainName)
@@ -5382,6 +5437,22 @@
             next.selection = {
               source: action.source || "tree",
               elementId: selectionPathOf("enumval", action.enumName, action.enumValue)
+            };
+            modelChanged = true;
+            selectionChanged = true;
+          }
+        }
+
+        if (action.type === "ADD_DOMAIN_VALUE") {
+          const domainIndex = next.model.domains.findIndex((d) => d.name === action.domainName);
+          if (domainIndex >= 0) {
+            if (!Array.isArray(next.model.domains[domainIndex].values)) {
+              next.model.domains[domainIndex].values = [];
+            }
+            next.model.domains[domainIndex].values.push(action.domainValue);
+            next.selection = {
+              source: action.source || "tree",
+              elementId: selectionPathOf("domainval", action.domainName, action.domainValue)
             };
             modelChanged = true;
             selectionChanged = true;
@@ -5460,6 +5531,16 @@
             next.selection = {
               source: action.source || "properties",
               elementId: selectionPathOf("domain", action.name)
+            };
+            modelChanged = true;
+            selectionChanged = true;
+          }
+
+          if (sel.kind === "domainval") {
+            next.model.domains[sel.domainIndex].values[sel.valueIndex] = action.name;
+            next.selection = {
+              source: action.source || "properties",
+              elementId: selectionPathOf("domainval", next.model.domains[sel.domainIndex].name, action.name)
             };
             modelChanged = true;
             selectionChanged = true;
@@ -5548,6 +5629,16 @@
             selectionChanged = true;
           }
 
+          if (sel.kind === "domainval") {
+            next.model.domains[sel.domainIndex].values.splice(sel.valueIndex, 1);
+            next.selection = {
+              source: action.source || "tree",
+              elementId: selectionPathOf("domain", next.model.domains[sel.domainIndex].name)
+            };
+            modelChanged = true;
+            selectionChanged = true;
+          }
+
           if (sel.kind === "association") {
             next.model.associations.splice(sel.associationIndex, 1);
             next.selection = { source: action.source || "tree", elementId: "model" };
@@ -5595,6 +5686,9 @@
           }
           if (from.kind === "attr" && to.kind === "attr" && from.className === to.className) {
             moved = moveArrayItem(next.model.classes[from.classIndex].attributes, from.attrIndex, to.attrIndex);
+          }
+          if (from.kind === "domainval" && to.kind === "domainval" && from.domainName === to.domainName) {
+            moved = moveArrayItem(next.model.domains[from.domainIndex].values, from.valueIndex, to.valueIndex);
           }
           if (from.kind === "enumval" && to.kind === "enumval" && from.enumName === to.enumName) {
             moved = moveArrayItem(next.model.enums[from.enumIndex].values, from.valueIndex, to.valueIndex);
@@ -5779,6 +5873,7 @@
               (source.kind === "enum" && target.kind === "enum") ||
               (source.kind === "topic" && target.kind === "topic") ||
               (source.kind === "attr" && target.kind === "attr" && source.className === target.className) ||
+              (source.kind === "domainval" && target.kind === "domainval" && source.domainName === target.domainName) ||
               (source.kind === "enumval" && target.kind === "enumval" && source.enumName === target.enumName) ||
               (source.kind === "subtopic" && target.kind === "subtopic" && source.topicName === target.topicName);
 
@@ -5806,6 +5901,7 @@
               (source.kind === "enum" && target.kind === "enum") ||
               (source.kind === "topic" && target.kind === "topic") ||
               (source.kind === "attr" && target.kind === "attr" && source.className === target.className) ||
+              (source.kind === "domainval" && target.kind === "domainval" && source.domainName === target.domainName) ||
               (source.kind === "enumval" && target.kind === "enumval" && source.enumName === target.enumName) ||
               (source.kind === "subtopic" && target.kind === "subtopic" && source.topicName === target.topicName);
 
@@ -5869,7 +5965,17 @@
 
         appendGroup("Domains");
         for (const domain of coreState.model.domains) {
-          appendItem({ path: selectionPathOf("domain", domain.name), label: `DOMAIN ${domain.name} : ${domain.type || "TEXT"}`, kind: "domain" });
+          const values = Array.isArray(domain.values) ? domain.values : [];
+          const suffix = values.length ? ` (${values.length} values)` : ` : ${domain.type || "TEXT"}`;
+          appendItem({ path: selectionPathOf("domain", domain.name), label: `DOMAIN ${domain.name}${suffix}`, kind: "domain" });
+          for (const value of values) {
+            appendItem({
+              path: selectionPathOf("domainval", domain.name, value),
+              label: `VAL ${value}`,
+              kind: "domain",
+              extraClass: "attr"
+            });
+          }
         }
 
         appendGroup("Associations");
@@ -5891,11 +5997,19 @@
         propAssocFromCardRow.style.display = "none";
         propAssocToRow.style.display = "none";
         propAssocCardRow.style.display = "none";
+        propDomainValuesRow.style.display = "none";
+        propModelAtRow.style.display = "none";
+        propModelVersionRow.style.display = "none";
 
         if (sel.kind === "model") {
           propNameInput.value = coreState.model.model_name;
+          propModelAtInput.value = coreState.model.model_at || "";
+          propModelVersionInput.value = coreState.model.model_model_version || "";
+          propModelAtRow.style.display = "grid";
+          propModelVersionRow.style.display = "grid";
           propTypeRow.style.display = "none";
           propAttrCardRow.style.display = "none";
+          deleteDomainValueBtn.disabled = true;
           return;
         }
 
@@ -5903,6 +6017,7 @@
           propNameInput.value = coreState.model.topics[sel.topicIndex].name;
           propTypeRow.style.display = "none";
           propAttrCardRow.style.display = "none";
+          deleteDomainValueBtn.disabled = true;
           return;
         }
 
@@ -5910,6 +6025,7 @@
           propNameInput.value = coreState.model.topics[sel.topicIndex].subtopics[sel.subtopicIndex].name;
           propTypeRow.style.display = "none";
           propAttrCardRow.style.display = "none";
+          deleteDomainValueBtn.disabled = true;
           return;
         }
 
@@ -5922,6 +6038,7 @@
           propClassExtendsRow.style.display = "grid";
           propClassAbstractInput.checked = !!cls.abstract;
           populateClassExtendsSelect(cls.name, cls.extends || "");
+          deleteDomainValueBtn.disabled = true;
           return;
         }
 
@@ -5932,6 +6049,7 @@
           propAttrCardInput.value = normalizeAttributeCardinality(attr);
           propTypeRow.style.display = "grid";
           propAttrCardRow.style.display = "grid";
+          deleteDomainValueBtn.disabled = true;
           return;
         }
 
@@ -5940,7 +6058,19 @@
           propNameInput.value = domain.name;
           setPropertyTypeSelectValue(domain.type || "TEXT");
           propAttrCardRow.style.display = "none";
-          propTypeRow.style.display = "grid";
+          propTypeRow.style.display = (Array.isArray(domain.values) && domain.values.length > 0) ? "none" : "grid";
+          propDomainValuesRow.style.display = "grid";
+          deleteDomainValueBtn.disabled = true;
+          return;
+        }
+
+        if (sel.kind === "domainval") {
+          const domain = coreState.model.domains[sel.domainIndex];
+          propNameInput.value = domain.values[sel.valueIndex];
+          propAttrCardRow.style.display = "none";
+          propTypeRow.style.display = "none";
+          propDomainValuesRow.style.display = "grid";
+          deleteDomainValueBtn.disabled = false;
           return;
         }
 
@@ -5956,6 +6086,7 @@
           populateAssociationClassSelects(assoc.from_class, assoc.to_class);
           propAssocFromCardInput.value = assoc.from_cardinality || "0..*";
           propAssocCardInput.value = assoc.cardinality || "1..*";
+          deleteDomainValueBtn.disabled = true;
           return;
         }
 
@@ -5963,6 +6094,7 @@
           propNameInput.value = coreState.model.enums[sel.enumIndex].name;
           propTypeRow.style.display = "none";
           propAttrCardRow.style.display = "none";
+          deleteDomainValueBtn.disabled = true;
           return;
         }
 
@@ -5970,12 +6102,14 @@
           propNameInput.value = coreState.model.enums[sel.enumIndex].values[sel.valueIndex];
           propTypeRow.style.display = "none";
           propAttrCardRow.style.display = "none";
+          deleteDomainValueBtn.disabled = true;
           return;
         }
 
         propNameInput.value = "";
         propTypeRow.style.display = "none";
         propAttrCardRow.style.display = "none";
+        deleteDomainValueBtn.disabled = true;
       }
 
       function renderProseEditor() {
@@ -7114,6 +7248,42 @@
         dispatch({ type: "ADD_DOMAIN", domainName: candidate, domainType: "TEXT", source: "tree-add-domain" });
       });
 
+      addDomainValueBtn.addEventListener("click", () => {
+        const sel = resolveSelection(coreState.selection.elementId, coreState.model);
+        if (sel.kind !== "domain" && sel.kind !== "domainval") {
+          renderIssues([{ level: "warning", code: "DOMAIN_VALUE_TARGET_REQUIRED", message: "Seleziona un domain o un valore domain" }]);
+          return;
+        }
+
+        const domainName = sel.kind === "domain" ? sel.domainName : sel.domainName;
+        const domainIndex = sel.kind === "domain" ? sel.domainIndex : sel.domainIndex;
+        const suggested = `Value${(coreState.model.domains[domainIndex].values || []).length + 1}`;
+        const rawValue = window.prompt("Nuovo valore domain", suggested);
+        if (!rawValue) return;
+        const value = rawValue.trim();
+        if (!value) return;
+        if (!isInterlisIdentifier(value)) {
+          renderIssues([{ level: "warning", code: "DOMAIN_VALUE_INVALID", message: "Valore domain non valido: usare identificatore INTERLIS" }]);
+          return;
+        }
+        if ((coreState.model.domains[domainIndex].values || []).includes(value)) {
+          renderIssues([{ level: "warning", code: "DOMAIN_VALUE_DUPLICATE", message: `Valore domain '${value}' gia esistente` }]);
+          return;
+        }
+
+        dispatch({ type: "ADD_DOMAIN_VALUE", domainName, domainValue: value, source: "properties-domain-value" });
+      });
+
+      deleteDomainValueBtn.addEventListener("click", () => {
+        const sel = resolveSelection(coreState.selection.elementId, coreState.model);
+        if (sel.kind !== "domainval") {
+          renderIssues([{ level: "warning", code: "DOMAIN_VALUE_SELECT_REQUIRED", message: "Seleziona un valore domain da eliminare" }]);
+          return;
+        }
+        if (!window.confirm(`Eliminare il valore '${sel.domainValue}'?`)) return;
+        dispatch({ type: "DELETE_SELECTED", source: "properties-domain-value-delete" });
+      });
+
       document.getElementById("addAssocBtn").addEventListener("click", () => {
         const associationName = window.prompt(t("prompt.newAssociation"), "NewAssociation");
         if (!associationName) return;
@@ -7155,7 +7325,7 @@
           return;
         }
 
-        const needsInterlisIdentifier = ["model", "topic", "subtopic", "class", "attr", "domain", "association"].includes(sel.kind);
+        const needsInterlisIdentifier = ["model", "topic", "subtopic", "class", "attr", "domain", "domainval", "association"].includes(sel.kind);
         if (needsInterlisIdentifier && !isInterlisIdentifier(name)) {
           renderIssues([{ level: "warning", code: "NAME_INVALID", message: t("issue.NAME_INVALID") }]);
           return;
@@ -7164,6 +7334,8 @@
         if (sel.kind === "model") {
           const modelCopy = deepClone(coreState.model);
           modelCopy.model_name = name;
+          modelCopy.model_at = String(propModelAtInput.value || "").trim();
+          modelCopy.model_model_version = String(propModelVersionInput.value || "").trim();
           dispatch({ type: "SET_MODEL", model: modelCopy, resetSelection: false, source: "properties-model" }, { markDirty: true });
           return;
         }
@@ -7239,6 +7411,29 @@
             renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_DOMAIN", message: t("issue.PROPERTIES_DUPLICATE_DOMAIN", { name }) }]);
             return;
           }
+
+          dispatch({
+            type: "UPDATE_SELECTED",
+            name,
+            attrType: propTypeSelect.value,
+            source: "properties"
+          });
+          return;
+        }
+
+        if (sel.kind === "domainval") {
+          const values = coreState.model.domains[sel.domainIndex].values || [];
+          if (values.some((value, index) => index !== sel.valueIndex && value === name)) {
+            renderIssues([{ level: "warning", code: "PROPERTIES_DUPLICATE_DOMAIN_VALUE", message: `Valore domain '${name}' gia esistente` }]);
+            return;
+          }
+
+          dispatch({
+            type: "UPDATE_SELECTED",
+            name,
+            source: "properties"
+          });
+          return;
         }
 
         if (sel.kind === "association") {

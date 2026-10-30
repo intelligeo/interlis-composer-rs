@@ -5,6 +5,10 @@ pub struct InterlisModel {
     pub model_name: String,
     #[serde(default = "default_language")]
     pub language: String,
+    #[serde(default = "default_model_at")]
+    pub model_at: String,
+    #[serde(default)]
+    pub model_model_version: String,
     #[serde(default)]
     pub model_version: String,
     #[serde(default)]
@@ -28,6 +32,9 @@ pub struct InterlisModel {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Domain {
     pub name: String,
+    #[serde(default)]
+    pub values: Vec<String>,
+    #[serde(default)]
     #[serde(rename = "type")]
     pub r#type: String,
 }
@@ -132,6 +139,10 @@ pub struct CatalogValidationPreset {
 
 fn default_language() -> String {
     "de".to_string()
+}
+
+fn default_model_at() -> String {
+    "https://intelligeo.ch/imc".to_string()
 }
 
 fn canonical_interlis_version(raw: &str) -> Option<&'static str> {
@@ -299,6 +310,8 @@ impl InterlisProject {
             model: InterlisModel {
                 model_name,
                 language,
+                model_at: default_model_at(),
+                model_model_version: String::new(),
                 model_version: String::new(),
                 model_md5: String::new(),
                 domains: Vec::new(),
@@ -383,14 +396,56 @@ fn from_interlis_type(value: &str) -> String {
     raw.to_string()
 }
 
-fn parse_domain_declaration_line(line: &str) -> Option<(String, String)> {
+fn parse_domain_values(value: &str) -> Option<Vec<String>> {
+    let trimmed = value.trim();
+    if !(trimmed.starts_with('(') && trimmed.ends_with(')')) {
+        return None;
+    }
+
+    let body = &trimmed[1..trimmed.len() - 1];
+    let values = body
+        .split(',')
+        .map(|part| part.trim().trim_matches('"').trim_matches('\''))
+        .filter(|part| !part.is_empty())
+        .map(|part| part.to_string())
+        .collect::<Vec<_>>();
+
+    Some(values)
+}
+
+fn parse_domain_declaration_line(line: &str) -> Option<Domain> {
     let body = line.trim().trim_end_matches(';').trim();
     let (name_part, type_part) = body.split_once('=')?;
     let domain_name = name_part.trim();
     if domain_name.is_empty() {
         return None;
     }
-    Some((domain_name.to_string(), from_interlis_type(type_part.trim())))
+
+    let raw_type = type_part.trim();
+    let (values, normalized_type) = if let Some(values) = parse_domain_values(raw_type) {
+        (values, String::new())
+    } else {
+        (Vec::new(), from_interlis_type(raw_type))
+    };
+
+    Some(Domain {
+        name: domain_name.to_string(),
+        values,
+        r#type: normalized_type,
+    })
+}
+
+fn parse_quoted_attribute(line: &str, keyword: &str) -> Option<String> {
+    let upper = line.to_ascii_uppercase();
+    let marker = format!("{} \"", keyword.to_ascii_uppercase());
+    let start = upper.find(&marker)? + marker.len();
+    let tail = &line[start..];
+    let end = tail.find('"')?;
+    let value = tail[..end].trim();
+    if value.is_empty() {
+        return None;
+    }
+    Some(value.to_string())
 }
 
 fn parse_association_end_line(line: &str, class_names: &HashSet<String>) -> Option<(String, String)> {
@@ -432,6 +487,8 @@ fn parse_association_end_line(line: &str, class_names: &HashSet<String>) -> Opti
 pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
     let mut model_name: Option<String> = None;
     let mut language: Option<String> = None;
+    let mut model_at: Option<String> = None;
+    let mut model_model_version: Option<String> = None;
     let mut model_version: Option<String> = None;
     let mut domains: Vec<Domain> = Vec::new();
     let mut associations: Vec<Association> = Vec::new();
@@ -487,6 +544,7 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
                     if !domain_name.is_empty() {
                         domains.push(Domain {
                             name: domain_name.to_string(),
+                            values: Vec::new(),
                             r#type: from_interlis_type(type_part.trim()),
                         });
                     }
@@ -534,7 +592,7 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
                         1,
                     )
                 })?;
-            let (lang_part, _) = rest
+            let (lang_part, tail_part) = rest
                 .split_once(')')
                 .ok_or_else(|| {
                     ParseFailure::new(
@@ -551,6 +609,19 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
 
             model_name = Some(parsed_name);
             language = Some(lang_part.trim().to_string());
+            if let Some(parsed_at) = parse_quoted_attribute(tail_part, "AT") {
+                model_at = Some(parsed_at);
+            }
+            if let Some(parsed_model_version) = parse_quoted_attribute(tail_part, "VERSION") {
+                model_model_version = Some(parsed_model_version);
+            }
+            continue;
+        }
+
+        if line.starts_with("VERSION ") {
+            if let Some(parsed_model_version) = parse_quoted_attribute(line, "VERSION") {
+                model_model_version = Some(parsed_model_version);
+            }
             continue;
         }
 
@@ -564,11 +635,8 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
                 in_domain_block = false;
             } else {
                 if line.ends_with(';') {
-                    if let Some((domain_name, domain_type)) = parse_domain_declaration_line(line) {
-                        domains.push(Domain {
-                            name: domain_name,
-                            r#type: domain_type,
-                        });
+                    if let Some(domain) = parse_domain_declaration_line(line) {
+                        domains.push(domain);
                     }
                 }
                 continue;
@@ -582,11 +650,8 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
 
         if line.starts_with("DOMAIN ") && line.ends_with(';') {
             let domain_line = line.strip_prefix("DOMAIN ").unwrap_or("").trim();
-            if let Some((domain_name, domain_type)) = parse_domain_declaration_line(domain_line) {
-                domains.push(Domain {
-                    name: domain_name,
-                    r#type: domain_type,
-                });
+            if let Some(domain) = parse_domain_declaration_line(domain_line) {
+                domains.push(domain);
             }
             continue;
         }
@@ -771,6 +836,8 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
     Ok(InterlisModel {
         model_name: parsed_model_name,
         language: language.unwrap_or_else(default_language),
+        model_at: model_at.unwrap_or_else(default_model_at),
+        model_model_version: model_model_version.unwrap_or_default(),
         model_version: model_version.unwrap_or_else(|| "INTERLIS 2.4".to_string()),
         model_md5: md5,
         domains,
@@ -791,10 +858,20 @@ impl InterlisModel {
         } else {
             self.model_version.trim().to_string()
         };
+        let model_at = if self.model_at.trim().is_empty() {
+            default_model_at()
+        } else {
+            self.model_at.trim().to_string()
+        };
+        let model_clause_version = if self.model_model_version.trim().is_empty() {
+            String::new()
+        } else {
+            format!(" VERSION \"{}\"", self.model_model_version.trim())
+        };
         out.push_str(&format!("{};\n\n", version));
         out.push_str(&format!(
-            "MODEL {} ({}) AT \"https://intelligeo.ch/imc\" =\n",
-            self.model_name, self.language
+            "MODEL {} ({}) AT \"{}\"{} =\n",
+            self.model_name, self.language, model_at, model_clause_version
         ));
         out.push_str("  TOPIC Main =\n");
 
@@ -808,11 +885,19 @@ impl InterlisModel {
         if !self.domains.is_empty() {
             out.push_str("    DOMAIN\n");
             for domain in &self.domains {
-                out.push_str(&format!(
-                    "      {} = {};\n",
-                    domain.name,
-                    to_interlis_type(&domain.r#type)
-                ));
+                if !domain.values.is_empty() {
+                    out.push_str(&format!(
+                        "      {} = ({});\n",
+                        domain.name,
+                        domain.values.join(", ")
+                    ));
+                } else {
+                    out.push_str(&format!(
+                        "      {} = {};\n",
+                        domain.name,
+                        to_interlis_type(&domain.r#type)
+                    ));
+                }
             }
             out.push('\n');
         }

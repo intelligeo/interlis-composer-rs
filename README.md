@@ -95,3 +95,18 @@ Notes:
 - If a tool is unavailable and `*_STRICT=false`, the API returns warnings and continues.
 - If `*_STRICT=true`, unavailable tool execution is treated as an error.
 - `IOX_ILI_*` config is used by the Rust-native adapter for `/api/instance/export/xtf`.
+
+## Validation playbook and smoke test
+
+- Validation strategy: `docs/VALIDATION_PLAYBOOK.md`
+- Automated smoke check: `scripts/smoke-api-validation.ps1`
+
+Examples:
+
+```bash
+# Start server externally, then run smoke test
+pwsh -File scripts/smoke-api-validation.ps1 -SkipStartServer
+
+# Let the script start the server (requires cargo in PATH)
+pwsh -File scripts/smoke-api-validation.ps1 -StartServer
+```
