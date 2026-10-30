@@ -686,7 +686,7 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
         if let Some(topic_name) = parse_topic_name(line) {
             if !topics.iter().any(|topic| topic.name == topic_name) {
                 topics.push(Topic {
-                    name: topic_name,
+                    name: topic_name.clone(),
                     subtopics: Vec::new(),
                 });
             }
