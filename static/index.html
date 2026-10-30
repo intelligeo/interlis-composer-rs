@@ -1113,6 +1113,14 @@
         background: rgba(8, 15, 30, 0.78);
       }
 
+      .ili-editor-shell pre,
+      .ili-editor-shell textarea {
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        min-height: 0;
+      }
+
       .ili-line-numbers {
         margin: 0;
         padding: 0.7rem 0.55rem;
@@ -1128,7 +1136,23 @@
 
       .ili-editor-code-wrap {
         position: relative;
-        min-height: 360px;
+        height: clamp(320px, 48vh, 620px);
+        min-height: 320px;
+        overflow: hidden;
+      }
+
+      @media (max-width: 1366px), (max-height: 900px) {
+        .ili-editor-code-wrap {
+          height: clamp(260px, 40vh, 500px);
+          min-height: 260px;
+        }
+      }
+
+      @media (max-width: 1024px), (max-height: 760px) {
+        .ili-editor-code-wrap {
+          height: clamp(220px, 36vh, 420px);
+          min-height: 220px;
+        }
       }
 
       .ili-highlight,
@@ -1136,11 +1160,11 @@
         margin: 0;
         padding: 0.7rem 0.85rem;
         width: 100%;
-        min-height: 360px;
+        height: 100%;
+        min-height: 0;
         border: 0;
         font: 0.88rem/1.45 Consolas, "Courier New", monospace;
         white-space: pre;
-        overflow: auto;
         tab-size: 2;
       }
 
@@ -1149,12 +1173,16 @@
         inset: 0;
         pointer-events: none;
         color: #e8f1ff;
+        background: transparent;
+        overflow: hidden;
+        z-index: 1;
       }
 
       .ili-text-input {
         position: relative;
         z-index: 2;
-        resize: vertical;
+        resize: none;
+        overflow: auto;
         background: transparent;
         color: transparent;
         caret-color: #eaf2ff;
@@ -1507,11 +1535,11 @@
             <span id="diagramPanelTitle">Diagram Editor</span>
             <span class="panel-header-actions">
               <span id="diagramTextSyncBadge" class="sync-badge synced">Synced</span>
-              <button class="ghost" id="diagramModeToggleBtn" type="button">Switch to Textual</button>
               <span id="diagramZoomControls">
                 <label for="diagramZoomInput">Zoom</label>
                 <input id="diagramZoomInput" type="range" min="60" max="180" step="10" value="100" />
               </span>
+              <button class="ghost" id="diagramModeToggleBtn" type="button">Switch to Textual</button>
             </span>
           </h2>
           <div class="content">
