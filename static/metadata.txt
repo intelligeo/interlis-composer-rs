@@ -7,5 +7,6 @@ support_email: ask@intelligeo.ch
 build_date: 2026-10-29
 license: Apache License v2.0
 tools_core: Rust, Axum, Tokio, Serde, Tower HTTP, Tracing
+ili2c_version: 5.6.9
 tools_interlis: ili2c, ilivalidator, iox-ili adapter integration, INTERLIS UDL (Notepad++): interlis_byStefanBurckhardt.xml
 credits: Special thanks to Claude Eisenhut and the INTERLIS community for foundational work and reference tooling. AI agents (including GitHub Copilot and other AI-assisted workflows) are gratefully acknowledged for supporting the development of this application.

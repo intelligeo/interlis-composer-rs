@@ -461,6 +461,11 @@
         margin-left: auto;
       }
 
+      #structurePanel > h2 .panel-header-actions {
+        display: flex !important;
+        margin-left: auto;
+      }
+
       #diagramPanel > h2 .panel-header-actions label {
         font-size: 0.82rem;
         color: var(--ink-soft);
@@ -518,6 +523,25 @@
         font-size: 0.68rem;
         letter-spacing: 0.08em;
         text-transform: uppercase;
+      }
+
+      .panel-context-zoom-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 0.45rem 0.45rem;
+      }
+
+      .panel-context-zoom-wrap input[type="range"] {
+        flex: 1;
+        min-width: 120px;
+      }
+
+      .panel-context-zoom-value {
+        min-width: 3.2rem;
+        text-align: right;
+        color: var(--ink-soft);
+        font-size: 0.78rem;
       }
 
       textarea,
@@ -869,6 +893,11 @@
       .tree-item.subtopic {
         margin-left: 0;
         padding-left: 1.4rem;
+      }
+
+      .tree-item.domain-value {
+        margin-left: 0;
+        padding-left: 2.2rem;
       }
 
       #structurePanel .content,
@@ -1402,18 +1431,12 @@
             <div class="ribbon-group">
               <div class="ribbon-group-header">Pannelli tecnici</div>
               <div class="ribbon-actions">
+                <button class="ribbon-button" data-toggle-panel="diagramPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12h8M12 8v8"/></svg></span>Diagram</button>
                 <button class="ribbon-button" data-toggle-panel="inputPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z"/><path d="M4 10h16"/></svg></span>Input</button>
                 <button class="ribbon-button" data-toggle-panel="outputPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z"/><path d="M8 12h8M8 15h5"/></svg></span>Output</button>
                 <button class="ribbon-button" data-toggle-panel="docsPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h9l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M14 4v5h5"/><path d="M8 12h8M8 16h8"/></svg></span>Docs</button>
                 <button class="ribbon-button" data-toggle-panel="recentPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 7v6l4 2"/><circle cx="12" cy="12" r="8"/></svg></span>Recent</button>
                 <button class="ribbon-button" data-toggle-panel="syncPanel"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.5-5.5"/><path d="M20 12a8 8 0 0 1-13.5 5.5"/><path d="M20 4v6h-6M4 20v-6h6"/></svg></span>Sync</button>
-              </div>
-            </div>
-            <div class="ribbon-group">
-              <div class="ribbon-group-header">Project</div>
-              <div class="ribbon-actions">
-                <button class="ribbon-button" data-action="saveAsProjectBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M9 4v5h6V4M8 16h8"/></svg></span>Salva come</button>
-                <button class="ribbon-button" data-action="exportCollabBundleBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20V10"/><path d="m8 14 4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>Bundle</button>
               </div>
             </div>
           </div>
@@ -1442,7 +1465,12 @@
 
       <section class="workspace-shell">
         <article class="card" id="structurePanel" data-panel-name="structurePanel">
-          <h2>Structure Tree</h2>
+          <h2>
+            <span>Structure Tree</span>
+            <span class="panel-header-actions">
+              <span id="diagramTextSyncBadge" class="sync-badge synced">Synced</span>
+            </span>
+          </h2>
           <div class="content">
             <div class="diag-tools">
               <input id="treeSearch" type="text" placeholder="Cerca nodo..." />
@@ -1556,12 +1584,10 @@
           <h2>
             <span id="diagramPanelTitle">Diagram Editor</span>
             <span class="panel-header-actions">
-              <span id="diagramTextSyncBadge" class="sync-badge synced">Synced</span>
               <span id="diagramZoomControls">
                 <label for="diagramZoomInput">Zoom</label>
                 <input id="diagramZoomInput" type="range" min="60" max="180" step="10" value="100" />
               </span>
-              <button class="ghost" id="diagramModeToggleBtn" type="button">Switch to Textual</button>
             </span>
           </h2>
           <div class="content">
@@ -1607,20 +1633,7 @@
               <svg id="diagramMinimap" class="minimap" viewBox="0 0 240 120" role="img" aria-label="Minimap diagramma"></svg>
             </div>
             <div class="status" id="diagramStatus">Diagram: seleziona una classe dal tree o dal diagramma</div>
-            <div id="diagramTextEditorWrap" style="display:none;">
-              <div id="diagramIliEditorShell" class="ili-editor-shell">
-                <pre id="diagramTextLineNumbers" class="ili-line-numbers" aria-hidden="true">1</pre>
-                <div class="ili-editor-code-wrap">
-                  <pre id="diagramTextHighlight" class="ili-highlight" aria-hidden="true"></pre>
-                  <textarea id="diagramTextEditorInput" class="ili-text-input" spellcheck="false"></textarea>
-                </div>
-              </div>
-              <div class="actions" style="margin-top:0.6rem;">
-                <button class="primary" id="diagramTextApplyBtn" type="button">Apply Text Changes</button>
-                <button class="ghost" id="diagramTextResetBtn" type="button">Reset from Model</button>
-              </div>
-              <div class="status" id="diagramTextStatus">Textual editor: INTERLIS model (.ili) with row numbering</div>
-            </div>
+            <div id="diagramEmbeddedPanelHost" hidden></div>
           </div>
         </article>
       </section>
@@ -1707,6 +1720,7 @@
           <span><span class="status-dot"></span> <span id="statusProjectLabel">Project:</span> <strong id="statusBarProject">NewProject</strong></span>
           <span><span id="statusModeLabel">Mode:</span> <strong id="statusBarMode">INTERLIS 2.3 / 2.4</strong></span>
           <span><span id="statusVersionLabel">Version:</span> <strong id="statusBarVersion">draft</strong></span>
+          <span><span id="statusIli2cLabel">ili2c:</span> <strong id="statusBarIli2c">-</strong></span>
         </div>
         <div class="status-bar-group">
           <a href="#" id="statusBarAbout">About</a>
@@ -1857,6 +1871,11 @@
       const ribbonButtons = document.querySelectorAll('.ribbon-button');
       const COLLAB_TOOLS_DEFINED = false;
       const DIAGRAM_PRESET_TOOLS_DEFINED = false;
+      const DIAGRAM_PREVIEW_DEFINED = false;
+      const DIAGRAM_SECTOR_PANEL_IDS = ["diagramPanel", "inputPanel", "outputPanel", "docsPanel", "recentPanel", "syncPanel"];
+      const DIAGRAM_NATIVE_SECTION_IDS = ["diagramVisualTools", "diagramPresetMeta", "diagramToolbar", "diagramStage", "diagramMinimapWrap", "diagramStatus"];
+      const diagramEmbeddedPanelHost = document.getElementById("diagramEmbeddedPanelHost");
+      let activeDiagramSectorPanelId = "diagramPanel";
 
       function applyCollabTabVisibility() {
         if (!appRibbon) return;
@@ -1887,6 +1906,71 @@
         document.querySelectorAll('[data-feature="diagram-preset-tools"]').forEach((element) => {
           element.hidden = !DIAGRAM_PRESET_TOOLS_DEFINED;
         });
+      }
+
+      function setDiagramNativeSectionsVisible(visible) {
+        DIAGRAM_NATIVE_SECTION_IDS.forEach((id) => {
+          const node = document.getElementById(id);
+          if (!node) return;
+          node.style.display = visible ? "" : "none";
+        });
+        if (!DIAGRAM_PREVIEW_DEFINED) {
+          const minimapWrap = document.getElementById("diagramMinimapWrap");
+          if (minimapWrap) minimapWrap.style.display = "none";
+        }
+      }
+
+      function updateDiagramSectorToggleButtons() {
+        document.querySelectorAll('[data-toggle-panel]').forEach((button) => {
+          const targetName = button.dataset.togglePanel || "";
+          if (!DIAGRAM_SECTOR_PANEL_IDS.includes(targetName)) return;
+          const active = activeDiagramSectorPanelId === targetName;
+          button.setAttribute('aria-pressed', String(active));
+          button.classList.toggle('active', active);
+        });
+      }
+
+      function setDiagramSectorPanel(panelId) {
+        const targetPanelId = DIAGRAM_SECTOR_PANEL_IDS.includes(panelId) ? panelId : "diagramPanel";
+        if (!diagramEmbeddedPanelHost) return false;
+
+        if (activeDiagramSectorPanelId !== "diagramPanel") {
+          const previousPanel = document.getElementById(activeDiagramSectorPanelId);
+          const embeddedContent = diagramEmbeddedPanelHost.querySelector('[data-embedded-panel-content]');
+          if (previousPanel && embeddedContent) {
+            previousPanel.appendChild(embeddedContent);
+          }
+        }
+
+        const diagramPanelTitleNode = document.getElementById("diagramPanelTitle");
+        const zoomControls = document.getElementById("diagramZoomControls");
+
+        if (targetPanelId === "diagramPanel") {
+          setDiagramNativeSectionsVisible(true);
+          if (zoomControls) zoomControls.style.display = "inline-flex";
+          if (diagramPanelTitleNode) diagramPanelTitleNode.textContent = "Diagram Editor";
+          diagramEmbeddedPanelHost.hidden = true;
+          diagramEmbeddedPanelHost.innerHTML = "";
+          activeDiagramSectorPanelId = "diagramPanel";
+          updateDiagramSectorToggleButtons();
+          return true;
+        }
+
+        const targetPanel = document.getElementById(targetPanelId);
+        const targetContent = targetPanel?.querySelector(':scope > .content');
+        const targetTitle = targetPanel?.querySelector(':scope > h2')?.textContent?.trim() || targetPanelId;
+        if (!targetPanel || !targetContent) return false;
+
+        setDiagramNativeSectionsVisible(false);
+        if (zoomControls) zoomControls.style.display = "none";
+        if (diagramPanelTitleNode) diagramPanelTitleNode.textContent = targetTitle;
+        targetContent.dataset.embeddedPanelContent = targetPanelId;
+        diagramEmbeddedPanelHost.innerHTML = "";
+        diagramEmbeddedPanelHost.appendChild(targetContent);
+        diagramEmbeddedPanelHost.hidden = false;
+        activeDiagramSectorPanelId = targetPanelId;
+        updateDiagramSectorToggleButtons();
+        return true;
       }
 
       const panelContextMenu = document.createElement('div');
@@ -1975,6 +2059,11 @@
             }
           }
           sections.push(...diagramSections);
+          sections.push({
+            title: (document.querySelector('label[for="diagramZoomInput"]')?.textContent || 'Zoom').trim(),
+            control: 'diagramZoom',
+            items: []
+          });
         } else if (panel.id === 'structurePanel') {
           const structureSections = [
             buildSection(t('ctx.section.model'), ['addTopicBtn', 'addSubtopicBtn']),
@@ -2010,7 +2099,33 @@
             wrap.appendChild(title);
           }
 
-          section.items.forEach(({ label, action }) => {
+          if (section.control === 'diagramZoom' && diagramZoomInput) {
+            const zoomWrap = document.createElement('div');
+            zoomWrap.className = 'panel-context-zoom-wrap';
+
+            const zoomInput = document.createElement('input');
+            zoomInput.type = 'range';
+            zoomInput.min = diagramZoomInput.min || '60';
+            zoomInput.max = diagramZoomInput.max || '180';
+            zoomInput.step = diagramZoomInput.step || '10';
+            zoomInput.value = diagramZoomInput.value || '100';
+
+            const zoomValue = document.createElement('span');
+            zoomValue.className = 'panel-context-zoom-value';
+            zoomValue.textContent = `${zoomInput.value}%`;
+
+            zoomInput.addEventListener('input', () => {
+              diagramZoomInput.value = zoomInput.value;
+              zoomValue.textContent = `${zoomInput.value}%`;
+              diagramZoomInput.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+
+            zoomWrap.appendChild(zoomInput);
+            zoomWrap.appendChild(zoomValue);
+            wrap.appendChild(zoomWrap);
+          }
+
+          (section.items || []).forEach(({ label, action }) => {
             const item = document.createElement('button');
             item.type = 'button';
             item.textContent = label;
@@ -2174,6 +2289,10 @@
         button.addEventListener('click', () => {
           const toggleTargetName = button.dataset.togglePanel;
           if (toggleTargetName) {
+            if (DIAGRAM_SECTOR_PANEL_IDS.includes(toggleTargetName)) {
+              setDiagramSectorPanel(toggleTargetName);
+              return;
+            }
             const target = document.getElementById(toggleTargetName) || document.querySelector(`[data-panel-name="${CSS.escape(toggleTargetName)}"]`);
             if (target) {
               const nextState = !target.classList.contains('is-hidden');
@@ -2194,7 +2313,16 @@
         panel.classList.toggle('is-hidden', !isCore);
       });
 
+      setDiagramSectorPanel("diagramPanel");
+
       document.querySelectorAll('[data-toggle-panel]').forEach((button) => {
+        const toggleTargetName = button.dataset.togglePanel || "";
+        if (DIAGRAM_SECTOR_PANEL_IDS.includes(toggleTargetName)) {
+          const active = activeDiagramSectorPanelId === toggleTargetName;
+          button.setAttribute('aria-pressed', String(active));
+          button.classList.toggle('active', active);
+          return;
+        }
         const target = document.getElementById(button.dataset.togglePanel) || document.querySelector(`[data-panel-name="${CSS.escape(button.dataset.togglePanel)}"]`);
         if (target) {
           const visible = !target.classList.contains('is-hidden');
@@ -2288,6 +2416,7 @@
       const statusBarProject = document.getElementById("statusBarProject");
       const statusBarMode = document.getElementById("statusBarMode");
       const statusBarVersion = document.getElementById("statusBarVersion");
+      const statusBarIli2c = document.getElementById("statusBarIli2c");
       const statusBarSync = document.getElementById("statusBarSync");
       const statusBarAbout = document.getElementById("statusBarAbout");
       const recentProjects = document.getElementById("recentProjects");
@@ -2419,13 +2548,14 @@
       const I18N_DEFAULT_LOCALE = "en_US";
       const I18N_SUPPORTED_LOCALES = ["de_CH", "fr_FR", "it_IT", "en_US"];
       const I18N_UI_LOCALE_KEY = "imc_ui_locale_v1";
-      const SUPPORTED_INTERLIS_MODE = "INTERLIS 2.3 / 2.4";
+      const DEFAULT_INTERLIS_MODE = "INTERLIS 2.4";
 
       const I18N_MESSAGES = {
         en_US: {
           "status.project": "Project",
           "status.mode": "Mode",
           "status.version": "Version",
+          "status.ili2c": "ili2c",
           "status.lastSync": "Last sync",
           "status.idle": "idle",
           "status.syncPrefix": "Sync",
@@ -2655,6 +2785,7 @@
           "ribbon.btn.listGitRefsBtn": "Branches",
           "ribbon.btn.generateCommitDraftBtn": "Draft",
           "ribbon.btn.diffBundleBtn": "Diff",
+          "ribbon.toggle.diagramPanel": "Diagram Editor",
           "ribbon.toggle.inputPanel": "Input",
           "ribbon.toggle.outputPanel": "Output",
           "ribbon.toggle.docsPanel": "Docs",
@@ -2667,8 +2798,9 @@
         },
         it_IT: {
           "status.project": "Progetto",
-          "status.mode": "Modalita",
+          "status.mode": "Modalità",
           "status.version": "Versione",
+          "status.ili2c": "ili2c",
           "status.lastSync": "Ultima sync",
           "status.idle": "idle",
           "status.syncPrefix": "Sync",
@@ -2777,6 +2909,7 @@
           "ribbon.btn.listGitRefsBtn": "Branch",
           "ribbon.btn.generateCommitDraftBtn": "Draft",
           "ribbon.btn.diffBundleBtn": "Diff",
+          "ribbon.toggle.diagramPanel": "Diagram Editor",
           "ribbon.toggle.inputPanel": "Input",
           "ribbon.toggle.outputPanel": "Output",
           "ribbon.toggle.docsPanel": "Docs",
@@ -2791,6 +2924,7 @@
           "status.project": "Projekt",
           "status.mode": "Modus",
           "status.version": "Version",
+          "status.ili2c": "ili2c",
           "status.lastSync": "Letzte Sync",
           "status.idle": "idle",
           "status.syncPrefix": "Sync",
@@ -2899,6 +3033,7 @@
           "ribbon.btn.listGitRefsBtn": "Branches",
           "ribbon.btn.generateCommitDraftBtn": "Entwurf",
           "ribbon.btn.diffBundleBtn": "Diff",
+          "ribbon.toggle.diagramPanel": "Diagram Editor",
           "ribbon.toggle.inputPanel": "Input",
           "ribbon.toggle.outputPanel": "Output",
           "ribbon.toggle.docsPanel": "Docs",
@@ -2913,6 +3048,7 @@
           "status.project": "Projet",
           "status.mode": "Mode",
           "status.version": "Version",
+          "status.ili2c": "ili2c",
           "status.lastSync": "Derniere sync",
           "status.idle": "idle",
           "status.syncPrefix": "Sync",
@@ -3021,6 +3157,7 @@
           "ribbon.btn.listGitRefsBtn": "Branches",
           "ribbon.btn.generateCommitDraftBtn": "Brouillon",
           "ribbon.btn.diffBundleBtn": "Diff",
+          "ribbon.toggle.diagramPanel": "Diagram Editor",
           "ribbon.toggle.inputPanel": "Input",
           "ribbon.toggle.outputPanel": "Output",
           "ribbon.toggle.docsPanel": "Docs",
@@ -3037,6 +3174,8 @@
       let currentProjectName = "NewProject";
       let isDirty = false;
       let uiLocale = I18N_DEFAULT_LOCALE;
+      let runtimeMetadata = null;
+      let activeIli2cVersion = "-";
 
       function normalizeUiLocale(rawLocale) {
         const value = String(rawLocale || "").trim().replace("-", "_");
@@ -3154,6 +3293,8 @@
         if (statusModeLabel) statusModeLabel.textContent = `${t("status.mode")}:`;
         const statusVersionLabel = document.getElementById("statusVersionLabel");
         if (statusVersionLabel) statusVersionLabel.textContent = `${t("status.version")}:`;
+        const statusIli2cLabel = document.getElementById("statusIli2cLabel");
+        if (statusIli2cLabel) statusIli2cLabel.textContent = `${t("status.ili2c")}:`;
         const statusLastSyncLabel = document.getElementById("statusLastSyncLabel");
         if (statusLastSyncLabel) statusLastSyncLabel.textContent = `${t("status.lastSync")}:`;
 
@@ -3197,10 +3338,33 @@
         });
       }
 
+      function parseInterlisModeFromFirstLine(rawText) {
+        const text = String(rawText || "");
+        if (!text) return "";
+        const firstLine = text.split(/\r?\n/).find((line) => String(line || "").trim().length > 0) || "";
+        const match = firstLine.match(/\b(?:INTERLIS|INTELRIS)\s*(2\.[34])\b/i);
+        if (!match) return "";
+        return `INTERLIS ${match[1]}`;
+      }
+
+      function resolveActiveInterlisMode() {
+        const fromOutput = parseInterlisModeFromFirstLine(output?.textContent || "");
+        if (fromOutput) return fromOutput;
+
+        const fromInput = parseInterlisModeFromFirstLine(modelInput?.value || "");
+        if (fromInput) return fromInput;
+
+        const fromModelVersion = parseInterlisModeFromFirstLine(coreState?.model?.model_version || "");
+        if (fromModelVersion) return fromModelVersion;
+
+        return DEFAULT_INTERLIS_MODE;
+      }
+
       function updateStatusBar() {
         if (statusBarProject) statusBarProject.textContent = currentProjectName;
-        if (statusBarMode) statusBarMode.textContent = SUPPORTED_INTERLIS_MODE;
+        if (statusBarMode) statusBarMode.textContent = resolveActiveInterlisMode();
         if (statusBarVersion) statusBarVersion.textContent = modelInput && modelInput.value ? "draft" : "empty";
+        if (statusBarIli2c) statusBarIli2c.textContent = activeIli2cVersion || "-";
         if (statusBarSync) statusBarSync.textContent = syncMeta?.dataset?.syncMessage || t("status.idle");
       }
 
@@ -3417,36 +3581,26 @@
       }
 
       function applyDiagramEditorModeUi() {
-        const textual = diagramEditorMode === "textual";
-        if (diagramModeToggleBtn) {
-          diagramModeToggleBtn.textContent = textual ? "Switch to Diagram" : "Switch to Textual";
-        }
+        const textual = false;
         if (diagramPanelTitle) {
-          diagramPanelTitle.textContent = textual ? "Textual Model Editor" : "Diagram Editor";
+          diagramPanelTitle.textContent = "Diagram Editor";
         }
 
         if (diagramVisualTools) diagramVisualTools.style.display = textual ? "none" : "flex";
         if (diagramPresetMeta) diagramPresetMeta.style.display = (!DIAGRAM_PRESET_TOOLS_DEFINED || textual) ? "none" : "block";
         if (diagramToolbar) diagramToolbar.style.display = textual ? "none" : "flex";
         if (diagramStage) diagramStage.style.display = textual ? "none" : "block";
-        if (diagramMinimapWrap) diagramMinimapWrap.style.display = textual ? "none" : "block";
+        if (diagramMinimapWrap) diagramMinimapWrap.style.display = (textual || !DIAGRAM_PREVIEW_DEFINED) ? "none" : "block";
         if (diagramStatus) diagramStatus.style.display = textual ? "none" : "block";
         if (diagramZoomControls) diagramZoomControls.style.display = textual ? "none" : "inline-flex";
         if (diagramTextEditorWrap) diagramTextEditorWrap.style.display = textual ? "block" : "none";
         updateDiagramTextSyncBadge();
       }
 
-      function setDiagramEditorMode(mode) {
-        const nextMode = mode === "textual" ? "textual" : "diagram";
-        if (diagramEditorMode === nextMode) return;
-        diagramEditorMode = nextMode;
-        if (diagramEditorMode === "textual") {
-          syncDiagramTextEditorFromModel("mode-switch", { force: true });
-        }
+      function setDiagramEditorMode() {
+        diagramEditorMode = "diagram";
         applyDiagramEditorModeUi();
-        if (diagramEditorMode === "diagram") {
-          renderDiagramEditor();
-        }
+        renderDiagramEditor();
       }
 
       let currentIssues = [];
@@ -3534,7 +3688,7 @@
 
       function updateDiagramTextSyncBadge() {
         if (!diagramTextSyncBadge) return;
-        const dirty = !!diagramTextEditorDirty;
+        const dirty = !!isDirty;
         diagramTextSyncBadge.textContent = dirty ? "Local edits" : "Synced";
         diagramTextSyncBadge.classList.toggle("dirty", dirty);
         diagramTextSyncBadge.classList.toggle("synced", !dirty);
@@ -3907,7 +4061,20 @@
         return out;
       }
 
-      async function showAboutWindow() {
+      function resolveIli2cVersion(metadata) {
+        const explicitVersion = String(metadata?.ili2c_version || "").trim();
+        if (explicitVersion) return explicitVersion;
+
+        const interlisTools = String(metadata?.tools_interlis || "");
+        const match = interlisTools.match(/\bili2c\D*([0-9]+(?:\.[0-9]+){1,3})\b/i);
+        if (match && match[1]) return match[1];
+
+        return "-";
+      }
+
+      async function loadRuntimeMetadata() {
+        if (runtimeMetadata) return runtimeMetadata;
+
         const fallback = {
           app_name: "INTERLIS Model Composer",
           app_version: "unknown",
@@ -3920,6 +4087,7 @@
           license: "-",
           tools_core: "-",
           tools_interlis: "-",
+          ili2c_version: "-",
           tools_ai: "-",
           credits: "-"
         };
@@ -3937,9 +4105,20 @@
           // Fallback is used if metadata file is not available.
         }
 
+        runtimeMetadata = metadata;
+        activeIli2cVersion = resolveIli2cVersion(metadata);
+        updateStatusBar();
+        return runtimeMetadata;
+      }
+
+      async function showAboutWindow() {
+        const metadata = await loadRuntimeMetadata();
+        const ili2cVersion = resolveIli2cVersion(metadata);
+
         const message = [
           `${metadata.app_name} (${metadata.product_line})`,
           `Version: ${metadata.app_version}`,
+          `ili2c version: ${ili2cVersion}`,
           `Organization: ${metadata.organization}`,
           `Build date: ${metadata.build_date}`,
           `Homepage: ${metadata.homepage}`,
@@ -4536,7 +4715,6 @@
 
         coreState.model.catalog_validation_presets = existing;
         setModelInputValue(JSON.stringify(coreState.model, null, 2));
-        syncDiagramTextEditorFromModel("catalog-preset-import");
         setDirty(true);
         bus.emit(EVENTS.MODEL_CHANGED, { source: "catalog-preset-import" });
         renderCatalogValidationPresetEditor();
@@ -4813,6 +4991,7 @@
 
       function setDirty(nextDirty) {
         isDirty = nextDirty;
+        updateDiagramTextSyncBadge();
         refreshProjectMeta();
         updateStatusBar();
         bus.emit(EVENTS.PROJECT_STATE_CHANGED, { isDirty, projectName: currentProjectName });
@@ -5633,6 +5812,7 @@
       }
 
       function renderDiagramMinimap() {
+        if (!DIAGRAM_PREVIEW_DEFINED) return;
         if (diagramEditorMode === "textual") return;
         if (!diagramMinimap || !diagramStage) return;
         const ns = "http://www.w3.org/2000/svg";
@@ -6651,7 +6831,7 @@
                 path: selectionPathOf("domainval", domain.name, value),
                 label: `VAL ${value}`,
                 kind: "domain",
-                extraClass: "attr"
+                extraClass: "domain-value"
               });
             }
           }
@@ -6678,7 +6858,7 @@
                 path: selectionPathOf("domainval", domain.name, value),
                 label: `VAL ${value}`,
                 kind: "domain",
-                extraClass: "attr"
+                extraClass: "domain-value"
               });
             }
           }
@@ -7196,7 +7376,6 @@
             setDirty(true);
           }
           bus.emit(EVENTS.MODEL_CHANGED, { source: config.source });
-          syncDiagramTextEditorFromModel(config.source);
         }
 
         if (selectionChanged) {
@@ -7777,7 +7956,6 @@
           });
           setIliTransferProgress(true, "Import .ili: sincronizzazione editor", 80);
           dispatch({ type: "SET_MODEL", model: payload.model, resetSelection: true, source: "ili-import" }, { markDirty: true });
-          await syncDiagramTextEditorFromModel("ili-import", { force: true, preferredText: interlisText });
           renderIssues(payload.issues || []);
           output.textContent = "";
           setIliTransferProgress(true, "Import .ili completato", 100);
@@ -7808,7 +7986,6 @@
           });
           setIliTransferProgress(true, "Import .ili: sincronizzazione editor", 85);
           dispatch({ type: "SET_MODEL", model: payload.model, resetSelection: true, source: "ili-import-overwrite" }, { markDirty: true });
-          await syncDiagramTextEditorFromModel("ili-import-overwrite", { force: true, preferredText: interlisText });
           renderIssues(payload.issues || []);
           output.textContent = "";
           setIliTransferProgress(true, "Import .ili completato", 100);
@@ -8713,34 +8890,6 @@
         presetFileInput.value = "";
         presetFileInput.click();
       });
-      if (diagramModeToggleBtn) {
-        diagramModeToggleBtn.addEventListener("click", () => {
-          setDiagramEditorMode(diagramEditorMode === "diagram" ? "textual" : "diagram");
-        });
-      }
-      if (diagramTextApplyBtn) {
-        diagramTextApplyBtn.addEventListener("click", async () => {
-          try {
-            await importIliObject(diagramTextEditorInput.value || "");
-            diagramTextEditorDirty = false;
-            await syncDiagramTextEditorFromModel("diagram-text-editor", { force: true });
-            if (diagramTextStatus) {
-              diagramTextStatus.textContent = "Textual editor: INTERLIS changes applied";
-            }
-            scheduleValidation();
-          } catch (err) {
-            renderIssues([{ level: "error", code: "TEXT_MODEL_PARSE_ERROR", message: err.message || "Invalid INTERLIS in textual model editor" }]);
-            if (diagramTextStatus) {
-              diagramTextStatus.textContent = "Textual editor: invalid INTERLIS";
-            }
-          }
-        });
-      }
-      if (diagramTextResetBtn) {
-        diagramTextResetBtn.addEventListener("click", () => {
-          syncDiagramTextEditorFromModel("diagram-text-reset", { force: true });
-        });
-      }
       exportKpiBtn.addEventListener("click", exportUxKpi);
       resetKpiBtn.addEventListener("click", resetUxKpi);
 
@@ -8856,6 +9005,7 @@
       uiLocale = resolveInitialUiLocale();
       if (uiLocaleSelect) uiLocaleSelect.value = uiLocale;
       applyI18nToUi();
+      loadRuntimeMetadata();
       scheduleCrossPanelModelSync("bootstrap");
       setDirty(false);
       renderRecentProjects();
