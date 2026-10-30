@@ -288,10 +288,6 @@
         display: none !important;
       }
 
-      .card[data-panel-name]:not(#structurePanel):not(#propertiesPanel):not(#diagramPanel) {
-        display: none;
-      }
-
       .sync-meta {
         margin-left: 0.5rem;
       }
@@ -652,6 +648,24 @@
         font-size: 0.84rem;
       }
 
+      .ili-transfer-progress {
+        margin-top: 0.5rem;
+        padding: 0.45rem 0.55rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(8, 15, 30, 0.68);
+      }
+
+      .ili-transfer-progress .status {
+        margin-top: 0;
+        margin-bottom: 0.35rem;
+      }
+
+      .ili-transfer-progress progress {
+        width: 100%;
+        height: 0.7rem;
+      }
+
       .docs-preview {
         margin-top: 0.5rem;
         max-height: 320px;
@@ -891,6 +905,14 @@
         letter-spacing: 0.03em;
       }
 
+      .tree-group.subgroup {
+        margin-top: 0.25rem;
+        padding-left: 1.4rem;
+        font-size: 0.72rem;
+        letter-spacing: 0.05em;
+        opacity: 0.92;
+      }
+
       .form-grid {
         display: grid;
         gap: 0.55rem;
@@ -1107,10 +1129,8 @@
       .ili-editor-shell {
         display: grid;
         grid-template-columns: 3.2rem 1fr;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        overflow: hidden;
-        background: rgba(8, 15, 30, 0.78);
+        overflow: visible;
+        background: transparent;
       }
 
       .ili-editor-shell pre,
@@ -1124,11 +1144,11 @@
       .ili-line-numbers {
         margin: 0;
         padding: 0.7rem 0.55rem;
-        background: rgba(26, 37, 58, 0.92);
+        background: transparent;
         color: #8ea0b8;
         text-align: right;
         user-select: none;
-        border-right: 1px solid var(--line);
+        border-right: 1px solid rgba(125, 170, 214, 0.2);
         white-space: pre;
         overflow: hidden;
         font: 0.88rem/1.45 Consolas, "Courier New", monospace;
@@ -1139,6 +1159,8 @@
         height: clamp(320px, 48vh, 620px);
         min-height: 320px;
         overflow: hidden;
+        border-radius: 8px;
+        background: linear-gradient(180deg, #091923, #0b1f31);
       }
 
       @media (max-width: 1366px), (max-height: 900px) {
@@ -1351,7 +1373,7 @@
                 <button class="ribbon-button" data-action="diagramAddRelationBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 8h8M8 16h8M12 4v16"/><circle cx="8" cy="8" r="2"/><circle cx="16" cy="8" r="2"/><circle cx="8" cy="16" r="2"/><circle cx="16" cy="16" r="2"/></svg></span>Relazione</button>
               </div>
             </div>
-            <div class="ribbon-group">
+            <div class="ribbon-group" data-feature="diagram-preset-tools">
               <div class="ribbon-group-header">Preset</div>
               <div class="ribbon-actions">
                 <button class="ribbon-button" data-action="diagramSavePresetBtn"><span class="ribbon-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M9 4v5h6V4M8 16h8"/></svg></span>Preset</button>
@@ -1551,29 +1573,29 @@
               <button class="ghost" id="diagramLockLayoutBtn">Lock layout: OFF</button>
               <button class="ghost" id="diagramLockNodesBtn">Lock nodi: OFF</button>
               <button class="ghost" id="diagramLockRelationsBtn">Lock connessioni: OFF</button>
-              <label for="diagramPresetSelect">Preset</label>
-              <select id="diagramPresetSelect">
+              <label for="diagramPresetSelect" data-feature="diagram-preset-tools">Preset</label>
+              <select id="diagramPresetSelect" data-feature="diagram-preset-tools">
                 <option value="default">Default</option>
                 <option value="structure">Analisi strutturale</option>
                 <option value="presentation">Presentazione</option>
                 <option value="debugging">Debug diagnostica</option>
               </select>
-              <label for="diagramPresetContextSelect">Contesto</label>
-              <select id="diagramPresetContextSelect">
+              <label for="diagramPresetContextSelect" data-feature="diagram-preset-tools">Contesto</label>
+              <select id="diagramPresetContextSelect" data-feature="diagram-preset-tools">
                 <option value="all">Tutti</option>
                 <option value="authoring">Authoring</option>
                 <option value="review">Review</option>
                 <option value="validation">Validation</option>
               </select>
-              <button class="ghost" id="diagramSavePresetBtn">Salva preset</button>
-              <button class="ghost" id="diagramDeletePresetBtn">Elimina preset</button>
-              <button class="ghost" id="diagramSetPresetOwnerBtn">Owner preset</button>
-              <button class="ghost" id="diagramReviewPresetBtn">Approva/Riapri</button>
-              <button class="ghost" id="diagramExportPresetsBtn">Export preset</button>
-              <button class="ghost" id="diagramImportPresetsBtn">Import preset</button>
+              <button class="ghost" id="diagramSavePresetBtn" data-feature="diagram-preset-tools">Salva preset</button>
+              <button class="ghost" id="diagramDeletePresetBtn" data-feature="diagram-preset-tools">Elimina preset</button>
+              <button class="ghost" id="diagramSetPresetOwnerBtn" data-feature="diagram-preset-tools">Owner preset</button>
+              <button class="ghost" id="diagramReviewPresetBtn" data-feature="diagram-preset-tools">Approva/Riapri</button>
+              <button class="ghost" id="diagramExportPresetsBtn" data-feature="diagram-preset-tools">Export preset</button>
+              <button class="ghost" id="diagramImportPresetsBtn" data-feature="diagram-preset-tools">Import preset</button>
               <button class="ghost" id="diagramResetBtn">Reset vista</button>
             </div>
-            <div class="status" id="diagramPresetMeta">Preset: standard</div>
+            <div class="status" id="diagramPresetMeta" data-feature="diagram-preset-tools">Preset: standard</div>
             <div id="diagramToolbar" class="diagram-toolbar">
               <button class="ghost" id="diagramAddClassBtn">+ Classe dal diagramma</button>
               <button class="ghost" id="diagramAddRelationBtn">+ Relazione dal diagramma</button>
@@ -1627,6 +1649,10 @@
             <input id="presetFileInput" type="file" accept=".json,application/json" style="display: none" />
             <input id="catalogPresetFileInput" type="file" accept=".json,application/json" style="display: none" />
             <input id="collabBundleFileInput" type="file" accept=".json,application/json" style="display: none" />
+            <div id="iliTransferProgressWrap" class="ili-transfer-progress" hidden>
+              <div id="iliTransferProgressStatus" class="status">Transfer .ili: idle</div>
+              <progress id="iliTransferProgressBar" max="100" value="0"></progress>
+            </div>
             <div class="diag-tools">
               <select id="diagLevelFilter">
                 <option value="all">Tutti i livelli</option>
@@ -1827,7 +1853,41 @@
     <script>
       const ribbonTabs = document.querySelectorAll('.ribbon-tab');
       const ribbonPanels = document.querySelectorAll('.ribbon-panel');
+      const appRibbon = document.querySelector('.app-ribbon');
       const ribbonButtons = document.querySelectorAll('.ribbon-button');
+      const COLLAB_TOOLS_DEFINED = false;
+      const DIAGRAM_PRESET_TOOLS_DEFINED = false;
+
+      function applyCollabTabVisibility() {
+        if (!appRibbon) return;
+        const collabTab = appRibbon.querySelector('.ribbon-tab[data-tab="collab"]');
+        const collabPanel = appRibbon.querySelector('.ribbon-panel[data-panel="collab"]');
+        if (COLLAB_TOOLS_DEFINED) {
+          if (collabTab) collabTab.hidden = false;
+          if (collabPanel) collabPanel.hidden = false;
+          return;
+        }
+
+        if (collabTab) collabTab.hidden = true;
+        if (collabPanel) collabPanel.hidden = true;
+
+        const collabWasActive =
+          (collabTab && collabTab.classList.contains('active')) ||
+          (collabPanel && collabPanel.classList.contains('active'));
+        if (!collabWasActive) return;
+
+        const homeTab = appRibbon.querySelector('.ribbon-tab[data-tab="home"]');
+        ribbonTabs.forEach((item) => item.classList.toggle('active', item === homeTab));
+        ribbonPanels.forEach((panel) => {
+          panel.classList.toggle('active', panel.dataset.panel === 'home');
+        });
+      }
+
+      function applyDiagramPresetToolsVisibility() {
+        document.querySelectorAll('[data-feature="diagram-preset-tools"]').forEach((element) => {
+          element.hidden = !DIAGRAM_PRESET_TOOLS_DEFINED;
+        });
+      }
 
       const panelContextMenu = document.createElement('div');
       panelContextMenu.className = 'panel-context-menu';
@@ -1906,9 +1966,14 @@
           const diagramSections = [
             buildSection(t('ctx.section.insert'), ['diagramAddClassBtn', 'diagramAddRelationBtn']),
             buildSection(t('ctx.section.view'), ['diagramAutoLayoutBtn', 'diagramFitBtn', 'diagramToggleAttrsBtn', 'diagramResetBtn']),
-            buildSection(t('ctx.section.layout'), ['diagramSnapAnchorsBtn', 'diagramLockLayoutBtn', 'diagramLockNodesBtn', 'diagramLockRelationsBtn']),
-            buildSection(t('ctx.section.preset'), ['diagramSavePresetBtn', 'diagramDeletePresetBtn', 'diagramSetPresetOwnerBtn', 'diagramReviewPresetBtn', 'diagramExportPresetsBtn', 'diagramImportPresetsBtn'])
+            buildSection(t('ctx.section.layout'), ['diagramSnapAnchorsBtn', 'diagramLockLayoutBtn', 'diagramLockNodesBtn', 'diagramLockRelationsBtn'])
           ].filter(Boolean);
+          if (DIAGRAM_PRESET_TOOLS_DEFINED) {
+            const presetSection = buildSection(t('ctx.section.preset'), ['diagramSavePresetBtn', 'diagramDeletePresetBtn', 'diagramSetPresetOwnerBtn', 'diagramReviewPresetBtn', 'diagramExportPresetsBtn', 'diagramImportPresetsBtn']);
+            if (presetSection) {
+              diagramSections.push(presetSection);
+            }
+          }
           sections.push(...diagramSections);
         } else if (panel.id === 'structurePanel') {
           const structureSections = [
@@ -2068,6 +2133,9 @@
           });
         });
       });
+
+      applyCollabTabVisibility();
+      applyDiagramPresetToolsVisibility();
 
       function triggerDomAction(actionName, sourceButton = null) {
         if (!actionName) return;
@@ -2320,6 +2388,9 @@
       const diagramExportPresetsBtn = document.getElementById("diagramExportPresetsBtn");
       const diagramImportPresetsBtn = document.getElementById("diagramImportPresetsBtn");
       const diagramPresetMeta = document.getElementById("diagramPresetMeta");
+      const iliTransferProgressWrap = document.getElementById("iliTransferProgressWrap");
+      const iliTransferProgressStatus = document.getElementById("iliTransferProgressStatus");
+      const iliTransferProgressBar = document.getElementById("iliTransferProgressBar");
       const kpiT1Line = document.getElementById("kpiT1Line");
       const kpiT2Line = document.getElementById("kpiT2Line");
       const kpiT3Line = document.getElementById("kpiT3Line");
@@ -3355,7 +3426,7 @@
         }
 
         if (diagramVisualTools) diagramVisualTools.style.display = textual ? "none" : "flex";
-        if (diagramPresetMeta) diagramPresetMeta.style.display = textual ? "none" : "block";
+        if (diagramPresetMeta) diagramPresetMeta.style.display = (!DIAGRAM_PRESET_TOOLS_DEFINED || textual) ? "none" : "block";
         if (diagramToolbar) diagramToolbar.style.display = textual ? "none" : "flex";
         if (diagramStage) diagramStage.style.display = textual ? "none" : "block";
         if (diagramMinimapWrap) diagramMinimapWrap.style.display = textual ? "none" : "block";
@@ -3431,6 +3502,35 @@
 
       const RECENT_PROJECTS_KEY = "imc_recent_projects";
       const AUTOSAVE_KEY = "imc_autosave_snapshot_v1";
+      let iliTransferProgressHideTimer = null;
+
+      function setIliTransferProgress(visible, statusText, percent) {
+        if (!iliTransferProgressWrap || !iliTransferProgressBar || !iliTransferProgressStatus) return;
+        if (iliTransferProgressHideTimer) {
+          clearTimeout(iliTransferProgressHideTimer);
+          iliTransferProgressHideTimer = null;
+        }
+
+        iliTransferProgressWrap.hidden = !visible;
+        if (!visible) return;
+
+        iliTransferProgressStatus.textContent = statusText || "Transfer .ili in corso";
+        if (Number.isFinite(percent)) {
+          iliTransferProgressBar.value = Math.max(0, Math.min(100, Number(percent)));
+        } else {
+          iliTransferProgressBar.removeAttribute("value");
+        }
+      }
+
+      function closeIliTransferProgress(delayMs = 500) {
+        if (!iliTransferProgressWrap) return;
+        if (iliTransferProgressHideTimer) {
+          clearTimeout(iliTransferProgressHideTimer);
+        }
+        iliTransferProgressHideTimer = setTimeout(() => {
+          setIliTransferProgress(false, "", 0);
+        }, delayMs);
+      }
 
       function updateDiagramTextSyncBadge() {
         if (!diagramTextSyncBadge) return;
@@ -6409,9 +6509,9 @@
           return byType && byText;
         }
 
-        function appendGroup(title) {
+        function appendGroup(title, extraClass) {
           const li = document.createElement("li");
-          li.className = "tree-group";
+          li.className = `tree-group ${extraClass || ""}`.trim();
           li.textContent = title;
           structureTree.appendChild(li);
         }
@@ -6519,7 +6619,7 @@
         appendItem({ path: "model", label: `MODEL ${coreState.model.model_name}`, kind: "model" });
 
         if (Array.isArray(coreState.model.imports) && coreState.model.imports.length > 0) {
-          appendGroup("Imports");
+          appendGroup("Imports", "subgroup");
           for (const importName of coreState.model.imports) {
             appendItem({
               path: selectionPathOf("import", importName),
@@ -6530,11 +6630,40 @@
           }
         }
 
-        appendGroup("Topics");
         const knownTopicNames = new Set(coreState.model.topics.map((topic) => topic.name));
+        const unscopedDomains = coreState.model.domains.filter((domain) => {
+          const domainTopic = String(domain.topic || "").trim();
+          return !domainTopic || !knownTopicNames.has(domainTopic);
+        });
+        if (unscopedDomains.length > 0) {
+          appendGroup("Domains", "subgroup");
+          for (const domain of unscopedDomains) {
+            const values = Array.isArray(domain.values) ? domain.values : [];
+            const suffix = values.length ? ` (${values.length} values)` : ` : ${domain.type || "TEXT"}`;
+            appendItem({
+              path: selectionPathOf("domain", domain.name),
+              label: `DOMAIN ${domain.name}${suffix}`,
+              kind: "domain",
+              extraClass: "subtopic"
+            });
+            for (const value of values) {
+              appendItem({
+                path: selectionPathOf("domainval", domain.name, value),
+                label: `VAL ${value}`,
+                kind: "domain",
+                extraClass: "attr"
+              });
+            }
+          }
+        }
+
+        appendGroup("Topics");
         for (const topic of coreState.model.topics) {
           appendItem({ path: selectionPathOf("topic", topic.name), label: `TOPIC ${topic.name}`, kind: "topic" });
           const topicDomains = coreState.model.domains.filter((domain) => String(domain.topic || "").trim() === topic.name);
+          if (topicDomains.length > 0) {
+            appendGroup(`Domains (${topic.name})`, "subgroup");
+          }
           for (const domain of topicDomains) {
             const values = Array.isArray(domain.values) ? domain.values : [];
             const suffix = values.length ? ` (${values.length} values)` : ` : ${domain.type || "TEXT"}`;
@@ -6560,27 +6689,6 @@
               kind: "subtopic",
               extraClass: "subtopic"
             });
-          }
-        }
-
-        const unscopedDomains = coreState.model.domains.filter((domain) => {
-          const domainTopic = String(domain.topic || "").trim();
-          return !domainTopic || !knownTopicNames.has(domainTopic);
-        });
-        if (unscopedDomains.length > 0) {
-          appendGroup("Domains");
-          for (const domain of unscopedDomains) {
-            const values = Array.isArray(domain.values) ? domain.values : [];
-            const suffix = values.length ? ` (${values.length} values)` : ` : ${domain.type || "TEXT"}`;
-            appendItem({ path: selectionPathOf("domain", domain.name), label: `DOMAIN ${domain.name}${suffix}`, kind: "domain" });
-            for (const value of values) {
-              appendItem({
-                path: selectionPathOf("domainval", domain.name, value),
-                label: `VAL ${value}`,
-                kind: "domain",
-                extraClass: "attr"
-              });
-            }
           }
         }
 
@@ -7528,15 +7636,22 @@
       }
 
       async function exportIli() {
+        setIliTransferProgress(true, "Export .ili: preparazione richiesta", 10);
         try {
+          setIliTransferProgress(true, "Export .ili: generazione modello", 55);
           const payload = await postJson("/api/model/export/ili", deepClone(coreState.model));
+          setIliTransferProgress(true, "Export .ili: finalizzazione output", 90);
           output.textContent = payload.interlis || "";
           lastFileName = payload.file_name || "model.ili";
           renderIssues(payload.issues || []);
           setDirty(false);
+          setIliTransferProgress(true, "Export .ili completato", 100);
+          closeIliTransferProgress();
         } catch (err) {
           output.textContent = "";
           renderIssues(err.payload?.issues || [{ level: "error", code: "EXPORT_ERROR", message: err.message || t("error.export") }]);
+          setIliTransferProgress(true, "Export .ili fallito", 100);
+          closeIliTransferProgress(900);
         }
       }
 
@@ -7646,41 +7761,58 @@
         iliFileInput.click();
       }
 
-      async function importIliObject(interlisText) {
+      async function importIliObject(interlisText, options = {}) {
+        if (!options.keepExistingProgress) {
+          setIliTransferProgress(true, "Import .ili: preparazione richiesta", 10);
+        } else {
+          setIliTransferProgress(true, "Import .ili: parsing modello", 35);
+        }
         const currentModel = deepClone(coreState.model);
         try {
+          setIliTransferProgress(true, "Import .ili: parsing modello", 55);
           const payload = await postJson("/api/model/import/ili", {
             interlis: interlisText,
             current_model: currentModel,
             on_conflict: "reject"
           });
+          setIliTransferProgress(true, "Import .ili: sincronizzazione editor", 80);
           dispatch({ type: "SET_MODEL", model: payload.model, resetSelection: true, source: "ili-import" }, { markDirty: true });
           await syncDiagramTextEditorFromModel("ili-import", { force: true, preferredText: interlisText });
           renderIssues(payload.issues || []);
           output.textContent = "";
+          setIliTransferProgress(true, "Import .ili completato", 100);
+          closeIliTransferProgress();
         } catch (err) {
           const conflict = err.payload?.issues?.some((i) => i.code === "ILI_MODEL_CONFLICT");
           if (!conflict) {
             renderIssues(err.payload?.issues || [{ level: "error", code: "ILI_LOAD_ERROR", message: err.message || t("error.importIli") }]);
             output.textContent = "";
+            setIliTransferProgress(true, "Import .ili fallito", 100);
+            closeIliTransferProgress(900);
             return;
           }
 
           const confirmed = window.confirm(t("confirm.modelConflictOverwrite"));
           if (!confirmed) {
             renderIssues(err.payload?.issues || []);
+            setIliTransferProgress(true, "Import .ili annullato", 100);
+            closeIliTransferProgress(700);
             return;
           }
 
+          setIliTransferProgress(true, "Import .ili: overwrite in corso", 70);
           const payload = await postJson("/api/model/import/ili", {
             interlis: interlisText,
             current_model: currentModel,
             on_conflict: "overwrite"
           });
+          setIliTransferProgress(true, "Import .ili: sincronizzazione editor", 85);
           dispatch({ type: "SET_MODEL", model: payload.model, resetSelection: true, source: "ili-import-overwrite" }, { markDirty: true });
           await syncDiagramTextEditorFromModel("ili-import-overwrite", { force: true, preferredText: interlisText });
           renderIssues(payload.issues || []);
           output.textContent = "";
+          setIliTransferProgress(true, "Import .ili completato", 100);
+          closeIliTransferProgress();
         }
       }
 
@@ -8670,10 +8802,13 @@
         if (!file) return;
 
         try {
+          setIliTransferProgress(true, `Import .ili: lettura file (${file.name})`, 20);
           const text = await file.text();
-          await importIliObject(text);
+          await importIliObject(text, { keepExistingProgress: true });
         } catch (err) {
           renderIssues(err.payload?.issues || [{ level: "error", code: "ILI_LOAD_ERROR", message: err.message || t("error.importIli") }]);
+          setIliTransferProgress(true, "Import .ili fallito", 100);
+          closeIliTransferProgress(900);
         }
       });
 
