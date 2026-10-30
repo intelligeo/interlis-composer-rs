@@ -13,4 +13,8 @@ services:
       - key: DEFAULT_MODEL_LANG
         value: de
       - key: ILI2C_ENABLED
-        value: "false"
+        value: "true"
+      - key: ILI2C_BIN
+        value: java
+      - key: ILI2C_ARGS
+        value: -jar /tools/ili2c.jar
