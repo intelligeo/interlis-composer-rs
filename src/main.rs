@@ -2173,11 +2173,20 @@ fn validate_class(class: &Class, issues: &mut Vec<ValidationIssue>) {
             ));
         }
 
-        if !model::is_supported_type(&attr.r#type) {
+        if attr.r#type.trim().is_empty() {
             issues.push(error_issue_at(
-                "ATTRIBUTE_TYPE_UNSUPPORTED",
+                "ATTRIBUTE_TYPE_EMPTY",
                 &format!(
-                    "Attribute '{}.{}' has unsupported type '{}'; supported types are TEXT, BOOLEAN, NUMERIC, DATE, TIMEOFDAY, DATETIME, UUID",
+                    "Attribute '{}.{}' has empty type; provide a valid INTERLIS type expression",
+                    class.name, attr.name
+                ),
+                Some(attr_path.clone()),
+            ));
+        } else if !model::is_supported_type(&attr.r#type) {
+            issues.push(warn_issue_at(
+                "ATTRIBUTE_TYPE_CUSTOM",
+                &format!(
+                    "Attribute '{}.{}' uses type '{}': accepted as custom INTERLIS type (internal editor has limited built-in type mapping)",
                     class.name, attr.name, attr.r#type
                 ),
                 Some(attr_path.clone()),
@@ -2207,11 +2216,20 @@ fn validate_domains(domains: &[Domain], issues: &mut Vec<ValidationIssue>) {
                 Some(path.clone()),
             ));
         }
-        if !model::is_supported_type(&domain.r#type) {
+        if domain.r#type.trim().is_empty() {
             issues.push(error_issue_at(
-                "DOMAIN_TYPE_UNSUPPORTED",
+                "DOMAIN_TYPE_EMPTY",
                 &format!(
-                    "Domain '{}' has unsupported type '{}'; supported types are TEXT, BOOLEAN, NUMERIC, DATE, TIMEOFDAY, DATETIME, UUID",
+                    "Domain '{}' has empty type; provide a valid INTERLIS type expression",
+                    domain.name
+                ),
+                Some(path.clone()),
+            ));
+        } else if !model::is_supported_type(&domain.r#type) {
+            issues.push(warn_issue_at(
+                "DOMAIN_TYPE_CUSTOM",
+                &format!(
+                    "Domain '{}' uses type '{}': accepted as custom INTERLIS type (internal editor has limited built-in type mapping)",
                     domain.name, domain.r#type
                 ),
                 Some(path),
