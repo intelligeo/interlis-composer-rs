@@ -1104,6 +1104,84 @@
         flex-wrap: wrap;
         gap: 0.35rem;
       }
+
+      .ili-editor-shell {
+        display: grid;
+        grid-template-columns: 3.2rem 1fr;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+        background: rgba(8, 15, 30, 0.78);
+      }
+
+      .ili-line-numbers {
+        margin: 0;
+        padding: 0.7rem 0.55rem;
+        background: rgba(26, 37, 58, 0.92);
+        color: #8ea0b8;
+        text-align: right;
+        user-select: none;
+        border-right: 1px solid var(--line);
+        white-space: pre;
+        overflow: hidden;
+        font: 0.88rem/1.45 Consolas, "Courier New", monospace;
+      }
+
+      .ili-editor-code-wrap {
+        position: relative;
+        min-height: 360px;
+      }
+
+      .ili-highlight,
+      .ili-text-input {
+        margin: 0;
+        padding: 0.7rem 0.85rem;
+        width: 100%;
+        min-height: 360px;
+        border: 0;
+        font: 0.88rem/1.45 Consolas, "Courier New", monospace;
+        white-space: pre;
+        overflow: auto;
+        tab-size: 2;
+      }
+
+      .ili-highlight {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        color: #e8f1ff;
+      }
+
+      .ili-text-input {
+        position: relative;
+        z-index: 2;
+        resize: vertical;
+        background: transparent;
+        color: transparent;
+        caret-color: #eaf2ff;
+        text-shadow: 0 0 0 #eaf2ff;
+      }
+
+      .ili-text-input:focus {
+        outline: 2px solid rgba(77, 163, 255, 0.35);
+        outline-offset: -2px;
+      }
+
+      .ili-editor-help {
+        margin-top: 0.45rem;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      .ili-token-comment { color: var(--ili-color-comment, #00b300); font-style: italic; }
+      .ili-token-string { color: var(--ili-color-delimiter1, #ff00ff); }
+      .ili-token-keyword1 { color: var(--ili-color-keyword1, #0000ff); }
+      .ili-token-keyword2 { color: var(--ili-color-keyword2, #008000); }
+      .ili-token-keyword3 { color: var(--ili-color-keyword3, #ff0000); }
+      .ili-token-keyword4 { color: var(--ili-color-keyword4, #800080); }
+      .ili-token-keyword5 { color: var(--ili-color-keyword5, #000000); }
+      .ili-token-number { color: var(--ili-color-number, #ff8000); }
+      .ili-token-operator { color: var(--ili-color-operator, #ff0000); }
     </style>
   </head>
   <body>
@@ -1443,12 +1521,21 @@
             </div>
             <div class="status" id="diagramStatus">Diagram: seleziona una classe dal tree o dal diagramma</div>
             <div id="diagramTextEditorWrap" style="display:none;">
-              <textarea id="diagramTextEditorInput" style="width:100%; min-height:360px; resize:vertical; font-family:Consolas, 'Courier New', monospace;"></textarea>
+              <div id="diagramIliEditorShell" class="ili-editor-shell">
+                <pre id="diagramTextLineNumbers" class="ili-line-numbers" aria-hidden="true">1</pre>
+                <div class="ili-editor-code-wrap">
+                  <pre id="diagramTextHighlight" class="ili-highlight" aria-hidden="true"></pre>
+                  <textarea id="diagramTextEditorInput" class="ili-text-input" spellcheck="false"></textarea>
+                </div>
+              </div>
+              <div class="ili-editor-help">
+                INTERLIS UDL source: <a href="interlis_byStefanBurckhardt.xml" target="_blank" rel="noopener noreferrer">interlis_byStefanBurckhardt.xml</a>
+              </div>
               <div class="actions" style="margin-top:0.6rem;">
                 <button class="primary" id="diagramTextApplyBtn" type="button">Apply Text Changes</button>
                 <button class="ghost" id="diagramTextResetBtn" type="button">Reset from Model</button>
               </div>
-              <div class="status" id="diagramTextStatus">Textual editor: JSON model representation</div>
+              <div class="status" id="diagramTextStatus">Textual editor: INTERLIS model (.ili) with row numbering</div>
             </div>
           </div>
         </article>
@@ -2148,6 +2235,9 @@
       const diagramVisualTools = document.getElementById("diagramVisualTools");
       const diagramToolbar = document.getElementById("diagramToolbar");
       const diagramTextEditorWrap = document.getElementById("diagramTextEditorWrap");
+      const diagramIliEditorShell = document.getElementById("diagramIliEditorShell");
+      const diagramTextLineNumbers = document.getElementById("diagramTextLineNumbers");
+      const diagramTextHighlight = document.getElementById("diagramTextHighlight");
       const diagramTextEditorInput = document.getElementById("diagramTextEditorInput");
       const diagramTextApplyBtn = document.getElementById("diagramTextApplyBtn");
       const diagramTextResetBtn = document.getElementById("diagramTextResetBtn");
@@ -2980,11 +3070,188 @@
         if (statusBarSync) statusBarSync.textContent = syncMeta?.dataset?.syncMessage || t("status.idle");
       }
 
-      function setDiagramTextEditorSnapshot() {
+      function escapeHtml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      function regexEscape(value) {
+        return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+
+      function hexToCssColor(value) {
+        const trimmed = String(value || "").trim();
+        if (!/^[0-9a-fA-F]{6}$/.test(trimmed)) return "";
+        return `#${trimmed}`;
+      }
+
+      function parseUdKeywordList(raw) {
+        return String(raw || "")
+          .split(/\r?\n/)
+          .map((item) => item.trim())
+          .filter((item) => item.length > 0);
+      }
+
+      function applyInterlisStyleColors(styleByName) {
+        if (!diagramIliEditorShell || !styleByName) return;
+        const setVarFromStyle = (varName, styleName) => {
+          const color = hexToCssColor(styleByName[styleName]);
+          if (color) {
+            diagramIliEditorShell.style.setProperty(varName, color);
+          }
+        };
+
+        setVarFromStyle("--ili-color-keyword1", "KEYWORDS1");
+        setVarFromStyle("--ili-color-keyword2", "KEYWORDS2");
+        setVarFromStyle("--ili-color-keyword3", "KEYWORDS3");
+        setVarFromStyle("--ili-color-keyword4", "KEYWORDS4");
+        setVarFromStyle("--ili-color-keyword5", "KEYWORDS5");
+        setVarFromStyle("--ili-color-comment", "COMMENTS");
+        setVarFromStyle("--ili-color-number", "NUMBERS");
+        setVarFromStyle("--ili-color-operator", "OPERATORS");
+        setVarFromStyle("--ili-color-delimiter1", "DELIMITERS1");
+      }
+
+      async function loadInterlisUdSyntax() {
+        if (interlisSyntax.loaded || interlisSyntax.loading) return;
+        interlisSyntax.loading = true;
+        try {
+          const response = await fetch("interlis_byStefanBurckhardt.xml", { cache: "no-store" });
+          if (!response.ok) throw new Error(`UDL fetch failed: ${response.status}`);
+          const xmlText = await response.text();
+          const xmlDoc = new DOMParser().parseFromString(xmlText, "application/xml");
+
+          const readKeywords = (name) => {
+            const node = xmlDoc.querySelector(`KeywordLists > Keywords[name=\"${name}\"]`);
+            return parseUdKeywordList(node?.textContent || "");
+          };
+
+          interlisSyntax.keywords1 = readKeywords("Keywords1");
+          interlisSyntax.keywords2 = readKeywords("Keywords2");
+          interlisSyntax.keywords3 = readKeywords("Keywords3");
+          interlisSyntax.keywords4 = readKeywords("Keywords4");
+          interlisSyntax.keywords5 = readKeywords("Keywords5");
+          interlisSyntax.operators = parseUdKeywordList(xmlDoc.querySelector("KeywordLists > Keywords[name=\"Operators1\"]")?.textContent || "");
+
+          const styleByName = {};
+          xmlDoc.querySelectorAll("Styles > WordsStyle").forEach((styleNode) => {
+            const styleName = styleNode.getAttribute("name") || "";
+            const fgColor = styleNode.getAttribute("fgColor") || "";
+            if (styleName) styleByName[styleName] = fgColor;
+          });
+
+          applyInterlisStyleColors(styleByName);
+          interlisSyntax.loaded = true;
+        } catch (_) {
+          interlisSyntax.keywords1 = ["MODEL", "TOPIC", "CLASS", "DOMAIN", "ASSOCIATION", "END", "IMPORTS", "INTERLIS", "VERSION", "AT"];
+          interlisSyntax.keywords2 = ["--", "{1}", "{0..*}", "{0..1}"];
+          interlisSyntax.keywords3 = ["->", "SUPERCLASS"];
+          interlisSyntax.keywords4 = ["AGGREGATION", "JOIN", "UNION"];
+          interlisSyntax.keywords5 = ["EXISTS", "LANGUAGE", "SELECTION"];
+          interlisSyntax.operators = ["(", ")", "*", ",", ".", ":", ";", "{", "}", "="];
+          interlisSyntax.loaded = true;
+        } finally {
+          interlisSyntax.loading = false;
+        }
+      }
+
+      function wrapWithClass(values, className, value) {
+        if (!values || values.length === 0) return value;
+        const escapedValues = values
+          .map((token) => token.trim())
+          .filter((token) => token.length > 0)
+          .map((token) => regexEscape(token));
+        if (escapedValues.length === 0) return value;
+        const pattern = new RegExp(`\\b(?:${escapedValues.join("|")})\\b`, "g");
+        return value.replace(pattern, (match) => `<span class=\"${className}\">${match}</span>`);
+      }
+
+      function wrapOperators(operators, value) {
+        if (!operators || operators.length === 0) return value;
+        const escaped = operators
+          .map((token) => token.trim())
+          .filter((token) => token.length > 0)
+          .map((token) => regexEscape(token))
+          .sort((a, b) => b.length - a.length);
+        if (escaped.length === 0) return value;
+        return value.replace(new RegExp(`(?:${escaped.join("|")})`, "g"), (match) => `<span class=\"ili-token-operator\">${match}</span>`);
+      }
+
+      function highlightInterlis(value) {
+        const placeholders = {};
+        const makePlaceholderKey = (idx) => {
+          let n = idx;
+          let suffix = "";
+          do {
+            suffix = String.fromCharCode(97 + (n % 26)) + suffix;
+            n = Math.floor(n / 26) - 1;
+          } while (n >= 0);
+          return `@@ilitok_${suffix}@@`;
+        };
+        let html = escapeHtml(value || "");
+
+        html = html.replace(/\/\*[\s\S]*?\*\//g, (match) => {
+          const key = makePlaceholderKey(Object.keys(placeholders).length);
+          placeholders[key] = `<span class=\"ili-token-comment\">${match}</span>`;
+          return key;
+        });
+
+        html = html.replace(/!![^\n]*/g, (match) => {
+          const key = makePlaceholderKey(Object.keys(placeholders).length);
+          placeholders[key] = `<span class=\"ili-token-comment\">${match}</span>`;
+          return key;
+        });
+
+        html = html.replace(/"([^"\\]|\\.)*"/g, (match) => {
+          const key = makePlaceholderKey(Object.keys(placeholders).length);
+          placeholders[key] = `<span class=\"ili-token-string\">${match}</span>`;
+          return key;
+        });
+
+        html = html.replace(/\b\d+(?:\.\d+)?\b/g, (match) => `<span class=\"ili-token-number\">${match}</span>`);
+
+        html = wrapWithClass(interlisSyntax.keywords1, "ili-token-keyword1", html);
+        html = wrapWithClass(interlisSyntax.keywords2, "ili-token-keyword2", html);
+        html = wrapWithClass(interlisSyntax.keywords3, "ili-token-keyword3", html);
+        html = wrapWithClass(interlisSyntax.keywords4, "ili-token-keyword4", html);
+        html = wrapWithClass(interlisSyntax.keywords5, "ili-token-keyword5", html);
+        return html.replace(/@@ilitok_[a-z]+@@/g, (token) => {
+          return placeholders[token] || "";
+        });
+      }
+
+      function renderDiagramTextEditorDecorations() {
         if (!diagramTextEditorInput) return;
-        diagramTextEditorInput.value = JSON.stringify(coreState.model, null, 2);
+        const rawText = diagramTextEditorInput.value || "";
+        const lineCount = Math.max(1, rawText.split("\n").length);
+        if (diagramTextLineNumbers) {
+          const rows = [];
+          for (let i = 1; i <= lineCount; i += 1) rows.push(String(i));
+          diagramTextLineNumbers.textContent = rows.join("\n");
+          diagramTextLineNumbers.scrollTop = diagramTextEditorInput.scrollTop;
+        }
+        if (diagramTextHighlight) {
+          const withCursorLine = rawText.endsWith("\n") ? `${rawText} ` : rawText;
+          diagramTextHighlight.innerHTML = highlightInterlis(withCursorLine);
+          diagramTextHighlight.scrollTop = diagramTextEditorInput.scrollTop;
+          diagramTextHighlight.scrollLeft = diagramTextEditorInput.scrollLeft;
+        }
+      }
+
+      async function setDiagramTextEditorSnapshot() {
+        if (!diagramTextEditorInput) return;
+        await loadInterlisUdSyntax();
+        try {
+          const payload = await postJson("/api/model/export/ili", deepClone(coreState.model));
+          diagramTextEditorInput.value = payload?.interlis || "";
+        } catch (_) {
+          diagramTextEditorInput.value = "";
+        }
+        renderDiagramTextEditorDecorations();
         if (diagramTextStatus) {
-          diagramTextStatus.textContent = "Textual editor: JSON model representation";
+          diagramTextStatus.textContent = "Textual editor: INTERLIS model (.ili) with row numbering";
         }
       }
 
@@ -3045,6 +3312,16 @@
       let lastDocsMarkdown = "";
       let lastDocsFileName = "";
       let lastCollabBundleModel = null;
+      const interlisSyntax = {
+        loaded: false,
+        loading: false,
+        keywords1: [],
+        keywords2: [],
+        keywords3: [],
+        keywords4: [],
+        keywords5: [],
+        operators: []
+      };
       const diagramRelationOffsets = {};
       const diagramCustomPresets = {};
       const uxKpi = {
@@ -3061,6 +3338,19 @@
 
       const RECENT_PROJECTS_KEY = "imc_recent_projects";
       const AUTOSAVE_KEY = "imc_autosave_snapshot_v1";
+
+      if (diagramTextEditorInput) {
+        diagramTextEditorInput.addEventListener("input", () => {
+          renderDiagramTextEditorDecorations();
+        });
+        diagramTextEditorInput.addEventListener("scroll", () => {
+          if (diagramTextLineNumbers) diagramTextLineNumbers.scrollTop = diagramTextEditorInput.scrollTop;
+          if (diagramTextHighlight) {
+            diagramTextHighlight.scrollTop = diagramTextEditorInput.scrollTop;
+            diagramTextHighlight.scrollLeft = diagramTextEditorInput.scrollLeft;
+          }
+        });
+      }
 
       const EVENTS = {
         MODEL_CHANGED: "MODEL_CHANGED",
@@ -8168,21 +8458,17 @@
         });
       }
       if (diagramTextApplyBtn) {
-        diagramTextApplyBtn.addEventListener("click", () => {
+        diagramTextApplyBtn.addEventListener("click", async () => {
           try {
-            const parsed = JSON.parse(diagramTextEditorInput.value);
-            dispatch(
-              { type: "SET_MODEL", model: parsed, resetSelection: false, source: "diagram-text-editor" },
-              { syncText: false, markDirty: true }
-            );
+            await importIliObject(diagramTextEditorInput.value || "");
             if (diagramTextStatus) {
-              diagramTextStatus.textContent = "Textual editor: changes applied";
+              diagramTextStatus.textContent = "Textual editor: INTERLIS changes applied";
             }
             scheduleValidation();
           } catch (err) {
-            renderIssues([{ level: "error", code: "TEXT_MODEL_PARSE_ERROR", message: err.message || "Invalid JSON in textual model editor" }]);
+            renderIssues([{ level: "error", code: "TEXT_MODEL_PARSE_ERROR", message: err.message || "Invalid INTERLIS in textual model editor" }]);
             if (diagramTextStatus) {
-              diagramTextStatus.textContent = "Textual editor: invalid JSON";
+              diagramTextStatus.textContent = "Textual editor: invalid INTERLIS";
             }
           }
         });
