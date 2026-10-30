@@ -25,7 +25,7 @@ use tower_http::{
     trace::TraceLayer,
 };
 use tracing::info;
-use tracing_appender::non_blocking::WorkerGuard;
+use tracing_appender::non_blocking::{NonBlocking, WorkerGuard};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Clone)]
@@ -204,10 +204,10 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|_| "interlis_composer_rs=info,tower_http=info".to_string());
 
     let mut _file_log_guard: Option<WorkerGuard> = None;
-    let file_layer = match setup_file_logger() {
-        Ok((layer, guard, path)) => {
+    let file_logger = match setup_file_logger() {
+        Ok((writer, guard, path)) => {
             _file_log_guard = Some(guard);
-            Some((layer, path))
+            Some((writer, path))
         }
         Err(err) => {
             eprintln!("[logging] file logger disabled: {}", err);
@@ -215,16 +215,25 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    let stdout_layer = fmt::layer().with_target(true);
-    let registry = tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(env_filter))
-        .with(stdout_layer);
+    if let Some((file_writer, log_path)) = file_logger {
+        let file_layer = fmt::layer()
+            .with_ansi(false)
+            .with_writer(file_writer)
+            .with_target(true)
+            .with_thread_ids(true)
+            .with_thread_names(true);
 
-    if let Some((file_layer, log_path)) = file_layer {
-        registry.with(file_layer).init();
+        tracing_subscriber::registry()
+            .with(tracing_subscriber::EnvFilter::new(env_filter))
+            .with(fmt::layer().with_target(true))
+            .with(file_layer)
+            .init();
         info!(log_file = %log_path, "file logging enabled");
     } else {
-        registry.init();
+        tracing_subscriber::registry()
+            .with(tracing_subscriber::EnvFilter::new(env_filter))
+            .with(fmt::layer().with_target(true))
+            .init();
     }
 
     let state = AppState {
@@ -1291,24 +1300,18 @@ fn tool_exec_error_issue(err: ToolExecError, node_path: &str, strict: bool) -> V
     }
 }
 
-fn setup_file_logger() -> Result<(impl tracing_subscriber::Layer<tracing_subscriber::Registry> + Send + Sync + 'static, WorkerGuard, String), String> {
+fn setup_file_logger() -> Result<(NonBlocking, WorkerGuard, String), String> {
     let log_dir = resolve_user_log_dir()?;
     fs::create_dir_all(&log_dir).map_err(|e| format!("unable to create log dir {}: {}", log_dir.display(), e))?;
 
     let file_appender = tracing_appender::rolling::daily(&log_dir, "interlis-composer-rs.log");
-    let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
-    let layer = fmt::layer()
-        .with_ansi(false)
-        .with_writer(non_blocking)
-        .with_target(true)
-        .with_thread_ids(true)
-        .with_thread_names(true);
+    let (writer, guard) = tracing_appender::non_blocking(file_appender);
 
     let full_path = log_dir
         .join("interlis-composer-rs.log")
         .to_string_lossy()
         .to_string();
-    Ok((layer, guard, full_path))
+    Ok((writer, guard, full_path))
 }
 
 fn resolve_user_log_dir() -> Result<PathBuf, String> {
