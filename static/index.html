@@ -1583,12 +1583,6 @@
         <article class="card diagram-card" id="diagramPanel" data-panel-name="diagramPanel">
           <h2>
             <span id="diagramPanelTitle">Diagram Editor</span>
-            <span class="panel-header-actions">
-              <span id="diagramZoomControls">
-                <label for="diagramZoomInput">Zoom</label>
-                <input id="diagramZoomInput" type="range" min="60" max="180" step="10" value="100" />
-              </span>
-            </span>
           </h2>
           <div class="content">
             <div id="diagramVisualTools" class="diag-tools">
@@ -1735,6 +1729,9 @@
           <span><span id="statusLastSyncLabel">Last sync:</span> <strong id="statusBarSync">idle</strong></span>
         </div>
       </div>
+
+      <input id="diagramZoomInput" type="range" min="60" max="180" step="10" value="100" hidden aria-hidden="true" />
+
       <article class="card" id="recentPanel" data-panel-name="recentPanel">
         <h2>Recent Projects</h2>
         <div class="content">
@@ -1970,6 +1967,9 @@
         diagramEmbeddedPanelHost.hidden = false;
         activeDiagramSectorPanelId = targetPanelId;
         updateDiagramSectorToggleButtons();
+        if (targetPanelId === "outputPanel") {
+          scheduleCrossPanelModelSync("output-panel-open");
+        }
         return true;
       }
 
@@ -7820,9 +7820,18 @@
           setIliTransferProgress(true, "Export .ili: generazione modello", 55);
           const payload = await postJson("/api/model/export/ili", deepClone(coreState.model));
           setIliTransferProgress(true, "Export .ili: finalizzazione output", 90);
-          output.textContent = payload.interlis || "";
+          const interlisText = String(payload.interlis || "");
+          output.textContent = interlisText;
           lastFileName = payload.file_name || "model.ili";
           renderIssues(payload.issues || []);
+          if (interlisText.trim()) {
+            const blob = new Blob([interlisText], { type: "text/plain;charset=utf-8" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = lastFileName;
+            a.click();
+            URL.revokeObjectURL(a.href);
+          }
           setDirty(false);
           setIliTransferProgress(true, "Export .ili completato", 100);
           closeIliTransferProgress();
