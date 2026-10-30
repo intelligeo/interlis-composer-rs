@@ -7,5 +7,5 @@ support_email: ask@intelligeo.ch
 build_date: 2026-10-29
 license: Apache License v2.0
 tools_core: Rust, Axum, Tokio, Serde, Tower HTTP, Tracing
-tools_interlis: ili2c, ilivalidator, iox-ili adapter integration
+tools_interlis: ili2c, ilivalidator, iox-ili adapter integration, INTERLIS UDL (Notepad++): interlis_byStefanBurckhardt.xml
 credits: Special thanks to Claude Eisenhut and the INTERLIS community for foundational work and reference tooling.

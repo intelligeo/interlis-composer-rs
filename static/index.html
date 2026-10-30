@@ -67,7 +67,6 @@
         padding: 0.2rem;
         border-radius: 12px;
         background: rgba(7, 20, 33, 0.58);
-        border: 1px solid rgba(125, 170, 214, 0.28);
         box-shadow: 0 10px 26px rgba(2, 6, 17, 0.42);
         backdrop-filter: blur(2px);
         pointer-events: none;
@@ -1167,12 +1166,6 @@
         outline-offset: -2px;
       }
 
-      .ili-editor-help {
-        margin-top: 0.45rem;
-        font-size: 0.82rem;
-        color: var(--muted);
-      }
-
       .ili-token-comment { color: var(--ili-color-comment, #00b300); font-style: italic; }
       .ili-token-string { color: var(--ili-color-delimiter1, #ff00ff); }
       .ili-token-keyword1 { color: var(--ili-color-keyword1, #0000ff); }
@@ -1182,6 +1175,49 @@
       .ili-token-keyword5 { color: var(--ili-color-keyword5, #000000); }
       .ili-token-number { color: var(--ili-color-number, #ff8000); }
       .ili-token-operator { color: var(--ili-color-operator, #ff0000); }
+
+      .sync-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        border: 1px solid rgba(141, 170, 201, 0.35);
+        font-size: 0.76rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+
+      .sync-badge::before {
+        content: "";
+        width: 0.45rem;
+        height: 0.45rem;
+        border-radius: 50%;
+        background: #93a9c3;
+        box-shadow: 0 0 0 3px rgba(147, 169, 195, 0.18);
+      }
+
+      .sync-badge.synced {
+        color: #d7ffe8;
+        border-color: rgba(52, 211, 153, 0.45);
+        background: rgba(34, 197, 94, 0.14);
+      }
+
+      .sync-badge.synced::before {
+        background: #2fd38d;
+        box-shadow: 0 0 0 3px rgba(47, 211, 141, 0.2);
+      }
+
+      .sync-badge.dirty {
+        color: #ffe8be;
+        border-color: rgba(245, 158, 11, 0.45);
+        background: rgba(245, 158, 11, 0.12);
+      }
+
+      .sync-badge.dirty::before {
+        background: #f5ad23;
+        box-shadow: 0 0 0 3px rgba(245, 173, 35, 0.22);
+      }
     </style>
   </head>
   <body>
@@ -1470,6 +1506,7 @@
           <h2>
             <span id="diagramPanelTitle">Diagram Editor</span>
             <span class="panel-header-actions">
+              <span id="diagramTextSyncBadge" class="sync-badge synced">Synced</span>
               <button class="ghost" id="diagramModeToggleBtn" type="button">Switch to Textual</button>
               <span id="diagramZoomControls">
                 <label for="diagramZoomInput">Zoom</label>
@@ -1527,9 +1564,6 @@
                   <pre id="diagramTextHighlight" class="ili-highlight" aria-hidden="true"></pre>
                   <textarea id="diagramTextEditorInput" class="ili-text-input" spellcheck="false"></textarea>
                 </div>
-              </div>
-              <div class="ili-editor-help">
-                INTERLIS UDL source: <a href="interlis_byStefanBurckhardt.xml" target="_blank" rel="noopener noreferrer">interlis_byStefanBurckhardt.xml</a>
               </div>
               <div class="actions" style="margin-top:0.6rem;">
                 <button class="primary" id="diagramTextApplyBtn" type="button">Apply Text Changes</button>
@@ -2231,6 +2265,7 @@
       const diagramMinimapWrap = document.getElementById("diagramMinimapWrap");
       const diagramZoomInput = document.getElementById("diagramZoomInput");
       const diagramZoomControls = document.getElementById("diagramZoomControls");
+      const diagramTextSyncBadge = document.getElementById("diagramTextSyncBadge");
       const diagramModeToggleBtn = document.getElementById("diagramModeToggleBtn");
       const diagramVisualTools = document.getElementById("diagramVisualTools");
       const diagramToolbar = document.getElementById("diagramToolbar");
@@ -3250,6 +3285,8 @@
           diagramTextEditorInput.value = "";
         }
         renderDiagramTextEditorDecorations();
+        diagramTextEditorDirty = false;
+        updateDiagramTextSyncBadge();
         if (diagramTextStatus) {
           diagramTextStatus.textContent = "Textual editor: INTERLIS model (.ili) with row numbering";
         }
@@ -3272,6 +3309,7 @@
         if (diagramStatus) diagramStatus.style.display = textual ? "none" : "block";
         if (diagramZoomControls) diagramZoomControls.style.display = textual ? "none" : "inline-flex";
         if (diagramTextEditorWrap) diagramTextEditorWrap.style.display = textual ? "block" : "none";
+        updateDiagramTextSyncBadge();
       }
 
       function setDiagramEditorMode(mode) {
@@ -3279,7 +3317,7 @@
         if (diagramEditorMode === nextMode) return;
         diagramEditorMode = nextMode;
         if (diagramEditorMode === "textual") {
-          setDiagramTextEditorSnapshot();
+          syncDiagramTextEditorFromModel("mode-switch", { force: true });
         }
         applyDiagramEditorModeUi();
         if (diagramEditorMode === "diagram") {
@@ -3307,6 +3345,7 @@
       let diagramPreset = "default";
       let diagramPresetContextFilter = "all";
       let diagramEditorMode = "diagram";
+      let diagramTextEditorDirty = false;
       let activeProseSectionTitle = "";
       let activeCatalogPresetName = "";
       let lastDocsMarkdown = "";
@@ -3339,9 +3378,38 @@
       const RECENT_PROJECTS_KEY = "imc_recent_projects";
       const AUTOSAVE_KEY = "imc_autosave_snapshot_v1";
 
+      function updateDiagramTextSyncBadge() {
+        if (!diagramTextSyncBadge) return;
+        const dirty = !!diagramTextEditorDirty;
+        diagramTextSyncBadge.textContent = dirty ? "Local edits" : "Synced";
+        diagramTextSyncBadge.classList.toggle("dirty", dirty);
+        diagramTextSyncBadge.classList.toggle("synced", !dirty);
+      }
+
+      async function syncDiagramTextEditorFromModel(source, options = {}) {
+        const force = options.force === true;
+        if (!diagramTextEditorInput) return;
+        if (!force && diagramEditorMode !== "textual") return;
+
+        if (!force && diagramTextEditorDirty && source !== "diagram-text-editor") {
+          if (diagramTextStatus) {
+            diagramTextStatus.textContent = "Textual editor: local changes not applied (use Apply/Reset)";
+          }
+          updateDiagramTextSyncBadge();
+          return;
+        }
+
+        await setDiagramTextEditorSnapshot();
+      }
+
       if (diagramTextEditorInput) {
         diagramTextEditorInput.addEventListener("input", () => {
+          diagramTextEditorDirty = true;
+          updateDiagramTextSyncBadge();
           renderDiagramTextEditorDecorations();
+          if (diagramTextStatus) {
+            diagramTextStatus.textContent = "Textual editor: local changes pending (Apply to sync)";
+          }
         });
         diagramTextEditorInput.addEventListener("scroll", () => {
           if (diagramTextLineNumbers) diagramTextLineNumbers.scrollTop = diagramTextEditorInput.scrollTop;
@@ -3351,6 +3419,8 @@
           }
         });
       }
+
+      updateDiagramTextSyncBadge();
 
       const EVENTS = {
         MODEL_CHANGED: "MODEL_CHANGED",
@@ -4311,6 +4381,7 @@
 
         coreState.model.catalog_validation_presets = existing;
         setModelInputValue(JSON.stringify(coreState.model, null, 2));
+        syncDiagramTextEditorFromModel("catalog-preset-import");
         setDirty(true);
         bus.emit(EVENTS.MODEL_CHANGED, { source: "catalog-preset-import" });
         renderCatalogValidationPresetEditor();
@@ -6962,6 +7033,7 @@
             setDirty(true);
           }
           bus.emit(EVENTS.MODEL_CHANGED, { source: config.source });
+          syncDiagramTextEditorFromModel(config.source);
         }
 
         if (selectionChanged) {
@@ -8461,6 +8533,8 @@
         diagramTextApplyBtn.addEventListener("click", async () => {
           try {
             await importIliObject(diagramTextEditorInput.value || "");
+            diagramTextEditorDirty = false;
+            await syncDiagramTextEditorFromModel("diagram-text-editor", { force: true });
             if (diagramTextStatus) {
               diagramTextStatus.textContent = "Textual editor: INTERLIS changes applied";
             }
@@ -8475,7 +8549,7 @@
       }
       if (diagramTextResetBtn) {
         diagramTextResetBtn.addEventListener("click", () => {
-          setDiagramTextEditorSnapshot();
+          syncDiagramTextEditorFromModel("diagram-text-reset", { force: true });
         });
       }
       exportKpiBtn.addEventListener("click", exportUxKpi);
