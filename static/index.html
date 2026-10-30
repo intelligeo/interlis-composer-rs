@@ -6329,7 +6329,26 @@
       }
 
       function renderIssues(items) {
-        currentIssues = Array.isArray(items) ? items : [];
+        const normalizeLegacyIssue = (item) => {
+          const next = { ...(item || {}) };
+          if (next.code === "ATTRIBUTE_TYPE_UNSUPPORTED") {
+            next.code = "ATTRIBUTE_TYPE_CUSTOM";
+            if (!next.message || /unsupported type/i.test(String(next.message))) {
+              next.message = "Attribute type accepted as custom INTERLIS expression";
+            }
+            next.level = "info";
+          }
+          if (next.code === "DOMAIN_TYPE_UNSUPPORTED") {
+            next.code = "DOMAIN_TYPE_CUSTOM";
+            if (!next.message || /unsupported type/i.test(String(next.message))) {
+              next.message = "Domain type accepted as custom INTERLIS expression";
+            }
+            next.level = "info";
+          }
+          return next;
+        };
+
+        currentIssues = (Array.isArray(items) ? items : []).map(normalizeLegacyIssue);
         issues.innerHTML = "";
         if (validationLogIssues) validationLogIssues.innerHTML = "";
         if (currentIssues.length === 0) {

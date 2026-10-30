@@ -2182,15 +2182,6 @@ fn validate_class(class: &Class, issues: &mut Vec<ValidationIssue>) {
                 ),
                 Some(attr_path.clone()),
             ));
-        } else if !model::is_supported_type(&attr.r#type) {
-            issues.push(warn_issue_at(
-                "ATTRIBUTE_TYPE_CUSTOM",
-                &format!(
-                    "Attribute '{}.{}' uses type '{}': accepted as custom INTERLIS type (internal editor has limited built-in type mapping)",
-                    class.name, attr.name, attr.r#type
-                ),
-                Some(attr_path.clone()),
-            ));
         }
 
         if !seen.insert(attr.name.as_str()) {
@@ -2224,15 +2215,6 @@ fn validate_domains(domains: &[Domain], issues: &mut Vec<ValidationIssue>) {
                     domain.name
                 ),
                 Some(path.clone()),
-            ));
-        } else if !model::is_supported_type(&domain.r#type) {
-            issues.push(warn_issue_at(
-                "DOMAIN_TYPE_CUSTOM",
-                &format!(
-                    "Domain '{}' uses type '{}': accepted as custom INTERLIS type (internal editor has limited built-in type mapping)",
-                    domain.name, domain.r#type
-                ),
-                Some(path),
             ));
         }
     }
