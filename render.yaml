@@ -12,3 +12,5 @@ services:
         value: ModelName
       - key: DEFAULT_MODEL_LANG
         value: de
+      - key: ILI2C_ENABLED
+        value: "false"
