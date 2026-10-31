@@ -2051,9 +2051,17 @@ fn model_to_markdown(model: &InterlisModel) -> String {
         for assoc in &model.associations {
             let from_link = format!("[{}](#class-{})", assoc.from_class, slugify_anchor(&assoc.from_class));
             let to_link = format!("[{}](#class-{})", assoc.to_class, slugify_anchor(&assoc.to_class));
+            let from_role = assoc.from_role.trim();
+            let to_role = assoc.to_role.trim();
             lines.push(format!(
-                "- {}: {} -> {} ({})",
-                assoc.name, from_link, to_link, assoc.cardinality
+                "- {}: {} {} ({}) -> {} {} ({})",
+                assoc.name,
+                if from_role.is_empty() { "from" } else { from_role },
+                from_link,
+                assoc.from_cardinality,
+                if to_role.is_empty() { "to" } else { to_role },
+                to_link,
+                assoc.cardinality
             ));
         }
     }
@@ -2262,6 +2270,27 @@ fn validate_associations(associations: &[Association], classes: &[Class], issues
             issues.push(error_issue_at(
                 "ASSOCIATION_TO_CLASS_UNKNOWN",
                 &format!("Association '{}' refers to unknown to_class '{}'", assoc.name, assoc.to_class),
+                Some(path.clone()),
+            ));
+        }
+        if !assoc.from_role.trim().is_empty() && !is_identifier(&assoc.from_role) {
+            issues.push(error_issue_at(
+                "ASSOCIATION_FROM_ROLE_INVALID",
+                &format!("Association '{}' has invalid from_role '{}'; use INTERLIS identifiers", assoc.name, assoc.from_role),
+                Some(path.clone()),
+            ));
+        }
+        if !assoc.to_role.trim().is_empty() && !is_identifier(&assoc.to_role) {
+            issues.push(error_issue_at(
+                "ASSOCIATION_TO_ROLE_INVALID",
+                &format!("Association '{}' has invalid to_role '{}'; use INTERLIS identifiers", assoc.name, assoc.to_role),
+                Some(path.clone()),
+            ));
+        }
+        if !is_cardinality(&assoc.from_cardinality) {
+            issues.push(error_issue_at(
+                "ASSOCIATION_FROM_CARDINALITY_INVALID",
+                &format!("Association '{}' has invalid from_cardinality '{}'; use min..max (e.g. 0..1, 1..*, 0..*)", assoc.name, assoc.from_cardinality),
                 Some(path.clone()),
             ));
         }

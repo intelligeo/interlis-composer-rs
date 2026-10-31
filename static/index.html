@@ -1029,18 +1029,33 @@
         margin-top: 0.5rem;
       }
 
+      #diagramPanel > .content {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+
       .diagram-stage {
         border: 1px solid var(--line);
         border-radius: 14px;
         background: linear-gradient(180deg, rgba(9, 18, 30, 0.98), rgba(15, 29, 46, 0.96));
-        min-height: 360px;
+        min-height: 0;
+        flex: 1 1 auto;
         overflow: auto;
       }
 
       .diagram-canvas {
         width: 100%;
-        height: 420px;
+        height: 100%;
         display: block;
+      }
+
+      #diagramEmbeddedPanelHost {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
       }
 
       .diagram-node rect {
@@ -1675,6 +1690,10 @@
               <label for="propAssocFromCardInput">From cardinality</label>
               <input id="propAssocFromCardInput" type="text" placeholder="0..*" />
             </div>
+            <div class="form-row" id="propAssocFromRoleRow">
+              <label for="propAssocFromRoleInput">From role</label>
+              <input id="propAssocFromRoleInput" type="text" placeholder="from" />
+            </div>
             <div class="form-row" id="propAssocToRow">
               <label for="propAssocToSelect">To class</label>
               <select id="propAssocToSelect"></select>
@@ -1682,6 +1701,10 @@
             <div class="form-row" id="propAssocCardRow">
               <label for="propAssocCardInput">To cardinality</label>
               <input id="propAssocCardInput" type="text" placeholder="1..*" />
+            </div>
+            <div class="form-row" id="propAssocToRoleRow">
+              <label for="propAssocToRoleInput">To role</label>
+              <input id="propAssocToRoleInput" type="text" placeholder="to" />
             </div>
             <div class="form-row" id="propDomainValuesRow" style="display:none;">
               <label>Domain values</label>
@@ -2594,12 +2617,16 @@
       const propAttrCardRow = document.getElementById("propAttrCardRow");
       const propAssocFromRow = document.getElementById("propAssocFromRow");
       const propAssocFromCardRow = document.getElementById("propAssocFromCardRow");
+      const propAssocFromRoleRow = document.getElementById("propAssocFromRoleRow");
       const propAssocToRow = document.getElementById("propAssocToRow");
       const propAssocCardRow = document.getElementById("propAssocCardRow");
+      const propAssocToRoleRow = document.getElementById("propAssocToRoleRow");
       const propAssocFromSelect = document.getElementById("propAssocFromSelect");
       const propAssocFromCardInput = document.getElementById("propAssocFromCardInput");
+      const propAssocFromRoleInput = document.getElementById("propAssocFromRoleInput");
       const propAssocToSelect = document.getElementById("propAssocToSelect");
       const propAssocCardInput = document.getElementById("propAssocCardInput");
+      const propAssocToRoleInput = document.getElementById("propAssocToRoleInput");
       const propDomainValuesRow = document.getElementById("propDomainValuesRow");
       const propDomainTopicRow = document.getElementById("propDomainTopicRow");
       const propDomainTopicSelect = document.getElementById("propDomainTopicSelect");
@@ -2754,6 +2781,8 @@
           "issue.PROPERTIES_DUPLICATE_ASSOC": "Relation '{name}' already exists",
           "issue.ASSOC_CLASS_REQUIRED": "From/To class are required",
           "issue.ASSOC_CLASS_INVALID": "From/To class must reference existing classes",
+          "issue.ASSOC_FROM_ROLE_INVALID": "Invalid from role: use INTERLIS identifier (start with a letter, then A-Z/a-z/0-9/_)",
+          "issue.ASSOC_TO_ROLE_INVALID": "Invalid to role: use INTERLIS identifier (start with a letter, then A-Z/a-z/0-9/_)",
           "issue.ASSOC_FROM_CARDINALITY_INVALID": "Invalid from cardinality. Use min..max format (e.g. 0..1, 1..*, 0..*)",
           "issue.ASSOC_CARDINALITY_INVALID": "Invalid cardinality. Use min..max format (e.g. 0..1, 1..*, 0..*)",
           "issue.CATALOG_PRESET_EXPORT_EMPTY": "No catalog preset to export",
@@ -2840,6 +2869,10 @@
           "tree.action.addAssociation": "New relation",
           "tree.action.deleteSelected": "Delete selected",
           "properties.action.apply": "Apply",
+          "properties.assoc.fromRole": "From role",
+          "properties.assoc.toRole": "To role",
+          "properties.assoc.fromRole.placeholder": "from",
+          "properties.assoc.toRole.placeholder": "to",
           "ctx.section.panel": "Panel",
           "ctx.section.actions": "Actions",
           "ctx.section.insert": "Insert",
@@ -2964,6 +2997,12 @@
           "tree.action.addAssociation": "Nuova relazione",
           "tree.action.deleteSelected": "Elimina selezionato",
           "properties.action.apply": "Applica",
+          "properties.assoc.fromRole": "Ruolo origine",
+          "properties.assoc.toRole": "Ruolo destinazione",
+          "properties.assoc.fromRole.placeholder": "origine",
+          "properties.assoc.toRole.placeholder": "destinazione",
+          "issue.ASSOC_FROM_ROLE_INVALID": "Ruolo origine non valido: usare identificatore INTERLIS (inizia con lettera, poi A-Z/a-z/0-9/_)",
+          "issue.ASSOC_TO_ROLE_INVALID": "Ruolo destinazione non valido: usare identificatore INTERLIS (inizia con lettera, poi A-Z/a-z/0-9/_)",
           "ctx.section.panel": "Pannello",
           "ctx.section.actions": "Azioni",
           "ctx.section.insert": "Inserimento",
@@ -3088,6 +3127,12 @@
           "tree.action.addAssociation": "Neue Beziehung",
           "tree.action.deleteSelected": "Auswahl loschen",
           "properties.action.apply": "Anwenden",
+          "properties.assoc.fromRole": "Rolle Quelle",
+          "properties.assoc.toRole": "Rolle Ziel",
+          "properties.assoc.fromRole.placeholder": "quelle",
+          "properties.assoc.toRole.placeholder": "ziel",
+          "issue.ASSOC_FROM_ROLE_INVALID": "Ungueltige Quellrolle: INTERLIS-Identifier verwenden (Start mit Buchstabe, dann A-Z/a-z/0-9/_)",
+          "issue.ASSOC_TO_ROLE_INVALID": "Ungueltige Zielrolle: INTERLIS-Identifier verwenden (Start mit Buchstabe, dann A-Z/a-z/0-9/_)",
           "ctx.section.panel": "Panel",
           "ctx.section.actions": "Aktionen",
           "ctx.section.insert": "Einfugen",
@@ -3212,6 +3257,12 @@
           "tree.action.addAssociation": "Nouvelle relation",
           "tree.action.deleteSelected": "Supprimer la selection",
           "properties.action.apply": "Appliquer",
+          "properties.assoc.fromRole": "Role source",
+          "properties.assoc.toRole": "Role cible",
+          "properties.assoc.fromRole.placeholder": "source",
+          "properties.assoc.toRole.placeholder": "cible",
+          "issue.ASSOC_FROM_ROLE_INVALID": "Role source invalide: utiliser un identifiant INTERLIS (commence par une lettre, puis A-Z/a-z/0-9/_)",
+          "issue.ASSOC_TO_ROLE_INVALID": "Role cible invalide: utiliser un identifiant INTERLIS (commence par une lettre, puis A-Z/a-z/0-9/_)",
           "ctx.section.panel": "Panneau",
           "ctx.section.actions": "Actions",
           "ctx.section.insert": "Insertion",
@@ -3442,6 +3493,10 @@
         setTextBySelector("#addAssocBtn", "tree.action.addAssociation");
         setTextBySelector("#deleteSelectedBtn", "tree.action.deleteSelected");
         setTextBySelector("#savePropertiesBtn", "properties.action.apply");
+        setTextBySelector('label[for="propAssocFromRoleInput"]', "properties.assoc.fromRole");
+        setTextBySelector('label[for="propAssocToRoleInput"]', "properties.assoc.toRole");
+        setPlaceholderBySelector("#propAssocFromRoleInput", "properties.assoc.fromRole.placeholder");
+        setPlaceholderBySelector("#propAssocToRoleInput", "properties.assoc.toRole.placeholder");
 
         refreshProjectMeta();
         setSyncMeta(syncMeta?.dataset?.syncMessage || t("status.idle"));
@@ -4435,6 +4490,8 @@
           .filter((value) => value.length > 0);
         normalized.associations = normalized.associations.map((assoc) => ({
           ...assoc,
+          from_role: String(assoc?.from_role || "").trim(),
+          to_role: String(assoc?.to_role || "").trim(),
           from_cardinality: isInterlisCardinality(String(assoc?.from_cardinality || "").trim())
             ? String(assoc.from_cardinality).trim()
             : "0..*",
@@ -6390,6 +6447,8 @@
             name: action.associationName,
             from_class: action.fromClass || "",
             to_class: action.toClass || "",
+            from_role: String(action.fromRole || "").trim(),
+            to_role: String(action.toRole || "").trim(),
             from_cardinality: action.fromCardinality || "0..*",
             cardinality: action.cardinality || "1..*"
           });
@@ -6554,6 +6613,12 @@
             }
             if (action.toClass) {
               next.model.associations[sel.associationIndex].to_class = action.toClass;
+            }
+            if (Object.prototype.hasOwnProperty.call(action, "fromRole")) {
+              next.model.associations[sel.associationIndex].from_role = String(action.fromRole || "").trim();
+            }
+            if (Object.prototype.hasOwnProperty.call(action, "toRole")) {
+              next.model.associations[sel.associationIndex].to_role = String(action.toRole || "").trim();
             }
             if (action.fromCardinality) {
               next.model.associations[sel.associationIndex].from_cardinality = action.fromCardinality;
@@ -7055,8 +7120,10 @@
         propClassExtendsRow.style.display = "none";
         propAssocFromRow.style.display = "none";
         propAssocFromCardRow.style.display = "none";
+        propAssocFromRoleRow.style.display = "none";
         propAssocToRow.style.display = "none";
         propAssocCardRow.style.display = "none";
+        propAssocToRoleRow.style.display = "none";
         propDomainValuesRow.style.display = "none";
         propDomainTopicRow.style.display = "none";
         propImportsRow.style.display = "none";
@@ -7163,9 +7230,13 @@
           propAttrCardRow.style.display = "none";
           propAssocFromRow.style.display = "grid";
           propAssocFromCardRow.style.display = "grid";
+          propAssocFromRoleRow.style.display = "grid";
           propAssocToRow.style.display = "grid";
           propAssocCardRow.style.display = "grid";
+          propAssocToRoleRow.style.display = "grid";
           populateAssociationClassSelects(assoc.from_class, assoc.to_class);
+          propAssocFromRoleInput.value = assoc.from_role || "";
+          propAssocToRoleInput.value = assoc.to_role || "";
           propAssocFromCardInput.value = assoc.from_cardinality || "0..*";
           propAssocCardInput.value = assoc.cardinality || "1..*";
           deleteDomainValueBtn.disabled = true;
@@ -8498,6 +8569,8 @@
           associationName: candidate,
           fromClass: coreState.model.classes[0]?.name || "",
           toClass: coreState.model.classes[1]?.name || coreState.model.classes[0]?.name || "",
+          fromRole: "from",
+          toRole: "to",
           cardinality: "1..*",
           source: "tree-add-association"
         });
@@ -8654,6 +8727,8 @@
 
           const fromClass = propAssocFromSelect.value;
           const toClass = propAssocToSelect.value;
+          const fromRole = propAssocFromRoleInput.value.trim();
+          const toRole = propAssocToRoleInput.value.trim();
           const fromCardinality = propAssocFromCardInput.value.trim();
           const cardinality = propAssocCardInput.value.trim();
           if (!fromClass || !toClass) {
@@ -8662,6 +8737,14 @@
           }
           if (!coreState.model.classes.some((c) => c.name === fromClass) || !coreState.model.classes.some((c) => c.name === toClass)) {
             renderIssues([{ level: "warning", code: "ASSOC_CLASS_INVALID", message: t("issue.ASSOC_CLASS_INVALID") }]);
+            return;
+          }
+          if (fromRole && !isInterlisIdentifier(fromRole)) {
+            renderIssues([{ level: "warning", code: "ASSOC_FROM_ROLE_INVALID", message: t("issue.ASSOC_FROM_ROLE_INVALID") }]);
+            return;
+          }
+          if (toRole && !isInterlisIdentifier(toRole)) {
+            renderIssues([{ level: "warning", code: "ASSOC_TO_ROLE_INVALID", message: t("issue.ASSOC_TO_ROLE_INVALID") }]);
             return;
           }
           if (!isInterlisCardinality(fromCardinality)) {
@@ -8678,6 +8761,8 @@
             name,
             fromClass,
             toClass,
+            fromRole,
+            toRole,
             fromCardinality,
             cardinality,
             source: "properties"
@@ -9009,6 +9094,8 @@
           associationName: candidate,
           fromClass: selectedClass,
           toClass,
+          fromRole: "from",
+          toRole: "to",
           cardinality: "1..*",
           source: "diagram-toolbar"
         });

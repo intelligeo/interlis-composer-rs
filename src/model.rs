@@ -50,6 +50,12 @@ pub struct Association {
     pub from_class: String,
     #[serde(default)]
     pub to_class: String,
+    #[serde(default = "default_assoc_role_from")]
+    pub from_role: String,
+    #[serde(default = "default_assoc_role_to")]
+    pub to_role: String,
+    #[serde(default = "default_from_cardinality")]
+    pub from_cardinality: String,
     #[serde(default = "default_cardinality")]
     pub cardinality: String,
 }
@@ -240,6 +246,18 @@ pub struct DiagramPresetConfig {
 
 fn default_cardinality() -> String {
     "1..*".to_string()
+}
+
+fn default_from_cardinality() -> String {
+    "0..*".to_string()
+}
+
+fn default_assoc_role_from() -> String {
+    "from".to_string()
+}
+
+fn default_assoc_role_to() -> String {
+    "to".to_string()
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -493,12 +511,22 @@ fn parse_topic_name(line: &str) -> Option<String> {
     Some(name.to_string())
 }
 
-fn parse_association_end_line(line: &str, class_names: &HashSet<String>) -> Option<(String, String)> {
+fn parse_association_end_line(
+    line: &str,
+    class_names: &HashSet<String>,
+) -> Option<(String, String, String)> {
     let body = line.trim().trim_end_matches(';').trim();
     let open_idx = body.find('{')?;
     let close_rel_idx = body[open_idx + 1..].find('}')?;
     let close_idx = open_idx + 1 + close_rel_idx;
     let cardinality = body[open_idx + 1..close_idx].trim().to_string();
+    let before_part = body[..open_idx].trim();
+    let role_name = before_part
+        .split_whitespace()
+        .next()
+        .unwrap_or("")
+        .trim()
+        .to_string();
 
     // Try class token immediately after cardinality.
     let after_token = body[close_idx + 1..]
@@ -507,23 +535,22 @@ fn parse_association_end_line(line: &str, class_names: &HashSet<String>) -> Opti
         .unwrap_or("")
         .trim();
     if !after_token.is_empty() && class_names.contains(after_token) {
-        return Some((after_token.to_string(), cardinality));
+        return Some((after_token.to_string(), cardinality, role_name));
     }
 
     // Fallback: find any known class token before the connector/cardinality.
-    let before_part = &body[..open_idx];
     for token in before_part
         .split(|c: char| c.is_whitespace() || c == '-' || c == '<' || c == '>' || c == '(' || c == ')' || c == ',')
         .filter(|tok| !tok.is_empty())
     {
         if class_names.contains(token) {
-            return Some((token.to_string(), cardinality));
+            return Some((token.to_string(), cardinality, role_name));
         }
     }
 
     // Last fallback keeps historical behavior.
     if !after_token.is_empty() {
-        return Some((after_token.to_string(), cardinality));
+        return Some((after_token.to_string(), cardinality, role_name));
     }
 
     None
@@ -543,7 +570,7 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
     let mut classes: Vec<Class> = Vec::new();
     let mut current_class: Option<Class> = None;
     let mut current_association_name: Option<String> = None;
-    let mut current_association_ends: Vec<(String, String)> = Vec::new();
+    let mut current_association_ends: Vec<(String, String, String)> = Vec::new();
     let mut in_domain_block = false;
     let mut first_code_line_seen = false;
 
@@ -572,6 +599,9 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
                                     name: assoc_name.to_string(),
                                     from_class: from_class.to_string(),
                                     to_class: to_class.to_string(),
+                                    from_role: default_assoc_role_from(),
+                                    to_role: default_assoc_role_to(),
+                                    from_cardinality: default_from_cardinality(),
                                     cardinality: card.to_string(),
                                 });
                             }
@@ -829,16 +859,19 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
 
             if let Some(assoc_name) = current_association_name.take() {
                 if current_association_ends.len() >= 2 {
-                    let (from_class, from_cardinality) = current_association_ends[0].clone();
-                    let (to_class, to_cardinality) = current_association_ends[1].clone();
+                    let (from_class, from_cardinality, from_role) = current_association_ends[0].clone();
+                    let (to_class, to_cardinality, to_role) = current_association_ends[1].clone();
                     associations.push(Association {
                         name: assoc_name,
                         from_class,
                         to_class,
+                        from_role,
+                        to_role,
+                        from_cardinality,
                         cardinality: if !to_cardinality.is_empty() {
                             to_cardinality
                         } else {
-                            from_cardinality
+                            default_cardinality()
                         },
                     });
                 }
@@ -866,8 +899,8 @@ pub fn from_interlis(input: &str) -> Result<InterlisModel, ParseFailure> {
         if current_association_name.is_some() {
             if line.ends_with(';') {
                 let class_names: HashSet<String> = classes.iter().map(|c| c.name.clone()).collect();
-                if let Some((class_name, cardinality)) = parse_association_end_line(line, &class_names) {
-                    current_association_ends.push((class_name, cardinality));
+                if let Some((class_name, cardinality, role_name)) = parse_association_end_line(line, &class_names) {
+                    current_association_ends.push((class_name, cardinality, role_name));
                 }
             }
             continue;
@@ -1050,17 +1083,40 @@ impl InterlisModel {
         }
 
         for assoc in &self.associations {
+            let from_role = if assoc.from_role.trim().is_empty() {
+                "from"
+            } else {
+                assoc.from_role.trim()
+            };
+            let to_role = if assoc.to_role.trim().is_empty() {
+                "to"
+            } else {
+                assoc.to_role.trim()
+            };
+            let from_cardinality = if assoc.from_cardinality.trim().is_empty() {
+                "0..*"
+            } else {
+                assoc.from_cardinality.trim()
+            };
+            let to_cardinality = if assoc.cardinality.trim().is_empty() {
+                "1..*"
+            } else {
+                assoc.cardinality.trim()
+            };
             out.push_str(&format!(
                 "    ASSOCIATION {} =\n",
                 assoc.name
             ));
             out.push_str(&format!(
-                "      from -- {{0..*}} {};\n",
+                "      {} -- {{{}}} {};\n",
+                from_role,
+                from_cardinality,
                 assoc.from_class
             ));
             out.push_str(&format!(
-                "      to -- {{{}}} {};\n",
-                assoc.cardinality,
+                "      {} -- {{{}}} {};\n",
+                to_role,
+                to_cardinality,
                 assoc.to_class
             ));
             out.push_str(&format!("    END {};\n\n", assoc.name));
