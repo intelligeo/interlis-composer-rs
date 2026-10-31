@@ -1083,6 +1083,12 @@
         fill: none;
       }
 
+      .diagram-link.selected {
+        stroke: #8be7ff;
+        stroke-width: 2.8;
+        filter: drop-shadow(0 0 10px rgba(139, 231, 255, 0.45));
+      }
+
       .diagram-inheritance {
         stroke: rgba(214, 229, 245, 0.92);
         stroke-width: 1.6;
@@ -1099,6 +1105,12 @@
       .diagram-link-label {
         font-size: 10px;
         fill: #dfeaf8;
+      }
+
+      .diagram-link-label.selected {
+        fill: #f2fbff;
+        font-weight: 700;
+        text-shadow: 0 0 8px rgba(139, 231, 255, 0.35);
       }
 
       .diagram-link-handle {
@@ -6063,6 +6075,8 @@
           const fromPos = diagramLayout.positions[assoc.from_class];
           const toPos = diagramLayout.positions[assoc.to_class];
           if (!fromPos || !toPos) continue;
+          const assocSelectionPath = selectionPathOf("association", assoc.name);
+          const assocSelected = coreState.selection.elementId === assocSelectionPath;
 
           const fromClass = coreState.model.classes.find((c) => c.name === assoc.from_class);
           const toClass = coreState.model.classes.find((c) => c.name === assoc.to_class);
@@ -6078,15 +6092,23 @@
           const midX = computeAssocMidX(x1, x2, pairIndex, assoc.name);
 
           const path = document.createElementNS(ns, "path");
-          path.setAttribute("class", "diagram-link");
+          path.setAttribute("class", `diagram-link ${assocSelected ? "selected" : ""}`.trim());
           path.setAttribute("d", `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`);
+          path.style.cursor = "pointer";
+          path.addEventListener("click", () => {
+            dispatch({ type: "SELECT_ELEMENT", elementId: assocSelectionPath, source: "diagram" }, { syncText: false, markDirty: false });
+          });
           diagramCanvas.appendChild(path);
 
           const label = document.createElementNS(ns, "text");
-          label.setAttribute("class", "diagram-link-label");
+          label.setAttribute("class", `diagram-link-label ${assocSelected ? "selected" : ""}`.trim());
           label.setAttribute("x", String(midX + 4));
           label.setAttribute("y", String((y1 + y2) / 2 - 6));
           label.textContent = `${assoc.name} ${assoc.cardinality || ""}`;
+          label.style.cursor = "pointer";
+          label.addEventListener("click", () => {
+            dispatch({ type: "SELECT_ELEMENT", elementId: assocSelectionPath, source: "diagram" }, { syncText: false, markDirty: false });
+          });
           diagramCanvas.appendChild(label);
 
           const handle = document.createElementNS(ns, "circle");
@@ -7482,6 +7504,30 @@
         catalogInstanceWrap.appendChild(table);
       }
 
+      function jumpSelectionFocusToTreeAndProperties(source) {
+        if (source !== "diagram") return;
+        const selectedPath = coreState.selection.elementId || "";
+        if (!selectedPath) return;
+
+        const selectedTreeItem = structureTree.querySelector(`button.tree-item[data-path="${CSS.escape(selectedPath)}"]`);
+        if (selectedTreeItem) {
+          selectedTreeItem.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+          selectedTreeItem.focus({ preventScroll: true });
+        }
+
+        const propertiesContent = document.querySelector("#propertiesPanel > .content");
+        if (propertiesContent) {
+          propertiesContent.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        if (propNameInput) {
+          propNameInput.focus({ preventScroll: true });
+          if (typeof propNameInput.select === "function") {
+            propNameInput.select();
+          }
+        }
+      }
+
       function dispatch(action, options = {}) {
         const config = {
           source: options.source || action.source || "ui",
@@ -7521,6 +7567,9 @@
         renderCatalogValidationPresetEditor();
         renderCatalogInstancesEditor();
         renderDiagramEditor();
+        if (selectionChanged) {
+          jumpSelectionFocusToTreeAndProperties(config.source);
+        }
         if (selectionChanged && (config.source === "diagnostics" || config.source === "tree" || config.source === "diagram" || config.source === "selection-input")) {
           focusDiagramOnSelection();
         }
