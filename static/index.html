@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>INTERLIS Model Composer • UML Studio</title>
+    <title>VERSATILI.APP • a Rust-based INTERLIS Model Composer</title>
     <meta name="theme-color" content="#0b1020" />
     <link rel="icon" href="data:," />
     <style>
@@ -26,6 +26,10 @@
         --input-bg: #0c1d2f;
         --input-border: rgba(115, 157, 210, 0.28);
         --subtle: rgba(159, 178, 204, 0.18);
+        --app-max-width: 1760px;
+        --app-gutter: clamp(0.75rem, 1.3vw, 1.35rem);
+        --app-top-margin: clamp(0.75rem, 1vh, 1rem);
+        --panel-gap: clamp(0.75rem, 0.9vw, 1rem);
       }
 
       * { box-sizing: border-box; }
@@ -91,12 +95,12 @@
       }
 
       .wrap {
-        width: min(1600px, calc(100% - 1.5rem));
-        height: calc(100vh - 2rem);
-        margin: 1rem auto 0;
+        width: min(var(--app-max-width), calc(100% - (var(--app-gutter) * 2)));
+        height: calc(100dvh - (var(--app-top-margin) + 0.65rem));
+        margin: var(--app-top-margin) auto 0;
         display: grid;
         grid-template-rows: auto auto minmax(0, 1fr);
-        gap: 1rem;
+        gap: var(--panel-gap);
       }
 
       .hero {
@@ -316,11 +320,56 @@
 
       .workspace-shell {
         display: grid;
-        grid-template-columns: minmax(230px, 0.9fr) minmax(260px, 1fr) minmax(420px, 2fr);
-        gap: 1rem;
+        grid-template-columns: minmax(240px, 0.82fr) minmax(280px, 1.05fr) minmax(520px, 2.2fr);
+        gap: var(--panel-gap);
         align-items: stretch;
         min-height: 0;
         height: 100%;
+      }
+
+      @media (max-width: 1540px) {
+        .workspace-shell {
+          grid-template-columns: minmax(220px, 0.9fr) minmax(250px, 1fr) minmax(380px, 1.65fr);
+        }
+      }
+
+      @media (max-width: 1240px) {
+        .workspace-shell {
+          grid-template-columns: minmax(240px, 1fr) minmax(380px, 1.4fr);
+          grid-template-areas:
+            "structure diagram"
+            "properties diagram";
+        }
+
+        #structurePanel { grid-area: structure; }
+        #propertiesPanel { grid-area: properties; }
+        #diagramPanel { grid-area: diagram; }
+      }
+
+      @media (max-width: 980px) {
+        body {
+          overflow-y: auto;
+        }
+
+        .wrap {
+          height: auto;
+          min-height: calc(100dvh - 0.75rem);
+        }
+
+        .workspace-shell {
+          grid-template-columns: 1fr;
+          grid-template-areas: none;
+          height: auto;
+        }
+
+        .workspace-shell > .card {
+          height: auto;
+          min-height: 280px;
+        }
+
+        .diagram-canvas {
+          height: 360px;
+        }
       }
 
       .workspace-shell > .card {
@@ -1203,6 +1252,72 @@
         .ili-editor-code-wrap {
           height: clamp(220px, 36vh, 420px);
           min-height: 220px;
+        }
+      }
+
+      @media (min-width: 1920px) {
+        :root {
+          --app-max-width: 2200px;
+          --app-gutter: clamp(1rem, 1.4vw, 1.8rem);
+          --panel-gap: clamp(0.95rem, 1vw, 1.25rem);
+        }
+
+        body {
+          font-size: 17px;
+        }
+
+        .workspace-shell {
+          grid-template-columns: minmax(300px, 0.86fr) minmax(400px, 1.15fr) minmax(760px, 2.35fr);
+        }
+
+        .ribbon-panel {
+          padding-right: clamp(116px, 10.5vw, 195px);
+        }
+
+        .diagram-canvas {
+          height: 520px;
+        }
+
+        .ili-editor-code-wrap {
+          height: clamp(360px, 52vh, 760px);
+          min-height: 340px;
+        }
+      }
+
+      @media (min-width: 2560px) {
+        :root {
+          --app-max-width: 3040px;
+          --app-gutter: clamp(1.2rem, 1.6vw, 2.6rem);
+          --panel-gap: clamp(1rem, 1vw, 1.4rem);
+        }
+
+        body {
+          font-size: 18px;
+        }
+
+        .workspace-shell {
+          grid-template-columns: minmax(340px, 0.85fr) minmax(520px, 1.2fr) minmax(1080px, 2.55fr);
+        }
+
+        .ribbon-group {
+          min-width: 172px;
+        }
+
+        .diagram-canvas {
+          height: 620px;
+        }
+
+        .ili-editor-code-wrap {
+          height: clamp(420px, 56vh, 900px);
+          min-height: 390px;
+        }
+      }
+
+      @media (min-width: 1920px) and (min-resolution: 2dppx) {
+        .card,
+        .app-ribbon,
+        .status-bar {
+          border-color: rgba(125, 170, 214, 0.26);
         }
       }
 
@@ -4014,11 +4129,24 @@
         try {
           const iliPayload = await postJson("/api/model/export/ili", modelSnapshot);
           if (syncId !== modelSyncRequestId) return;
-          output.textContent = iliPayload.interlis || "";
+          const exportedInterlisText = String(iliPayload?.interlis || "");
+          if (exportedInterlisText.trim()) {
+            lastInterlisTextSnapshot = exportedInterlisText;
+            output.textContent = exportedInterlisText;
+          } else if (lastInterlisTextSnapshot.trim()) {
+            output.textContent = lastInterlisTextSnapshot;
+          } else {
+            output.textContent = exportedInterlisText;
+          }
           lastFileName = iliPayload.file_name || "model.ili";
         } catch (_) {
           if (syncId !== modelSyncRequestId) return;
           // Keep last successful output if current model is temporarily invalid.
+          if (!output.textContent.trim() && lastInterlisTextSnapshot.trim()) {
+            output.textContent = lastInterlisTextSnapshot;
+          } else if (!output.textContent.trim() && diagramTextEditorInput?.value?.trim()) {
+            output.textContent = diagramTextEditorInput.value;
+          }
         }
 
         try {
@@ -7822,6 +7950,9 @@
           setIliTransferProgress(true, "Export .ili: finalizzazione output", 90);
           const interlisText = String(payload.interlis || "");
           output.textContent = interlisText;
+          if (interlisText.trim()) {
+            lastInterlisTextSnapshot = interlisText;
+          }
           lastFileName = payload.file_name || "model.ili";
           renderIssues(payload.issues || []);
           if (interlisText.trim()) {
@@ -7836,7 +7967,6 @@
           setIliTransferProgress(true, "Export .ili completato", 100);
           closeIliTransferProgress();
         } catch (err) {
-          output.textContent = "";
           renderIssues(err.payload?.issues || [{ level: "error", code: "EXPORT_ERROR", message: err.message || t("error.export") }]);
           setIliTransferProgress(true, "Export .ili fallito", 100);
           closeIliTransferProgress(900);
@@ -7966,7 +8096,12 @@
           setIliTransferProgress(true, "Import .ili: sincronizzazione editor", 80);
           dispatch({ type: "SET_MODEL", model: payload.model, resetSelection: true, source: "ili-import" }, { markDirty: true });
           renderIssues(payload.issues || []);
-          output.textContent = "";
+          const importedInterlisText = String(interlisText || "");
+          if (importedInterlisText.trim()) {
+            lastInterlisTextSnapshot = importedInterlisText;
+            output.textContent = importedInterlisText;
+          }
+          scheduleCrossPanelModelSync("ili-import");
           setIliTransferProgress(true, "Import .ili completato", 100);
           closeIliTransferProgress();
         } catch (err) {
@@ -7996,7 +8131,12 @@
           setIliTransferProgress(true, "Import .ili: sincronizzazione editor", 85);
           dispatch({ type: "SET_MODEL", model: payload.model, resetSelection: true, source: "ili-import-overwrite" }, { markDirty: true });
           renderIssues(payload.issues || []);
-          output.textContent = "";
+          const importedInterlisText = String(interlisText || "");
+          if (importedInterlisText.trim()) {
+            lastInterlisTextSnapshot = importedInterlisText;
+            output.textContent = importedInterlisText;
+          }
+          scheduleCrossPanelModelSync("ili-import-overwrite");
           setIliTransferProgress(true, "Import .ili completato", 100);
           closeIliTransferProgress();
         }
@@ -8949,7 +9089,7 @@
           const text = await file.text();
           const projectObj = JSON.parse(text);
           await importProjectObject(projectObj);
-          output.textContent = "";
+          scheduleCrossPanelModelSync("project-import");
         } catch (err) {
           renderIssues([{ level: "error", code: "PROJECT_LOAD_ERROR", message: err.message || t("error.projectLoad") }]);
         }
