@@ -1,0 +1,48 @@
+site_name: INTERLIS Model Composer (Rust)
+site_description: Backend and web UI for INTERLIS model authoring, validation, and export
+site_url: https://intelligeo.github.io/interlis-composer-rs/
+repo_url: https://github.com/intelligeo/interlis-composer-rs
+repo_name: intelligeo/interlis-composer-rs
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: blue grey
+      accent: light blue
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Guide: guide.md
+  - Configuration: configuration.md
+  - API Reference: api.md
+  - UI Workflow: ui-workflow.md
+  - Validation: validation.md
+  - Deployment: deployment.md
+  - Troubleshooting: troubleshooting.md
+
+plugins:
+  - search

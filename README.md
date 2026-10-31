@@ -2,6 +2,24 @@
 
 Rust + Axum backend with a static frontend for INTERLIS model authoring, validation, export, and collaboration support.
 
+## Documentation
+
+- Comprehensive project handbook: `GUIDE.md`
+- Material for MkDocs site config: `mkdocs.yml`
+- Documentation pages: `docs/`
+
+Primary docs entry points:
+
+- `docs/index.md`
+- `docs/getting-started.md`
+- `docs/guide.md`
+- `docs/configuration.md`
+- `docs/api.md`
+- `docs/ui-workflow.md`
+- `docs/validation.md`
+- `docs/deployment.md`
+- `docs/troubleshooting.md`
+
 ## Features
 
 - Project lifecycle: new, import/export `.imcp`
@@ -33,6 +51,19 @@ Default port: `8080`
 ```bash
 docker build -t interlis-composer-rs .
 docker run --rm -p 8080:8080 interlis-composer-rs
+```
+
+## Build docs with Material for MkDocs
+
+```bash
+pip install mkdocs-material
+mkdocs serve
+```
+
+Static site build:
+
+```bash
+mkdocs build
 ```
 
 ## CI
@@ -106,7 +137,7 @@ Notes:
 
 ## Validation playbook and smoke test
 
-- Validation strategy: `docs/VALIDATION_PLAYBOOK.md`
+- Validation strategy: `docs/validation.md`
 - Automated smoke check: `scripts/smoke-api-validation.ps1`
 
 Examples:
